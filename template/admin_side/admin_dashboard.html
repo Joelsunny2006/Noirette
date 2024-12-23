@@ -1,0 +1,139 @@
+
+{% extends "admin_side/base.html" %}
+
+{% block title %}
+Dashboard
+{% endblock %}
+
+{% block content %}
+<!-- Main Content -->
+<div class="content">
+  <!-- Top Navigation -->
+  <div class="top-nav d-flex justify-content-between align-items-center mb-4">
+    <button class="btn btn-light d-md-none"><i class="fas fa-bars"></i></button>
+    <div class="d-flex align-items-center">
+      <button class="btn btn-light me-3"><i class="fas fa-bell"></i></button>
+      <div class="dropdown">
+        <button class="btn btn-light dropdown-toggle" data-bs-toggle="dropdown">
+          <img src="https://via.placeholder.com/30" class="rounded-circle" alt="Avatar" />
+        </button>
+        <ul class="dropdown-menu dropdown-menu-end">
+          <li class="dropdown-item"><strong>Admin</strong><br><small>admin@example.com</small></li>
+          <li><hr class="dropdown-divider"></li>
+          <li><a class="dropdown-item" href="#">Profile</a></li>
+          <li><a class="dropdown-item" href="#">Settings</a></li>
+          <li><a class="dropdown-item" href="{% url 'admin_logout' %}">Log out</a></li>
+        </ul>
+      </div>
+    </div>
+  </div>
+
+  <h3 class="mb-4">Dashboard</h3>
+
+  <!-- Key Metrics -->
+  <div class="row">
+      <div class="col-md-3">
+          <div class="card card-custom">
+              <div class="card-body">
+                  <div class="d-flex justify-content-between">
+                      <h6>Total Sales</h6>
+                      <i class="fas fa-dollar-sign text-muted"></i>
+                  </div>
+                  <h4>${{ total_sales }}</h4>
+                  
+              </div>
+          </div>
+      </div>
+      <div class="col-md-3">
+          <div class="card card-custom">
+              <div class="card-body">
+                  <div class="d-flex justify-content-between">
+                      <h6>Pending Orders</h6>
+                      <i class="fas fa-shopping-cart text-muted"></i>
+                  </div>
+                  <h4>{{ pending_orders_count }}</h4>
+              </div>
+          </div>
+      </div>
+      
+  </div>
+  
+  <!-- Best Selling Products -->
+  <h5>Top Selling Products</h5>
+  <ul>
+      {% for product in best_selling_products %}
+          <li>{{ product.variant__product__name }} - Sold: {{ product.total_sold }}</li>
+      {% endfor %}
+  </ul>
+  
+  <!-- Best Selling Categories -->
+  <h5>Top Selling Categories</h5>
+  <ul>
+      {% for category in best_selling_categories %}
+          <li>{{ category.variant__product__category__name }} - Sold: {{ category.total_sold }}</li>
+      {% endfor %}
+  </ul>
+  
+  <!-- Best Selling Brands -->
+  <h5>Top Selling Brands</h5>
+  <ul>
+      {% for brand in best_selling_brands %}
+          <li>{{ brand.variant__product__brand__name }} - Sold: {{ brand.total_sold }}</li>
+      {% endfor %}
+  </ul>
+  
+  <!-- Revenue Overview Chart -->
+  <div class="card card-custom mb-4">
+      <div class="card-header d-flex justify-content-between align-items-center">
+          <span>Revenue Overview</span>
+          <select id="chartFilter" class="form-select" style="width: 120px;">
+              <option value="monthly">Monthly</option>
+              <option value="yearly">Yearly</option>
+          </select>
+      </div>
+      <div class="card-body">
+          <canvas id="revenueChart" width="400" height="200"></canvas>
+      </div>
+  </div>
+  
+  <!-- Include chart.js script and logic for filtering the chart as before -->
+  
+
+<script>
+  const ctx = document.getElementById('revenueChart').getContext('2d');
+  let chartData = {
+      labels: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'],
+      datasets: [{
+          label: 'Sales Revenue',
+          data: [12, 19, 3, 5, 2, 3, 7, 10, 15, 20, 25, 30], // Sample data
+          borderColor: 'rgb(75, 192, 192)',
+          fill: false
+      }]
+  };
+  
+  const config = {
+      type: 'line',
+      data: chartData,
+  };
+
+  let revenueChart = new Chart(ctx, config);
+
+  document.getElementById('chartFilter').addEventListener('change', function(event) {
+      let selectedFilter = event.target.value;
+
+      // You would modify this section to fetch the data dynamically based on the selected period
+      if (selectedFilter === 'monthly') {
+          chartData.labels = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+          chartData.datasets[0].data = [12, 19, 3, 5, 2, 3, 7, 10, 15, 20, 25, 30];
+      } else if (selectedFilter === 'yearly') {
+          chartData.labels = ['2020', '2021', '2022', '2023', '2024'];
+          chartData.datasets[0].data = [120, 150, 130, 160, 190]; // Example data for yearly
+      }
+
+      revenueChart.update();
+  });
+</script>
+
+
+{% endblock %}
+

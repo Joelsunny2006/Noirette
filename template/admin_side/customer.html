@@ -1,0 +1,214 @@
+
+{% extends "admin_side/base.html" %}
+
+{% block title %}
+Dashboard
+{% endblock %}
+
+{% block content %}
+  <style>
+    body {
+      background-color: #f7f8fa;
+    }
+    .sidebar {
+      width: 250px;
+      background-color: #fff;
+      padding: 20px;
+      min-height: 100vh;
+    }
+    .sidebar .nav-link {
+      color: #333;
+    }
+    .sidebar .nav-link.active {
+      font-weight: bold;
+      color: #007bff;
+    }
+    .content {
+      flex-grow: 1;
+      padding: 20px;
+    }
+    .top-nav {
+      padding: 10px 20px;
+      box-shadow: 0 1px 5px rgba(0, 0, 0, 0.1);
+      background-color: #fff;
+    }
+    .card-custom {
+      margin-bottom: 20px;
+    }
+    .btn-block {
+      background-color: #dc3545; /* Red color for block */
+      color: white;
+    }
+    .btn-unblock {
+      background-color: #28a745; /* Green color for unblock */
+      color: white;
+    }
+  </style>
+</head>
+<body>
+
+<div class="d-flex">
+  <!-- Sidebar -->
+
+
+  <!-- Content -->
+  <div class="content">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+      <h1 class="h3"><i class="fas fa-users me-2"></i> Customers</h1>
+    </div>
+
+    <!-- Search and Filter Bar -->
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <div class="input-group" style="width: 300px;">
+          <input type="text" class="form-control" placeholder="Search customers...">
+          <div class="input-group-append">
+            <button class="btn btn-outline-secondary" type="button">
+              <i class="fas fa-search"></i> <!-- Search icon -->
+            </button>
+          </div>
+        </div>
+        <button class="btn btn-outline-secondary">
+          <i class="fas fa-filter me-1"></i> Filter
+        </button>
+      </div>
+
+    <!-- Customers Table -->
+    <div class="card">
+      <div class="card-header">
+        Customer List
+      </div>
+      <div class="card-body">
+        <table class="table">
+          <thead>
+            <tr>
+              <th>Customer ID</th>
+              <th>Name</th>
+              <th>Email</th>
+              <th>Actions</th>
+              <th>Status</th>
+              
+             
+            </tr>
+          </thead>
+          <tbody>
+            {% for user in users %}
+            <tr>
+              <td>{{user.id}}</td>
+              <td>{{user.username}}</td>
+              <td>{{user.email}}</td>
+             
+              
+              <td>
+                <a>
+                <button type="submit" class="btn btn-sm btn-outline-primary" data-bs-toggle="modal" data-bs-target="#customerModal" onclick="setCustomerDetails({}, '', 'jane@example.com', 3, 299.97)">
+                </a>
+                  <i class="fas fa-eye me-1"></i> View
+                  <td>
+                    {% if user.is_blocked %}
+                        <span class="badge bg-danger">Blocked</span>
+                    {% else %}
+                        <span class="badge bg-success">Active</span>
+                    {% endif %}
+                </td>
+                <td>
+                  <form action="{% url 'user_status' user.id %}" method="POST">
+                    {% csrf_token %}
+                    {% if user.is_blocked %}
+                        <button type="submit" class="btn btn-block btn-sm">Unblock</button>
+                    {% else %}
+                        <button type="submit" class="btn btn-unblock btn-sm">Block</button>
+                    {% endif %}
+                </form>
+                
+                </td>
+                
+              </a>
+              </td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- View Customer Modal -->
+    <div class="modal fade" id="customerModal" tabindex="-1" aria-labelledby="customerModalLabel" aria-hidden="true">
+      <div class="modal-dialog">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h5 class="modal-title" id="customerModalLabel"><i class="fas fa-user-circle me-2"></i> Customer Details</h5>
+            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+          </div>
+          <div class="modal-body">
+            <div class="mb-3">
+              <strong>Customer ID:</strong> <span id="customerId">1</span>
+            </div>
+            <div class="d-flex align-items-center mb-3">
+              <div class="me-3">
+                <img id="customerAvatar" src="" alt="Customer Avatar" class="rounded-circle" style="width: 64px; height: 64px;">
+              </div>
+              <div>
+                <h5 id="customerName">John Doe</h5>
+                <p id="customerEmail" class="text-muted">john@example.com</p>
+              </div>
+            </div>
+            <div class="mb-3">
+              <strong>Total Orders:</strong> <span id="customerOrders">5</span>
+            </div>
+            <div>
+              <strong>Total Spent:</strong> <span id="customerTotalSpent">$499.95</span>
+            </div>
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- JavaScript for Bootstrap and Modal Handling -->
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+  
+  <script>
+    // Function to show the modal for editing an existing category
+    function editCategory(categoryId, categoryName, categoryDescription, categoryStatus) {
+        alert("Category ID: " + categoryId + "\nName: " + categoryName + "\nDescription: " + categoryDescription + "\nStatus: " + categoryStatus);
+        
+        // Set modal title and button text for edit
+        document.getElementById('categoryModalLabel').innerText = 'Edit Category';
+        document.getElementById('categorySubmitBtn').innerText = 'Update Category';
+
+        // Set form action to update category URL
+        document.getElementById('categoryForm').action = "{% url 'update_category' 0 %}".replace('0', categoryId);
+
+        // Pre-fill the form fields
+        document.getElementById('categoryId').value = categoryId;
+        document.getElementById('categoryName').value = categoryName;
+        document.getElementById('categoryDescription').value = categoryDescription;
+        
+        // Set the category status dropdown correctly
+        if (categoryStatus === "active") {
+            document.getElementById('categoryStatus').value = "active";
+        } else {
+            document.getElementById('categoryStatus').value = "inactive";
+        }
+    }
+
+    // Reset modal when adding a new category
+    function addCategory() {
+        document.getElementById('categoryModalLabel').innerText = 'Add New Category';
+        document.getElementById('categorySubmitBtn').innerText = 'Add Category';
+        document.getElementById('categoryForm').action = "{% url 'add_category' %}";
+
+        // Clear form fields
+        document.getElementById('categoryId').value = '';
+        document.getElementById('categoryForm').reset();
+        
+        // Show the modal
+        var categoryModal = new bootstrap.Modal(document.getElementById('categoryModal'));
+        categoryModal.show();
+    }
+</script>
+
+{%endblock%}

@@ -1,0 +1,230 @@
+
+{% extends "admin_side/base.html" %}
+
+{% block title %}
+Dashboard
+{% endblock %}
+
+{% block content %}
+    <style>
+        body {
+            background-color: #f7f8fa;
+        }
+        .sidebar {
+            width: 250px;
+            background-color: #fff;
+            padding: 20px;
+            min-height: 100vh;
+        }
+        .sidebar .nav-link {
+            color: #333;
+        }
+        .sidebar .nav-link.active {
+            font-weight: bold;
+            color: #007bff;
+        }
+        .content {
+            flex-grow: 1;
+            padding: 20px;
+        }
+        .top-nav {
+            padding: 10px 20px;
+            box-shadow: 0 1px 5px rgba(0, 0, 0, 0.1);
+            background-color: #fff;
+        }
+        .card-custom {
+            margin-bottom: 20px;
+        }
+    </style>
+</head>
+<body>
+
+<div class="d-flex">
+    <!-- Sidebar -->
+
+
+    <div class="content">
+        <div class="container my-5">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h1 class="h2">Content Management</h1>
+                <!-- Add Page Modal Trigger -->
+                <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addPageModal">
+                    <i class="fas fa-plus me-2"></i>Add Page
+                </button>
+            </div>
+
+            <div class="row g-4">
+                <!-- Pages -->
+                <div class="col-md-6 col-lg-4" id="aboutUs">
+                    <div class="card">
+                        <div class="card-header">
+                            <h5 class="card-title">About Us</h5>
+                            <p class="text-muted">Last updated: 2023-06-01</p>
+                        </div>
+                        <div class="card-body text-center">
+                            <i class="fas fa-file-alt fa-3x text-secondary"></i>
+                        </div>
+                        <div class="card-footer d-flex justify-content-between">
+                            <button class="btn btn-outline-secondary btn-sm" data-bs-toggle="modal" data-bs-target="#editPageModal">
+                                <i class="fas fa-edit me-1"></i>Edit
+                            </button>
+                            <button class="btn btn-danger btn-sm">
+                                <i class="fas fa-trash me-1"></i>Delete
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="col-md-6 col-lg-4" id="faq">
+                    <div class="card">
+                        <div class="card-header">
+                            <h5 class="card-title">FAQ</h5>
+                            <p class="text-muted">Last updated: 2023-06-01</p>
+                        </div>
+                        <div class="card-body text-center">
+                            <i class="fas fa-file-alt fa-3x text-secondary"></i>
+                        </div>
+                        <div class="card-footer d-flex justify-content-between">
+                            <button class="btn btn-outline-secondary btn-sm" data-bs-toggle="modal" data-bs-target="#editPageModal">
+                                <i class="fas fa-edit me-1"></i>Edit
+                            </button>
+                            <button class="btn btn-danger btn-sm">
+                                <i class="fas fa-trash me-1"></i>Delete
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="col-md-6 col-lg-4" id="terms">
+                    <div class="card">
+                        <div class="card-header">
+                            <h5 class="card-title">Terms and Conditions</h5>
+                            <p class="text-muted">Last updated: 2023-06-01</p>
+                        </div>
+                        <div class="card-body text-center">
+                            <i class="fas fa-file-alt fa-3x text-secondary"></i>
+                        </div>
+                        <div class="card-footer d-flex justify-content-between">
+                            <button class="btn btn-outline-secondary btn-sm" data-bs-toggle="modal" data-bs-target="#editPageModal">
+                                <i class="fas fa-edit me-1"></i>Edit
+                            </button>
+                            <button class="btn btn-danger btn-sm">
+                                <i class="fas fa-trash me-1"></i>Delete
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="col-md-6 col-lg-4" id="privacyPolicy">
+                    <div class="card">
+                        <div class="card-header">
+                            <h5 class="card-title">Privacy Policy</h5>
+                            <p class="text-muted">Last updated: 2023-06-01</p>
+                        </div>
+                        <div class="card-body text-center">
+                            <i class="fas fa-file-alt fa-3x text-secondary"></i>
+                        </div>
+                        <div class="card-footer d-flex justify-content-between">
+                            <button class="btn btn-outline-secondary btn-sm" data-bs-toggle="modal" data-bs-target="#editPageModal">
+                                <i class="fas fa-edit me-1"></i>Edit
+                            </button>
+                            <button class="btn btn-danger btn-sm">
+                                <i class="fas fa-trash me-1"></i>Delete
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="col-md-6 col-lg-4" id="shippingInfo">
+                    <div class="card">
+                        <div class="card-header">
+                            <h5 class="card-title">Shipping Information</h5>
+                            <p class="text-muted">Last updated: 2023-06-01</p>
+                        </div>
+                        <div class="card-body text-center">
+                            <i class="fas fa-file-alt fa-3x text-secondary"></i>
+                        </div>
+                        <div class="card-footer d-flex justify-content-between">
+                            <button class="btn btn-outline-secondary btn-sm" data-bs-toggle="modal" data-bs-target="#editPageModal">
+                                <i class="fas fa-edit me-1"></i>Edit
+                            </button>
+                            <button class="btn btn-danger btn-sm">
+                                <i class="fas fa-trash me-1"></i>Delete
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Add Page Modal -->
+        <div class="modal fade" id="addPageModal" tabindex="-1" aria-labelledby="addPageModalLabel" aria-hidden="true">
+            <div class="modal-dialog">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title" id="addPageModalLabel">Add New Page</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    <div class="modal-body">
+                        <form id="addPageForm">
+                            <div class="mb-3 row">
+                                <label for="title" class="col-sm-4 col-form-label">Page Title</label>
+                                <div class="col-sm-8">
+                                    <input type="text" class="form-control" id="title" placeholder="Enter page title">
+                                </div>
+                            </div>
+                            <div class="mb-3 row">
+                                <label for="content" class="col-sm-4 col-form-label">Content</label>
+                                <div class="col-sm-8">
+                                    <textarea class="form-control" id="content" rows="3" placeholder="Enter content"></textarea>
+                                </div>
+                            </div>
+                        </form>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                        <button type="button" class="btn btn-primary" id="savePageBtn">Save</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Edit Page Modal -->
+        <div class="modal fade" id="editPageModal" tabindex="-1" aria-labelledby="editPageModalLabel" aria-hidden="true">
+            <div class="modal-dialog">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title" id="editPageModalLabel">Edit Page</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    <div class="modal-body">
+                        <form id="editPageForm">
+                            <div class="mb-3 row">
+                                <label for="editTitle" class="col-sm-4 col-form-label">Page Title</label>
+                                <div class="col-sm-8">
+                                    <input type="text" class="form-control" id="editTitle" placeholder="Enter page title">
+                                </div>
+                            </div>
+                            <div class="mb-3 row">
+                                <label for="editContent" class="col-sm-4 col-form-label">Content</label>
+                                <div class="col-sm-8">
+                                    <textarea class="form-control" id="editContent" rows="3" placeholder="Enter content"></textarea>
+                                </div>
+                            </div>
+                        </form>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                        <button type="button" class="btn btn-primary" id="updatePageBtn">Update</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.10.2/dist/umd/popper.min.js" integrity="sha384-oBqDVmMz4fnFO9gyb6pW7FfA7X5w3ct5H08f0Yh6FfJv6dPZQhlbTKP2el20w1wK" crossorigin="anonymous"></script>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.min.js" integrity="sha384-Xk7DPUejEJ8IoS6WjtP3sdiBUZxk6SHGQsa15Xs6uZQErvGmlrsx+j5zmD+35q9u" crossorigin="anonymous"></script>
+
+{%endblock%}

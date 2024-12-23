@@ -1,0 +1,421 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Products Page</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+  <style>
+    .container { max-width: 1000px; }
+    .dropdown-item.text-red { color: red; }
+    .btn-success:hover, .btn-danger:hover { color: white; }
+    .table-sortable th { cursor: pointer; }
+    body { background-color: #f7f8fa; }
+    .sidebar { width: 250px; background-color: #fff; padding: 20px; min-height: 100vh; }
+    .sidebar .nav-link { color: #333; }
+    .sidebar .nav-link.active { font-weight: bold; color: #007bff; }
+    .content { flex-grow: 1; padding: 20px; }
+    .top-nav { padding: 10px 20px; box-shadow: 0 1px 5px rgba(0, 0, 0, 0.1); background-color: #fff; }
+    .card-custom { margin-bottom: 20px; }
+    .image-preview { 
+      max-width: 150px; 
+      max-height: 150px; 
+      margin: 10px;
+      border-radius: 8px;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    }
+    .preview-container {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      margin-top: 10px;
+    }
+    .image-wrapper {
+      position: relative;
+    }
+    .remove-image {
+      position: absolute;
+      top: -8px;
+      right: -8px;
+      background: red;
+      color: white;
+      border-radius: 50%;
+      width: 20px;
+      height: 20px;
+      text-align: center;
+      line-height: 20px;
+      cursor: pointer;
+    }
+    .drag-drop-zone {
+      border: 2px dashed #ccc;
+      padding: 20px;
+      text-align: center;
+      background: #f8f9fa;
+      border-radius: 8px;
+      cursor: pointer;
+    }
+    .drag-drop-zone.dragover {
+      background: #e9ecef;
+      border-color: #007bff;
+    }
+  </style>
+</head>
+<body>
+
+<div class="d-flex">
+  <!-- Sidebar -->
+  <div class="sidebar border-end">
+    <h5 class="mb-4 d-flex align-items-center">
+      <i class="fas fa-columns me-2 text-primary"></i> Admin Panel
+    </h5>
+    <nav class="nav flex-column">
+      <a class="nav-link" href="{% url 'admin_dashboard' %}"><i class="fas fa-columns me-2"></i> Dashboard</a>
+      <a class="nav-link active" href="{% url 'product_list' %}"><i class="fas fa-box me-2"></i> Products</a>
+      <a class="nav-link" href="{% url 'category' %}"><i class="fas fa-list me-2"></i> Category</a>
+      <a class="nav-link" href="{% url 'brand' %}"><i class="fas fa-users me-2"></i> Brand</a>
+      <a class="nav-link" href="{% url 'order:orders' %}"><i class="fas fa-shopping-cart me-2"></i> Orders</a>
+      <a class="nav-link" href="{% url 'customer' %}"><i class="fas fa-users me-2"></i> Customers</a>
+      <a class="nav-link" href="{% url 'coupon' %}"><i class="fas fa-tags me-2"></i> Coupon</a>
+      <a class="nav-link" href="{% url 'salesanalytics' %}"><i class="fas fa-chart-line me-2"></i> Sales & Analytics</a>
+      <a class="nav-link" href="{% url 'contents' %}"><i class="fas fa-file-alt me-2"></i> Content</a>
+      <a class="nav-link" href="{% url 'settings' %}"><i class="fas fa-cog me-2"></i> Settings</a>
+    </nav>
+  </div>
+
+  <!-- Main Content -->
+  <div class="content">
+    <div class="container my-4">
+      <!-- Header -->
+      <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1 class="h4">Products</h1>
+        <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addProductModal">
+          <i class="fas fa-plus me-2"></i> Add Product
+        </button>
+      </div>
+
+      <!-- Search and Filter -->
+      <div class="d-flex justify-content-between mb-3">
+        <div class="input-group" style="width: 300px;">
+          <input type="text" class="form-control" placeholder="Search products..." id="search-input" onkeyup="searchProducts()">
+          <button class="btn btn-outline-secondary" type="button">
+            <i class="fas fa-search"></i>
+          </button>
+        </div>
+      </div>
+
+      <!-- Products Table -->
+      <div class="table-responsive">
+        <table class="table table-striped table-sortable">
+          <thead>
+            <tr>
+              <th onclick="sortTable(0)">Name</th>
+              <th onclick="sortTable(1)">Category</th>
+              <th onclick="sortTable(2)">Brand</th>
+              
+              <th>Images</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody id="products-table-body">
+            {% for product in products %}
+        <tr>
+            <td>{{ product.name }}</td>
+            <td>{{ product.category.name }}</td>
+            <td>{{ product.brand.name }}</td>
+            <td>
+                <div class="d-flex">
+                    {% for image in product.images.all %}
+                    <img src="{{ image.image_url.url }}" alt="{{ product.name }}" class="img-thumbnail" style="width: 50px; height: 50px; margin-right: 5px;">
+                    {% empty %}
+                    <p>No images available for this product.</p>
+                    {% endfor %}
+                </div>
+            </td>
+            <td>
+                <ul class="list-unstyled mb-0">
+                    {% for variant in product.variants.all %}
+                    <li>
+                        <span>{{ variant.variant_name }}</span>
+                        - ${{ variant.variant_price|floatformat:2 }}
+                        (Stock: {{ variant.variant_stock }})
+                    </li>
+                    {% endfor %}
+                    {% if product.variants.count == 0 %}
+                    <span class="text-muted">No variants</span>
+                    {% endif %}
+                </ul>
+            </td>
+            <td>
+                <div class="dropdown">
+                    <button class="btn btn-link text-dark p-0" type="button" data-bs-toggle="dropdown">
+                        <i class="fas fa-ellipsis-h"></i>
+                    </button>
+                    <ul class="dropdown-menu">
+                        <li>
+                            <a class="dropdown-item" href="{% url 'update_product' product.serial_number %}">Edit</a>
+                        </li>
+                        <li>
+                            <hr class="dropdown-divider">
+                        </li>
+                        <li>
+                            <a class="dropdown-item text-red" 
+                               href="{% url 'delete_product' product.serial_number %}" 
+                               onclick="return confirm('Are you sure you want to delete this product?')">Delete</a>
+                        </li>
+                    </ul>
+                </div>
+            </td>
+        </tr>
+        {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="modal fade" id="addProductModal" tabindex="-1" aria-labelledby="addProductModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-lg">
+    <div class="modal-content">
+      <!-- Modal Header -->
+      <div class="modal-header">
+        <h5 class="modal-title" id="addProductModalLabel">Add New Product</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+
+      <!-- Modal Body -->
+      <div class="modal-body">
+        <form id="add-product-form" enctype="multipart/form-data" novalidate>
+          {% csrf_token %}
+
+          <!-- Product Name -->
+          <div class="mb-3">
+            <label for="product-name" class="form-label">Product Name</label>
+            <input type="text" class="form-control" id="product-name" name="product_name" required aria-describedby="productNameHelp">
+            <div class="form-text" id="productNameHelp">Enter the name of the product.</div>
+          </div>
+
+          <!-- Product Category -->
+          <div class="mb-3">
+            <label for="product-category" class="form-label">Category</label>
+            <select class="form-select" id="product-category" name="product_category" required aria-describedby="productCategoryHelp">
+              <option value="" disabled selected>Select Category</option>
+              {% for category in categories %}
+              <option value="{{ category.id }}">{{ category.name }}</option>
+              {% endfor %}
+            </select>
+            <div class="form-text" id="productCategoryHelp">Choose a category for the product.</div>
+          </div>
+
+          <!-- Product Brand -->
+          <div class="mb-3">
+            <label for="product-brand" class="form-label">Brand</label>
+            <select class="form-select" id="product-brand" name="product_brand" required aria-describedby="productBrandHelp">
+              <option value="" disabled selected>Select Brand</option>
+              {% for brand in brands %}
+              <option value="{{ brand.id }}">{{ brand.name }}</option>
+              {% endfor %}
+            </select>
+            <div class="form-text" id="productBrandHelp">Choose a brand for the product.</div>
+          </div>
+
+          <!-- Offer Price Percentage -->
+          <div class="mb-3">
+            <label for="product-offer-percentage" class="form-label">Offer Price Percentage</label>
+            <input type="number" step="0.01" min="0" max="100" class="form-control" id="product-offer-percentage" name="offer_price_percentage" aria-describedby="offerPriceHelp">
+            <small id="offerPriceHelp" class="form-text text-muted">Enter a percentage (e.g., 10 for 10% off). Applied to all variants.</small>
+          </div>
+
+          <!-- Variants Section -->
+          <div class="mb-3">
+            <label for="product-variants" class="form-label">Product Variants</label>
+            <div id="variants-container">
+              <div class="d-flex mb-2">
+                <input type="text" class="form-control me-2" placeholder="Variant Name" name="variant_name[]" required>
+                <input type="number" step="0.01" min="0" class="form-control me-2" placeholder="Variant Price" name="variant_price[]" required>
+                <input type="number" class="form-control" min="0" placeholder="Stock" name="variant_stock[]" required>
+              </div>
+            </div>
+            <button type="button" class="btn btn-secondary btn-sm" id="add-variant-btn">Add Variant</button>
+          </div>
+
+          <!-- Drag-and-Drop Images -->
+          <div class="mb-3">
+            <label for="product-images" class="form-label">Images (Max 5)</label>
+            <div class="drag-drop-zone border p-3 text-center" id="image-upload-zone" role="button" tabindex="0" aria-describedby="imageUploadHelp">
+              Drag and drop images here or click to select
+              <input type="file" id="product-images" name="product_images" multiple class="d-none" accept="image/*">
+            </div>
+            <small id="imageUploadHelp" class="form-text text-muted">You can upload up to 5 images.</small>
+            <div class="preview-container d-flex flex-wrap mt-3" id="image-preview-container"></div>
+          </div>
+
+          <!-- Product Description -->
+          <div class="mb-3">
+            <label for="product-description" class="form-label">Description</label>
+            <textarea class="form-control" id="product-description" name="product_description" rows="3" aria-describedby="descriptionHelp"></textarea>
+            <div id="descriptionHelp" class="form-text">Provide a detailed description of the product.</div>
+          </div>
+
+          <!-- Submit Button -->
+          <div class="d-grid">
+            <button type="submit" class="btn btn-primary" id="submit-product-btn">
+              <span class="spinner-border spinner-border-sm d-none" id="loading-spinner" role="status" aria-hidden="true"></span>
+              Add Product
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+
+
+
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.bundle.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/dragula/3.7.3/dragula.min.js"></script>
+<script>
+  // Sort Table Function
+  function sortTable(n) {
+    const table = document.querySelector('.table');
+    let switching = true;
+    let dir = "asc";
+    let switchCount = 0;
+
+    while (switching) {
+      switching = false;
+      const rows = table.rows;
+
+      for (let i = 1; i < rows.length - 1; i++) {
+        const x = rows[i].cells[n];
+        const y = rows[i + 1].cells[n];
+        const shouldSwitch = dir === "asc"
+          ? x.innerHTML.toLowerCase() > y.innerHTML.toLowerCase()
+          : x.innerHTML.toLowerCase() < y.innerHTML.toLowerCase();
+
+        if (shouldSwitch) {
+          rows[i].parentNode.insertBefore(rows[i + 1], rows[i]);
+          switching = true;
+          switchCount++;
+          break;
+        }
+      }
+
+      if (!switching && switchCount === 0 && dir === "asc") {
+        dir = "desc";
+        switching = true;
+      }
+    }
+  }
+
+  // Search Products
+  function searchProducts() {
+    const input = document.getElementById("search-input").value.toLowerCase();
+    const rows = document.querySelector(".table").getElementsByTagName("tr");
+
+    Array.from(rows).forEach((row, i) => {
+      if (i > 0) {
+        const cell = row.getElementsByTagName("td")[0];
+        row.style.display = cell && cell.textContent.toLowerCase().includes(input) ? "" : "none";
+      }
+    });
+  }
+
+</script>
+
+<script>
+  document.addEventListener("DOMContentLoaded", function() {
+    // Handle form submission
+    const form = document.getElementById('add-product-form');
+    const submitButton = document.getElementById('submit-product-btn');
+    const spinner = document.getElementById('loading-spinner');
+    
+    form.addEventListener('submit', function(event) {
+      event.preventDefault(); // Prevent the default form submission
+
+      // Show the loading spinner
+      submitButton.setAttribute('disabled', 'true');
+      spinner.classList.remove('d-none');
+
+      const formData = new FormData(form);
+
+      // Send the data via AJAX to the backend
+      fetch("{% url 'add_product' %}", {
+        method: 'POST',
+        body: formData,
+      })
+      .then(response => response.json())
+      .then(data => {
+        if (data.success) {
+          alert(data.message);
+          // Optionally, close the modal or reset the form
+          $('#addProductModal').modal('hide');
+          form.reset();
+        } else {
+          alert(data.message);
+        }
+      })
+      .catch(error => {
+        console.error("Error adding product:", error);
+        alert("An error occurred while adding the product.");
+      })
+      .finally(() => {
+        // Hide the loading spinner and re-enable the submit button
+        submitButton.removeAttribute('disabled');
+        spinner.classList.add('d-none');
+      });
+    });
+
+    // Handle adding more variants dynamically
+    const addVariantBtn = document.getElementById('add-variant-btn');
+    addVariantBtn.addEventListener('click', function() {
+      const variantContainer = document.getElementById('variants-container');
+      const variantRow = document.createElement('div');
+      variantRow.classList.add('d-flex', 'mb-2');
+      
+      variantRow.innerHTML = `
+        <input type="text" class="form-control me-2" placeholder="Variant Name" name="variant_name[]" required>
+        <input type="number" step="0.01" min="0" class="form-control me-2" placeholder="Variant Price" name="variant_price[]" required>
+        <input type="number" class="form-control" min="0" placeholder="Stock" name="variant_stock[]" required>
+      `;
+      
+      variantContainer.appendChild(variantRow);
+    });
+
+    // Handle image preview
+    const imageUploadZone = document.getElementById('image-upload-zone');
+    const imagePreviewContainer = document.getElementById('image-preview-container');
+    const imageInput = document.getElementById('product-images');
+
+    imageUploadZone.addEventListener('click', function() {
+      imageInput.click();
+    });
+
+    imageInput.addEventListener('change', function(event) {
+      const files = event.target.files;
+      imagePreviewContainer.innerHTML = ''; // Clear the preview container
+
+      for (let i = 0; i < files.length; i++) {
+        const file = files[i];
+        const reader = new FileReader();
+        
+        reader.onload = function(e) {
+          const imgElement = document.createElement('img');
+          imgElement.src = e.target.result;
+          imgElement.classList.add('img-thumbnail', 'me-2', 'mb-2');
+          imagePreviewContainer.appendChild(imgElement);
+        };
+
+        reader.readAsDataURL(file);
+      }
+    });
+
+  });
+</script>
+
+
+</body>
+</html>

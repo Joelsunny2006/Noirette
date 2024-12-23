@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Razorpay Payment</title>
+    <script src="https://checkout.razorpay.com/v1/checkout.js"></script>
+</head>
+<body>
+    <h2>Complete Your Payment</h2>
+    <button id="rzp-button">Pay Now</button>
+
+    <script>
+        var options = {
+            "key": "{{ razorpay_key_id }}",  // Razorpay Key ID
+            "amount": "{{ amount }}",       // Amount in paise
+            "currency": "INR",
+            "order_id": "{{ razorpay_order_id }}", // Razorpay Order ID
+            "name": "Noirette",
+            "description": "Payment for your order",
+            "theme": {
+                "color": "#000000"
+            },
+            "handler": function (response) {
+                // Send the payment details to your callback URL
+                fetch("{{ callback_url }}", {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json",
+                        "X-CSRFToken": "{{ csrf_token }}"
+                    },
+                    body: JSON.stringify({
+                        razorpay_payment_id: response.razorpay_payment_id,
+                        razorpay_order_id: response.razorpay_order_id,
+                        razorpay_signature: response.razorpay_signature
+                    })
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        window.location.href = "/order/order-success/"; // Redirect to success page
+                    } else {
+                        alert("Payment verification failed. Please try again.");
+                    }
+                });
+            },
+            "prefill": {
+                "name": "{{ user.first_name }}",
+                "email": "{{ user.email }}"
+            },
+            "modal": {
+                "ondismiss": function () {
+                    alert("Payment cancelled.");
+                }
+            }
+        };
+
+        var rzp1 = new Razorpay(options);
+        document.getElementById('rzp-button').onclick = function (e) {
+            rzp1.open();
+            e.preventDefault();
+        };
+    </script>
+</body>
+</html>

@@ -1,0 +1,610 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>User Profile - E-commerce</title>
+    <link
+      href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css"
+      rel="stylesheet"
+    />
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+      .active-tab {
+        border-bottom: 2px solid #3b82f6;
+        color: #3b82f6;
+      }
+    </style>
+  </head>
+<body class="bg-gray-100">
+    <div class="container mx-auto p-4">
+        <h1 class="text-3xl font-bold mb-6">User Profile</h1>
+
+        <div class="bg-white rounded-lg shadow-md p-6">
+            <div class="flex flex-wrap mb-4">
+                <button class="mr-4 py-2 px-4 font-medium active-tab" onclick="showTab('profile')">Profile</button>
+                <button class="mr-4 py-2 px-4 font-medium" onclick="showTab('addresses')">Addresses</button>
+                <button class="mr-4 py-2 px-4 font-medium" onclick="showTab('orders')">Orders</button>
+            </div>
+
+            <div id="profile" class="tab-content">
+                <h2 class="text-2xl font-semibold mb-4">User Details</h2>
+                <p><strong>Name:</strong> {{ request.user.username }}</p>
+                <p><strong>Email:</strong> {{ request.user.email }}</p>
+                <button class="mt-4 bg-blue-500 text-white py-2 px-4 rounded" onclick="openModal('editProfileModal')">Edit Profile</button>
+                <button class="mt-4 ml-2 bg-gray-500 text-white py-2 px-4 rounded" onclick="openModal('changePasswordModal')">Change Password</button>
+              </div>
+
+                <!-- Edit Profile Modal -->
+    <div class="modal fade" id="editProfileModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog">
+          <div class="modal-content">
+            <div class="modal-header">
+              <h5 class="modal-title">Edit Profile</h5>
+              <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+              <form method="post" action="{% url 'edit_profile' %}">
+                {% csrf_token %}
+                <div class="mb-3">
+                  <label for="username" class="form-label">Username</label>
+                  <input type="text" class="form-control" id="username" name="username" value="{{ request.user.username }}" required>
+                </div>
+                <div class="mb-3">
+                  <label for="email" class="form-label">Email</label>
+                  <input type="email" class="form-control" id="email" name="email" value="{{ request.user.email }}" required>
+                </div>
+                <div class="modal-footer">
+                  <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                  <button type="submit" class="btn btn-primary">Save Changes</button>
+                </div>
+              </form>
+            </div>
+          </div>
+        </div>
+      </div>
+    
+      <!-- Change Password Modal -->
+      <div class="modal fade" id="changePasswordModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog">
+          <div class="modal-content">
+            <div class="modal-header">
+              <h5 class="modal-title">Change Password</h5>
+              <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+              <form method="post" action="{% url 'change_password' %}">
+                {% csrf_token %}
+                <div class="mb-3">
+                  <label for="current_password" class="form-label">Current Password</label>
+                  <input type="password" class="form-control" id="current_password" name="current_password" required>
+                </div>
+                <div class="mb-3">
+                  <label for="new_password" class="form-label">New Password</label>
+                  <input type="password" class="form-control" id="new_password" name="new_password" required>
+                </div>
+                <div class="mb-3">
+                  <label for="confirm_password" class="form-label">Confirm New Password</label>
+                  <input type="password" class="form-control" id="confirm_password" name="confirm_password" required>
+                </div>
+                <div class="modal-footer">
+                  <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                  <button type="submit" class="btn btn-primary">Change Password</button>
+                </div>
+              </form>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div id="addresses" class="tab-content hidden">
+        <h2 class="text-2xl font-semibold mb-4">Addresses</h2>
+        
+        {% for address in addresses %}
+        <div class="bg-gray-200 p-4 rounded mb-4">
+            <p>{{ address.first_name }} {{ address.last_name }}</p>
+            <p>{{ address.street_address }} {{ address.apartment }}</p>
+            <p>{{ address.city }}, {{ address.state }} {{ address.postcode }}</p>
+            <p>{{ address.phone }}</p>
+            
+            <!-- Edit Button Trigger with data attributes -->
+            <button class="mt-2 bg-blue-500 text-white py-1 px-2 rounded openEditAddress"
+                    data-id="{{ address.id }}"
+                    data-first_name="{{ address.first_name }}"
+                    data-last_name="{{ address.last_name }}"
+                    data-street_address="{{ address.street_address }}"
+                    data-apartment="{{ address.apartment }}"
+                    data-city="{{ address.city }}"
+                    data-state="{{ address.state }}"
+                    data-postcode="{{ address.postcode }}"
+                    data-phone="{{ address.phone }}"
+                    data-email="{{ address.email }}"
+                    data-is_default="{{ address.is_default }}"
+                    onclick="openModal('edit')">Edit</button>
+            
+            <!-- Delete Form -->
+            <form method="post" action="{% url 'order:delete_address' address.id %}" onsubmit="return confirm('Are you sure you want to delete this address?');">
+                {% csrf_token %}
+                <button type="submit" class="mt-2 bg-red-500 text-white py-1 px-2 rounded">Delete</button>
+            </form>                    
+        </div>
+        {% empty %}
+        <p>No addresses found. Add a new one below.</p>
+        {% endfor %}
+        
+        <!-- Add New Address Button -->
+        <button class="mt-4 bg-green-500 text-white py-2 px-4 rounded" onclick="openModal('add')">Add New Address</button>
+    </div>
+    
+    <div id="orders" class="tab-content hidden">
+        <h2 class="text-2xl font-semibold mb-4">Orders</h2>
+        <div class="overflow-x-auto">
+            <table class="w-full table-auto">
+                <thead>
+                    <tr class="bg-gray-200">
+                        <th class="px-4 py-2">Order ID</th>
+                        <th class="px-4 py-2">Date</th>
+                        <th class="px-4 py-2">Total</th>
+                        <th class="px-4 py-2">Status</th>
+                        <th class="px-4 py-2">Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for order in orders %}
+                    <tr>
+                        <td class="border px-4 py-2">#{{ order.id }}</td>
+                        <td class="border px-4 py-2">{{ order.created_at|date:"Y-m-d H:i" }}</td>
+                        <td class="border px-4 py-2">${{ order.total_price }}</td>
+                        <td class="border px-4 py-2">{{ order.get_status_display }}</td>
+                        <td class="border px-4 py-2">
+                            {% if order.status == 'Payment Pending' or order.status == 'Payment Failed' %}
+                                <!-- Button to complete payment with AJAX -->
+                                <button 
+                                    class="continue-payment-btn bg-yellow-500 text-white py-1 px-2 rounded" 
+                                    data-order-id="{{ order.id }}"
+                                >
+                                    Complete Payment
+                                </button>
+                            {% elif order.status == 'Pending' or order.status == 'Processing' or order.status == 'Shipped' %}
+                                <!-- Button to cancel order -->
+                                <form method="post" action="{% url 'order:cancel_order' order.id %}" 
+                                      onsubmit="return confirm('Are you sure you want to cancel this order?');">
+                                    {% csrf_token %}
+                                    <button type="submit" class="bg-red-500 text-white py-1 px-2 rounded">
+                                        Cancel Order
+                                    </button>
+                                </form>
+                            {% elif order.status == 'Completed' %}
+                                <!-- Button to return order -->
+                                <form method="post" action="{% url 'order:return_order' order.id %}" 
+                                      onsubmit="return confirm('Are you sure you want to return this order?');">
+                                    {% csrf_token %}
+                                    <button type="submit" class="bg-blue-500 text-white py-1 px-2 rounded">
+                                        Return Order
+                                    </button>
+                                </form>
+                                <!-- Button to download invoice -->
+                                <form method="get" action="{% url 'order:download_invoice' order.id %}">
+                                    <button type="submit" class="bg-green-500 text-white py-1 px-2 rounded mt-2">
+                                        Download Invoice
+                                    </button>
+                                </form>
+                            {% endif %}
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="5" class="text-center py-4">No orders found.</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>                
+            </table>
+        </div>
+    </div>
+    
+    
+
+    <div class="modal fade" id="addressModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="modalTitle">Add Address</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="addressForm" method="POST" action="{% url 'order:save_address' %}" class="needs-validation" novalidate>
+                        {% csrf_token %}
+                        <input type="hidden" id="addressId" name="address_id" />
+                        
+                        <div class="mb-3">
+                            <label for="first_name" class="form-label">First Name</label>
+                            <input type="text" class="form-control" id="first_name" name="first_name" 
+                                   pattern="[A-Za-z ]{2,50}" required />
+                            <div class="invalid-feedback">
+                                Please enter a valid first name (2-50 characters, letters only)
+                            </div>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="last_name" class="form-label">Last Name</label>
+                            <input type="text" class="form-control" id="last_name" name="last_name" 
+                                   pattern="[A-Za-z ]{2,50}" required />
+                            <div class="invalid-feedback">
+                                Please enter a valid last name (2-50 characters, letters only)
+                            </div>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="street_address" class="form-label">Street Address</label>
+                            <input type="text" class="form-control" id="street_address" name="street_address" 
+                                   minlength="5" maxlength="100" required />
+                            <div class="invalid-feedback">
+                                Please enter a valid street address (5-100 characters)
+                            </div>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="apartment" class="form-label">Apartment (Optional)</label>
+                            <input type="text" class="form-control" id="apartment" name="apartment" 
+                                   maxlength="50" />
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="city" class="form-label">City</label>
+                            <input type="text" class="form-control" id="city" name="city" 
+                                   pattern="[A-Za-z ]{2,50}" required />
+                            <div class="invalid-feedback">
+                                Please enter a valid city name
+                            </div>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="state" class="form-label">State</label>
+                            <input type="text" class="form-control" id="state" name="state" 
+                                   pattern="[A-Za-z ]{2,50}" required />
+                            <div class="invalid-feedback">
+                                Please enter a valid state name
+                            </div>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="postcode" class="form-label">Postcode</label>
+                            <input type="text" class="form-control" id="postcode" name="postcode" 
+                                   pattern="[0-9]{5,6}" required />
+                            <div class="invalid-feedback">
+                                Please enter a valid postcode (5-6 digits)
+                            </div>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="phone" class="form-label">Phone</label>
+                            <input type="tel" class="form-control" id="phone" name="phone" 
+                                   pattern="[\+]?[0-9]{10,14}" required />
+                            <div class="invalid-feedback">
+                                Please enter a valid phone number (10-14 digits, may include + prefix)
+                            </div>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="email" class="form-label">Email</label>
+                            <input type="email" class="form-control" id="email" name="email" required />
+                            <div class="invalid-feedback">
+                                Please enter a valid email address
+                            </div>
+                        </div>
+
+                        <div class="mb-3 form-check">
+                            <input type="checkbox" class="form-check-input" id="is_default" name="is_default" />
+                            <label class="form-check-label" for="is_default">Set as Default</label>
+                        </div>
+
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                            <button type="submit" class="btn btn-primary">Save Address</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+</body>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Initialize Bootstrap modals
+    const editProfileModal = new bootstrap.Modal(document.getElementById('editProfileModal'));
+    const changePasswordModal = new bootstrap.Modal(document.getElementById('changePasswordModal'));
+    const addressModal = new bootstrap.Modal(document.getElementById('addressModal'));
+    const addressForm = document.getElementById('addressForm');
+    const modalTitle = document.getElementById('modalTitle');
+
+    // Form validation function
+    function validateForm(form) {
+        const namePattern = /^[A-Za-z ]{2,50}$/;
+        const phonePattern = /^[\+]?[0-9]{10,14}$/;
+        const postcodePattern = /^[0-9]{5,6}$/;
+        const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+        
+        let isValid = true;
+        
+        // Validate first name
+        const firstName = form.querySelector('#first_name');
+        if (!namePattern.test(firstName.value)) {
+            firstName.classList.add('is-invalid');
+            isValid = false;
+        } else {
+            firstName.classList.remove('is-invalid');
+            firstName.classList.add('is-valid');
+        }
+
+        // Validate last name
+        const lastName = form.querySelector('#last_name');
+        if (!namePattern.test(lastName.value)) {
+            lastName.classList.add('is-invalid');
+            isValid = false;
+        } else {
+            lastName.classList.remove('is-invalid');
+            lastName.classList.add('is-valid');
+        }
+
+        // Validate street address
+        const streetAddress = form.querySelector('#street_address');
+        if (streetAddress.value.length < 5 || streetAddress.value.length > 100) {
+            streetAddress.classList.add('is-invalid');
+            isValid = false;
+        } else {
+            streetAddress.classList.remove('is-invalid');
+            streetAddress.classList.add('is-valid');
+        }
+
+        // Validate city
+        const city = form.querySelector('#city');
+        if (!namePattern.test(city.value)) {
+            city.classList.add('is-invalid');
+            isValid = false;
+        } else {
+            city.classList.remove('is-invalid');
+            city.classList.add('is-valid');
+        }
+
+        // Validate state
+        const state = form.querySelector('#state');
+        if (!namePattern.test(state.value)) {
+            state.classList.add('is-invalid');
+            isValid = false;
+        } else {
+            state.classList.remove('is-invalid');
+            state.classList.add('is-valid');
+        }
+
+        // Validate postcode
+        const postcode = form.querySelector('#postcode');
+        if (!postcodePattern.test(postcode.value)) {
+            postcode.classList.add('is-invalid');
+            isValid = false;
+        } else {
+            postcode.classList.remove('is-invalid');
+            postcode.classList.add('is-valid');
+        }
+
+        // Validate phone
+        const phone = form.querySelector('#phone');
+        if (!phonePattern.test(phone.value)) {
+            phone.classList.add('is-invalid');
+            isValid = false;
+        } else {
+            phone.classList.remove('is-invalid');
+            phone.classList.add('is-valid');
+        }
+
+        // Validate email
+        const email = form.querySelector('#email');
+        if (!emailPattern.test(email.value)) {
+            email.classList.add('is-invalid');
+            isValid = false;
+        } else {
+            email.classList.remove('is-invalid');
+            email.classList.add('is-valid');
+        }
+
+        return isValid;
+    }
+
+    // Tab switching functionality
+    function showTab(tabName) {
+        document.querySelectorAll(".tab-content").forEach(tab => tab.classList.add("hidden"));
+        const selectedTab = document.getElementById(tabName);
+        if (selectedTab) {
+            selectedTab.classList.remove("hidden");
+        }
+
+        document.querySelectorAll('[onclick^="showTab"]').forEach(button => {
+            button.classList.remove('active-tab');
+        });
+        document.querySelector(`[onclick="showTab('${tabName}')"]`).classList.add('active-tab');
+    }
+
+    // Reset form and remove validation classes
+    function resetForm(form) {
+        form.reset();
+        form.querySelectorAll('.is-invalid, .is-valid').forEach(element => {
+            element.classList.remove('is-invalid', 'is-valid');
+        });
+    }
+
+    // Function to reset and prepare form for new address
+    function resetAddressForm() {
+        if (addressForm) {
+            resetForm(addressForm);
+            document.getElementById('addressId').value = '';
+            modalTitle.textContent = 'Add New Address';
+        }
+    }
+
+    // Function to populate form for editing
+    function populateAddressForm(button) {
+        resetAddressForm();
+        modalTitle.textContent = 'Edit Address';
+        
+        const fields = [
+            'addressId', 'first_name', 'last_name', 
+            'street_address', 'apartment', 'city', 
+            'state', 'postcode', 'phone', 'email'
+        ];
+
+        fields.forEach(field => {
+            const input = document.getElementById(field);
+            if (input && button.dataset[field.toLowerCase()]) {
+                input.value = button.dataset[field.toLowerCase()];
+            }
+        });
+
+        const isDefaultCheckbox = document.getElementById('is_default');
+        if (isDefaultCheckbox) {
+            isDefaultCheckbox.checked = button.dataset.is_default === 'true';
+        }
+    }
+
+    // Global modal opening function
+    window.openModal = function(modalType, button) {
+        // Close all existing modals
+        [editProfileModal, changePasswordModal, addressModal].forEach(modal => {
+            try {
+                modal.hide();
+            } catch(e) {}
+        });
+
+        switch(modalType) {
+            case 'editProfileModal':
+                editProfileModal.show();
+                break;
+            case 'changePasswordModal':
+                changePasswordModal.show();
+                break;
+            case 'add':
+                resetAddressForm();
+                addressModal.show();
+                break;
+            case 'edit':
+                if (button) {
+                    populateAddressForm(button);
+                    addressModal.show();
+                }
+                break;
+        }
+    };
+
+    // Add form validation to address form
+    if (addressForm) {
+        addressForm.addEventListener('submit', function(event) {
+            event.preventDefault();
+            if (validateForm(this)) {
+                // If validation passes, submit the form
+                this.submit();
+            }
+        });
+    }
+
+    // Add click handlers for edit buttons
+    document.querySelectorAll('.openEditAddress').forEach(button => {
+        button.addEventListener('click', function(e) {
+            e.preventDefault();
+            openModal('edit', this);
+        });
+    });
+
+    // Handle opening the modal for adding a new address
+    const addNewAddressButton = document.querySelector('[onclick*="openModal(\'add\')"]');
+    if (addNewAddressButton) {
+        addNewAddressButton.addEventListener('click', function(e) {
+            e.preventDefault();
+            openModal('add');
+        });
+    }
+
+    // Initialize first tab
+    showTab('profile');
+
+    // Expose necessary functions to global scope
+    window.showTab = showTab;
+});
+</script>
+
+<!-- Payment Processing Script -->
+<script src="https://checkout.razorpay.com/v1/checkout.js"></script>
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<script>
+$(document).ready(function() {
+    // Handle continue payment button click
+    $(document).on('click', '.continue-payment-btn', function(e) {
+        e.preventDefault();
+        var orderID = $(this).data('order-id');
+        
+        $.ajax({
+            url: `/order/continue_payment/${orderID}/`,
+            method: 'GET',
+            dataType: 'json',
+            success: function(response) {
+                if (typeof Razorpay === 'undefined') {
+                    console.error('Razorpay SDK not loaded');
+                    alert('Payment gateway is not available. Please try again later.');
+                    return;
+                }
+
+                var options = {
+                    "key": response.razorpay_key_id,
+                    "amount": response.amount * 100,
+                    "currency": "INR",
+                    "name": "Noirette",
+                    "description": "Order Payment",
+                    "order_id": response.razorpay_order_id,
+                    "handler": function (razorpay_response) {
+                        $.ajax({
+                            url: "{% url 'order:verify_payment' %}",
+                            method: 'POST',
+                            data: {
+                                'razorpay_order_id': razorpay_response.razorpay_order_id,
+                                'razorpay_payment_id': razorpay_response.razorpay_payment_id,
+                                'razorpay_signature': razorpay_response.razorpay_signature,
+                                'csrfmiddlewaretoken': '{{ csrf_token }}'
+                            },
+                            success: function(verifyResponse) {
+                                window.location.href = "{% url 'order:order_success' %}";
+                            },
+                            error: function(xhr) {
+                                alert('Payment verification failed. Please contact support if amount was deducted.');
+                                console.error(xhr);
+                            }
+                        });
+                    },
+                    "prefill": {
+                        "name": "{{ request.user.get_full_name }}",
+                        "email": "{{ request.user.email }}"
+                    },
+                    "theme": {
+                        "color": "#3399cc"
+                    },
+                    "modal": {
+                        "ondismiss": function() {
+                            console.log('Payment window closed');
+                        }
+                    }
+                };
+                
+                var rzp1 = new Razorpay(options);
+                rzp1.open();
+            },
+            error: function(xhr) {
+                console.error('Failed to initialize payment', xhr);
+                alert('Failed to initialize payment. Please try again later.');
+            }
+        });
+    });
+});
+</script>
+<script src="https://checkout.razorpay.com/v1/checkout.js"></script>
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+  </body>
+</html>

@@ -1,0 +1,305 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sign Up</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        body {
+            font-family: 'sans-serif';
+        }
+        .bg-gray-50 {
+            background-color: #f9fafb;
+        }
+        .bg-blue-600 {
+            background-color: #2563eb;
+        }
+        .bg-blue-700 {
+            background-color: #1d4ed8;
+        }
+        .text-blue-500 {
+            color: #3b82f6;
+        }
+        .text-gray-800 {
+            color: #1f2937;
+        }
+        .focus\:border-blue-500:focus {
+            border-color: #3b82f6;
+        }
+        .text-sm {
+            font-size: 0.875rem;
+        }
+        .text-xs {
+            font-size: 0.75rem;
+        }
+    </style>
+</head>
+<body class="bg-white">
+    <div class="font-[sans-serif] bg-white md:h-screen">
+        <div class="grid md:grid-cols-2 items-center gap-8 h-full">
+            <div class="max-md:order-1 p-4 bg-gray-50 h-full">
+                <img src="https://readymadeui.com/signin-image.webp" class="lg:max-w-[90%] w-full h-full object-contain block mx-auto" alt="login-image" />
+            </div>
+
+            <div class="flex items-center p-6 h-full w-full">
+                <form action="{% url 'signup' %}" method="post" id="signupForm" class="max-w-lg w-full mx-auto">
+                    {% csrf_token %}
+                    <div class="mb-12">
+                        <h3 class="text-blue-500 md:text-3xl text-2xl font-extrabold max-md:text-center">Create an account</h3>
+                    </div>
+
+                    <div>
+                        <label class="text-gray-800 text-xs block mb-2">Full Name</label>
+                        <div class="relative flex items-center">
+                            {{ form.username }}
+                            <div class="error-message text-red-500 text-sm mt-1 hidden"></div>
+                            <svg xmlns="http://www.w3.org/2000/svg" fill="#bbb" stroke="#bbb" class="w-[18px] h-[18px] absolute right-2" viewBox="0 0 24 24">
+                                <circle cx="10" cy="7" r="6" data-original="#000000"></circle>
+                                <path d="M14 15H6a5 5 0 0 0-5 5 3 3 0 0 0 3 3h12a3 3 0 0 0 3-3 5 5 0 0 0-5-5zm8-4h-2.59l.3-.29a1 1 0 0 0-1.42-1.42l-2 2a1 1 0 0 0 0 1.42l2 2a1 1 0 0 0 1.42 0 1 1 0 0 0 0-1.42l-.3-.29H22a1 1 0 0 0 0-2z" data-original="#000000"></path>
+                            </svg>
+                        </div>
+                    </div>
+
+                    <div class="mt-6">
+                        <label class="text-gray-800 text-xs block mb-2">Email</label>
+                        <div class="relative flex items-center">
+                            {{ form.email }}
+                            <div class="error-message text-red-500 text-sm mt-1 hidden"></div>
+                            <svg xmlns="http://www.w3.org/2000/svg" fill="#bbb" stroke="#bbb" class="w-[18px] h-[18px] absolute right-2" viewBox="0 0 682.667 682.667">
+                                <defs>
+                                    <clipPath id="a" clipPathUnits="userSpaceOnUse">
+                                        <path d="M0 512h512V0H0Z" data-original="#000000"></path>
+                                    </clipPath>
+                                </defs>
+                                <g clip-path="url(#a)" transform="matrix(1.33 0 0 -1.33 0 682.667)">
+                                    <path fill="none" stroke-miterlimit="10" stroke-width="40" d="M452 444H60c-22.091 0-40-17.909-40-40v-39.446l212.127-157.782c14.17-10.54 33.576-10.54 47.746 0L492 364.554V404c0 22.091-17.909 40-40 40Z" data-original="#000000"></path>
+                                    <path d="M472 274.9V107.999c0-11.027-8.972-20-20-20H60c-11.028 0-20 8.973-20 20V274.9L0 304.652V107.999c0-33.084 26.916-60 60-60h392c33.084 0 60 26.916 60 60v196.653Z" data-original="#000000"></path>
+                                </g>
+                            </svg>
+                        </div>
+                    </div>
+
+                    <div class="mt-6">
+                        <label class="text-gray-800 text-xs block mb-2">Password</label>
+                        <div class="relative flex items-center">
+                            {{ form.password }}
+                            <div class="error-message text-red-500 text-sm mt-1 hidden"></div>
+                            <svg xmlns="http://www.w3.org/2000/svg" fill="#bbb" stroke="#bbb" class="w-[18px] h-[18px] absolute right-2 cursor-pointer toggle-password" viewBox="0 0 128 128">
+                                <path d="M64 104C22.127 104 1.367 67.496.504 65.943a4 4 0 0 1 0-3.887C1.367 60.504 22.127 24 64 24s62.633 36.504 63.496 38.057a4 4 0 0 1 0 3.887C126.633 67.496 105.873 104 64 104zM8.707 63.994C13.465 71.205 32.146 96 64 96c31.955 0 50.553-24.775 55.293-31.994C114.535 56.795 95.854 32 64 32 32.045 32 13.447 56.775 8.707 63.994zM64 88c-13.234 0-24-10.766-24-24s10.766-24 24-24 24 10.766 24 24-10.766 24-24 24zm0-40c-8.822 0-16 7.178-16 16s7.178 16 16 16 16-7.178 16-16-7.178-16-16-16z" data-original="#000000"></path>
+                            </svg>
+                        </div>
+                    </div>
+
+                    <div class="mt-6">
+                        <label class="text-gray-800 text-xs block mb-2">Confirm Password</label>
+                        <div class="relative flex items-center">
+                            {{ form.confirm_password }}
+                            <div class="error-message text-red-500 text-sm mt-1 hidden"></div>
+                            <svg xmlns="http://www.w3.org/2000/svg" fill="#bbb" stroke="#bbb" class="w-[18px] h-[18px] absolute right-2 cursor-pointer toggle-password" viewBox="0 0 128 128">
+                                <path d="M64 104C22.127 104 1.367 67.496.504 65.943a4 4 0 0 1 0-3.887C1.367 60.504 22.127 24 64 24s62.633 36.504 63.496 38.057a4 4 0 0 1 0 3.887C126.633 67.496 105.873 104 64 104zM8.707 63.994C13.465 71.205 32.146 96 64 96c31.955 0 50.553-24.775 55.293-31.994C114.535 56.795 95.854 32 64 32 32.045 32 13.447 56.775 8.707 63.994zM64 88c-13.234 0-24-10.766-24-24s10.766-24 24-24 24 10.766 24 24-10.766 24-24 24zm0-40c-8.822 0-16 7.178-16 16s7.178 16 16 16 16-7.178 16-16-7.178-16-16-16z" data-original="#000000"></path>
+                            </svg>
+                        </div>
+                    </div>
+
+                    <div class="flex items-center mt-6">
+                        <input id="terms" name="terms" type="checkbox" required class="h-4 w-4 shrink-0 rounded" />
+                        <label for="terms" class="ml-3 block text-sm text-gray-800">
+                            I accept the <a href="javascript:void(0);" class="text-blue-500 font-semibold hover:underline ml-1">Terms and Conditions</a>
+                        </label>
+                    </div>
+
+                    <div class="mt-12">
+                        <button type="submit" class="w-full py-3 px-6 text-sm tracking-wider font-semibold rounded-md bg-blue-600 hover:bg-blue-700 text-white focus:outline-none">
+                            Create an account
+                        </button>
+                        
+                        <p class="text-sm mt-6 text-gray-800">Already have an account? <a href="{% url 'login' %}" class="text-blue-500 font-semibold hover:underline ml-1">Login here</a></p>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Add SweetAlert2 JS -->
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            // Function to show SweetAlert messages
+            function showAlert(type, message) {
+                const Toast = Swal.mixin({
+                    toast: true,
+                    position: 'top-end',
+                    showConfirmButton: false,
+                    timer: 3000,
+                    timerProgressBar: true,
+                    didOpen: (toast) => {
+                        toast.addEventListener('mouseenter', Swal.stopTimer);
+                        toast.addEventListener('mouseleave', Swal.resumeTimer);
+                    },
+                });
+    
+                Toast.fire({
+                    icon: type,
+                    title: message,
+                });
+            }
+    
+            // Function to handle form submission
+            function handleFormSubmission(formId, submitUrl) {
+                const form = document.getElementById(formId);
+    
+                form.addEventListener('submit', function (e) {
+                    e.preventDefault();
+    
+                    // Clear previous error styling
+                    const inputs = form.querySelectorAll('input');
+                    inputs.forEach((input) => {
+                        input.classList.remove('border-red-500');
+                    });
+    
+                    // Check terms acceptance
+                    const termsCheckbox = document.getElementById('terms');
+                    if (!termsCheckbox.checked) {
+                        showAlert('error', 'Please accept the Terms and Conditions');
+                        return;
+                    }
+    
+                    // Check password match before submission
+                    const password = form.querySelector('input[name="password"]').value;
+                    const confirmPassword = form.querySelector('input[name="confirm_password"]').value;
+    
+                    if (password !== confirmPassword) {
+                        showAlert('error', 'Passwords do not match');
+                        form.querySelector('input[name="confirm_password"]').classList.add('border-red-500');
+                        return;
+                    }
+    
+                    const formData = new FormData(form);
+    
+                    fetch(submitUrl, {
+                        method: 'POST',
+                        body: formData,
+                        headers: {
+                            'X-Requested-With': 'XMLHttpRequest',
+                            'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value,
+                        },
+                    })
+                        .then((response) => response.json())
+                        .then((data) => {
+                            if (data.status === 'success') {
+                                showAlert('success', data.message);
+                                if (data.redirect) {
+                                    setTimeout(() => {
+                                        window.location.href = data.redirect;
+                                    }, 1500);
+                                }
+                            } else {
+                                if (data.errors) {
+                                    Object.keys(data.errors).forEach((field) => {
+                                        const input = form.querySelector(`[name="${field}"]`);
+                                        if (input) {
+                                            input.classList.add('border-red-500');
+                                        }
+                                        data.errors[field].forEach((error) => {
+                                            showAlert('error', error);
+                                        });
+                                    });
+                                } else {
+                                    showAlert('error', data.message || 'An error occurred');
+                                }
+                            }
+                        })
+                        .catch((error) => {
+                            showAlert('error', 'An unexpected error occurred');
+                            console.error('Error:', error);
+                        });
+                });
+            }
+    
+            // Toggle password visibility
+            document.querySelectorAll('.toggle-password').forEach((toggle) => {
+                toggle.addEventListener('click', function () {
+                    const input = this.closest('div').querySelector('input');
+                    input.type = input.type === 'password' ? 'text' : 'password';
+                });
+            });
+    
+            // Password strength checker
+            const passwordInput = document.querySelector('input[name="password"]');
+            const confirmPasswordInput = document.querySelector('input[name="confirm_password"]');
+            let strengthTimeout;
+    
+            passwordInput.addEventListener('input', function () {
+                clearTimeout(strengthTimeout);
+                strengthTimeout = setTimeout(() => {
+                    const password = this.value;
+                    let strength = 0;
+                    let message = '';
+                    let icon = '';
+    
+                    if (password.length >= 8) strength += 1;
+                    if (/[A-Z]/.test(password)) strength += 1;
+                    if (/[a-z]/.test(password)) strength += 1;
+                    if (/[0-9]/.test(password)) strength += 1;
+                    if (/[!@#$%^&*(),.?":{}|<>]/.test(password)) strength += 1;
+    
+                    switch (strength) {
+                        case 0:
+                        case 1:
+                            message = 'Very Weak';
+                            icon = 'error';
+                            break;
+                        case 2:
+                            message = 'Weak';
+                            icon = 'warning';
+                            break;
+                        case 3:
+                            message = 'Medium';
+                            icon = 'info';
+                            break;
+                        case 4:
+                            message = 'Strong';
+                            icon = 'success';
+                            break;
+                        case 5:
+                            message = 'Very Strong';
+                            icon = 'success';
+                            break;
+                    }
+    
+                    showAlert(icon, `Password Strength: ${message}`);
+                }, 300);
+            });
+    
+            // Password match checker
+            confirmPasswordInput.addEventListener('input', function () {
+                const password = passwordInput.value;
+                const confirmPassword = this.value;
+    
+                if (confirmPassword !== '') {
+                    if (password !== confirmPassword) {
+                        showAlert('error', 'Passwords do not match');
+                        this.classList.add('border-red-500');
+                    } else {
+                        showAlert('success', 'Passwords match');
+                        this.classList.remove('border-red-500');
+                    }
+                }
+            });
+    
+            // Handle Django messages
+            {% if messages %}
+            {% for message in messages %}
+            showAlert(
+                '{{ message.tags }}' === 'error' ? 'error' : 'success',
+                '{{ message|escapejs }}'
+            );
+            {% endfor %}
+            {% endif %}
+    
+            // Initialize form handling
+            handleFormSubmission('signupForm', '{% url "signup" %}');
+        });
+    </script>
+    

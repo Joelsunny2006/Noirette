@@ -1,0 +1,445 @@
+{% extends "admin_side/base.html" %}
+
+{% block title %}
+Dashboard
+{% endblock %}
+
+{% block content %}
+    <style>
+        body {
+            background-color: #f8f9fa;
+        }
+        .container {
+            max-width: 800px;
+            margin-top: 50px;
+        }
+        .image-preview {
+            max-width: 150px;
+            max-height: 150px;
+            margin: 10px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .preview-container {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin-top: 10px;
+        }
+        .image-wrapper {
+            position: relative;
+        }
+        .remove-image {
+            position: absolute;
+            top: -8px;
+            right: -8px;
+            background: red;
+            color: white;
+            border-radius: 50%;
+            width: 20px;
+            height: 20px;
+            text-align: center;
+            line-height: 20px;
+            cursor: pointer;
+        }
+        .drag-drop-zone {
+            border: 2px dashed #ccc;
+            padding: 20px;
+            text-align: center;
+            background: #f8f9fa;
+            border-radius: 8px;
+            cursor: pointer;
+        }
+        .drag-drop-zone.dragover {
+            background: #e9ecef;
+            border-color: #007bff;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1 class="mb-4">Edit Product</h1>
+        <form id="edit-product-form" method="post" enctype="multipart/form-data" action="{% url 'update_product' product.serial_number %}">
+            {% csrf_token %}
+            <!-- Product Name -->
+            <div class="mb-3">
+                <label for="product-name" class="form-label">Name <span class="text-danger">*</span></label>
+                <input type="text" name="name" class="form-control" id="product-name" required value="{{ product.name }}">
+            </div>
+        
+            <!-- Category Selection -->
+            <div class="mb-3">
+                <label for="product-category" class="form-label">Category <span class="text-danger">*</span></label>
+                <select id="product-category" class="form-select" name="category" required>
+                    <option value="">Select a category</option>
+                    {% for category in categories %}
+                        <option value="{{ product.category.name }}" {% if category.id == product.category.id %}selected{% endif %}>{{ category.name }}</option>
+                    {% endfor %}
+                </select>
+                <div id="category-error" class="invalid-feedback">
+                    Please select a category
+                </div>
+            </div>
+
+            <!-- Offer Price Percentage -->
+<div class="mb-3">
+    <label for="product-offer-percentage" class="form-label">Offer Price Percentage</label>
+    <input type="number" step="0.01" min="0" max="100" class="form-control" id="product-offer-percentage" name="offer_price_percentage" value="{{ product.offer_percentage }}">
+    <small class="text-muted">Enter a percentage (e.g., 10 for 10% off). Applied to all variants.</small>
+  </div>
+  
+        
+            <!-- Price and Stock -->
+            <!-- <div class="row">
+                <div class="col-md-6">
+                    <div class="mb-3">
+                        <label for="product-price" min="0" max="1000" class="form-label">Price <span class="text-danger">*</span></label>
+                        <div class="input-group">
+                            <span class="input-group-text">$</span>
+                            <input type="number" step="0.01" min="0" max="1000" name="price" id="product-price" class="form-control" required value="{{ product.price }}">
+                        </div>
+                    </div>
+                </div>
+                
+            </div> -->
+        
+            <!-- Description -->
+            <div class="mb-3">
+                <label for="product-description" class="form-label">Description <span class="text-danger">*</span></label>
+                <textarea name="description" class="form-control" id="product-description" rows="3" required>{{ product.description }}</textarea>
+            </div>
+        
+            <!-- Product Images -->
+            <div class="mb-3">
+                <label class="form-label">Product Images</label>
+                <div class="drag-drop-zone" id="drag-drop-zone">
+                    <i class="fas fa-cloud-upload-alt fa-2x mb-2"></i>
+                    <p class="mb-0">Drag and drop images here or click to select files</p>
+                    <input type="file" name="product_images" id="product-images" multiple accept="image/*" class="d-none">
+                </div>
+                <div id="image-preview" class="preview-container">
+                    {% for image in product.images.all %}
+                        <div class="image-wrapper">
+                            <img src="{{ image.image_url.url }}" alt="Product Image" class="image-preview">
+                            <button type="button" class="btn btn-sm btn-danger remove-image" data-image-id="{{ image.id }}">×</button>
+                        </div>
+                    {% endfor %}
+                </div>
+                <small class="form-text text-muted">You can upload multiple images (max 5 images, each max 5MB).</small>
+            </div>
+        
+            <!-- Variants (Optional) -->
+<div class="mb-3">
+    <label class="form-label">Product Variants</label>
+    <div id="variants-container">
+        {% for variant in product.variants.all %}
+        <div class="row variant-row mb-2" data-variant-id="{{ variant.id }}">
+            <div class="col-md-4">
+                <input type="text" name="variant_name_{{ forloop.counter }}" class="form-control" placeholder="Variant Name" value="{{ variant.variant_name }}">
+            </div>
+            <div class="col-md-4">
+                <input type="number" name="variant_price_{{ forloop.counter }}" class="form-control" placeholder="Price" step="0.01" min="0" max="1000" value="{{ variant.variant_price }}">
+            </div>
+            <div class="col-md-4">
+                <input type="number" name="variant_stock_{{ forloop.counter }}" class="form-control" min="0" max="1000" placeholder="Stock" value="{{ variant.variant_stock }}">
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+    <button type="button" class="btn btn-secondary btn-sm" id="add-variant-button">Add Variant</button>
+</div>
+
+        
+            <!-- Form Actions -->
+            <button type="submit" class="btn btn-primary">Update Product</button>
+            <a href="{% url 'product_list' %}" class="btn btn-secondary">Cancel</a>
+        </form>
+        
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <script>
+        function setupImageUpload() {
+            const dragDropZone = document.getElementById('drag-drop-zone');
+            const imageInput = document.getElementById('product-images');
+            const previewContainer = document.getElementById('image-preview');
+
+            dragDropZone.addEventListener('click', () => imageInput.click());
+
+            dragDropZone.addEventListener('dragover', (e) => {
+                e.preventDefault();
+                dragDropZone.classList.add('dragover');
+            });
+
+            dragDropZone.addEventListener('dragleave', () => {
+                dragDropZone.classList.remove('dragover');
+            });
+
+            dragDropZone.addEventListener('drop', (e) => {
+                e.preventDefault();
+                dragDropZone.classList.remove('dragover');
+                handleFiles(e.dataTransfer.files);
+            });
+
+            imageInput.addEventListener('change', (e) => {
+                handleFiles(e.target.files);
+            });
+
+            function handleFiles(files) {
+                if (files.length > 5) {
+                    alert('You can only upload up to 5 images');
+                    return;
+                }
+
+                Array.from(files).forEach(file => {
+                    if (file.size > 5 * 1024 * 1024) {
+                        alert(`File ${file.name} is too large. Maximum size is 5MB`);
+                        return;
+                    }
+
+                    const reader = new FileReader();
+                    reader.onload = (e) => {
+                        const wrapper = document.createElement('div');
+                        wrapper.className = 'image-wrapper';
+                        
+                        const img = document.createElement('img');
+                        img.src = e.target.result;
+                        img.className = 'image-preview';
+                        
+                        const removeBtn = document.createElement('div');
+                        removeBtn.className = 'remove-image';
+                        removeBtn.innerHTML = '×';
+                        removeBtn.onclick = () => wrapper.remove();
+                        
+                        wrapper.appendChild(img);
+                        wrapper.appendChild(removeBtn);
+                        previewContainer.appendChild(wrapper);
+                    };
+                    reader.readAsDataURL(file);
+                });
+            }
+
+            // Handle existing image removal
+            previewContainer.addEventListener('click', (e) => {
+                if (e.target.classList.contains('remove-image')) {
+                    const imageId = e.target.dataset.imageId;
+                    if (imageId) {
+                        // Send AJAX request to remove the image
+                        fetch(`/product/remove-product-image/${imageId}/`, {
+                            method: 'POST',
+                            headers: {
+                                'X-CSRFToken': getCookie('csrftoken'),
+                            },
+                        }).then(response => {
+                            if (response.ok) {
+                                e.target.closest('.image-wrapper').remove();
+                            } else {
+                                alert('Failed to remove image. Please try again.');
+                            }
+                        });
+                    } else {
+                        e.target.closest('.image-wrapper').remove();
+                    }
+                }
+            });
+        }
+
+        function getCookie(name) {
+            let cookieValue = null;
+            if (document.cookie && document.cookie !== '') {
+                const cookies = document.cookie.split(';');
+                for (let i = 0; i < cookies.length; i++) {
+                    const cookie = cookies[i].trim();
+                    if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                        cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                        break;
+                    }
+                }
+            }
+            return cookieValue;
+        }
+
+
+        document.getElementById('add-variant-button').addEventListener('click', function() {
+    const variantsContainer = document.getElementById('variants-container');
+    const newVariantIndex = variantsContainer.children.length + 1; // Generate a unique index
+    const newVariantRow = document.createElement('div');
+    newVariantRow.classList.add('row', 'variant-row', 'mb-2');
+    
+    newVariantRow.innerHTML = `
+        <div class="col-md-4">
+            <input type="text" name="variant_name_${newVariantIndex}" class="form-control" placeholder="Variant Name">
+        </div>
+        <div class="col-md-4">
+            <input type="number" name="variant_price_${newVariantIndex}" class="form-control" placeholder="Price" step="0.01">
+        </div>
+        <div class="col-md-4">
+            <input type="number" name="variant_stock_${newVariantIndex}" class="form-control" placeholder="Stock">
+        </div>
+    `;
+    
+    variantsContainer.appendChild(newVariantRow);
+});
+
+
+
+        document.addEventListener('DOMContentLoaded', setupImageUpload);
+
+
+// Import SweetAlert2
+const Toast = Swal.mixin({
+  toast: true,
+  position: 'top-end',
+  showConfirmButton: false,
+  timer: 3000,
+  timerProgressBar: true
+});
+
+// Form validation function
+function validateProductForm(formId) {
+  const form = document.getElementById(formId);
+  const requiredFields = {
+    'product-name': 'Product name is required',
+    'product-category': 'Please select a category',
+    'product-brand': 'Please select a brand',
+    'product-description': 'Product description is required'
+  };
+
+  // Validate required fields
+  for (const [fieldId, message] of Object.entries(requiredFields)) {
+    const field = document.getElementById(fieldId);
+    if (!field.value.trim()) {
+      Toast.fire({
+        icon: 'error',
+        title: message
+      });
+      field.focus();
+      return false;
+    }
+  }
+
+  // Validate offer percentage
+  const offerPercentage = document.getElementById('product-offer-percentage');
+  if (offerPercentage.value && (parseFloat(offerPercentage.value) < 0 || parseFloat(offerPercentage.value) > 100)) {
+    Toast.fire({
+      icon: 'error',
+      title: 'Offer percentage must be between 0 and 100'
+    });
+    offerPercentage.focus();
+    return false;
+  }
+
+  // Validate variants
+  const variantNames = document.getElementsByName('variant_name[]');
+  const variantPrices = document.getElementsByName('variant_price[]');
+  const variantStocks = document.getElementsByName('variant_stock[]');
+
+  for (let i = 0; i < variantNames.length; i++) {
+    if (!variantNames[i].value.trim()) {
+      Toast.fire({
+        icon: 'error',
+        title: 'Variant name is required'
+      });
+      variantNames[i].focus();
+      return false;
+    }
+    if (!variantPrices[i].value || parseFloat(variantPrices[i].value) <= 0) {
+      Toast.fire({
+        icon: 'error',
+        title: 'Valid variant price is required'
+      });
+      variantPrices[i].focus();
+      return false;
+    }
+    if (!variantStocks[i].value || parseInt(variantStocks[i].value) < 0) {
+      Toast.fire({
+        icon: 'error',
+        title: 'Valid variant stock is required'
+      });
+      variantStocks[i].focus();
+      return false;
+    }
+  }
+
+  // Validate images
+  const images = document.getElementById('product-images').files;
+  const existingImages = document.querySelectorAll('.image-preview').length;
+  
+  if (formId === 'add-product-form' && images.length === 0) {
+    Toast.fire({
+      icon: 'error',
+      title: 'At least one product image is required'
+    });
+    return false;
+  }
+
+  if (images.length + existingImages > 5) {
+    Toast.fire({
+      icon: 'error',
+      title: 'Maximum 5 images allowed'
+    });
+    return false;
+  }
+
+  return true;
+}
+
+// Success message function
+function showSuccess(message) {
+  Toast.fire({
+    icon: 'success',
+    title: message
+  });
+}
+
+// Error message function
+function showError(message) {
+  Toast.fire({
+    icon: 'error',
+    title: message
+  });
+}
+
+// Handle form submission
+document.addEventListener('DOMContentLoaded', () => {
+  ['add-product-form', 'edit-product-form'].forEach(formId => {
+    const form = document.getElementById(formId);
+    if (form) {
+      form.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        
+        if (!validateProductForm(formId)) {
+          return;
+        }
+
+        try {
+          const formData = new FormData(form);
+          const response = await fetch(form.action, {
+            method: 'POST',
+            body: formData,
+            headers: {
+              'X-CSRFToken': getCookie('csrftoken')
+            }
+          });
+
+          const result = await response.json();
+
+          if (result.success) {
+            showSuccess(result.message);
+            setTimeout(() => {
+              window.location.href = '/product-list/';  // Adjust URL as needed
+            }, 1500);
+          } else {
+            showError(result.message);
+          }
+        } catch (error) {
+          showError('An error occurred. Please try again.');
+        }
+      });
+    }
+  });
+});
+
+    </script>
+{%endblock%}

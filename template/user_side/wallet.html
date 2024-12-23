@@ -1,0 +1,393 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <title>Wallet</title>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+    
+    <link href="https:/fonts.googleapis.com/css?family=Open+Sans:300,400,600,700,800" rel="stylesheet">
+
+    <link rel="stylesheet" href="{% static 'user_side/css/open-iconic-bootstrap.min.css' %}">
+    <link rel="stylesheet" href="{% static 'user_side/css/animate.css' %}">
+    
+    <link rel="stylesheet" href="{% static 'user_side/css/owl.carousel.min.css' %}">
+    <link rel="stylesheet" href="{% static 'user_side/css/owl.theme.default.min.css' %}">
+    <link rel="stylesheet" href="{% static 'user_side/css/magnific-popup.css' %}">
+
+    <link rel="stylesheet" href="{% static 'user_side/css/aos.css' %}">
+
+    <link rel="stylesheet" href="{% static 'user_side/css/ionicons.min.css' %}">
+
+    <link rel="stylesheet" href="{% static 'user_side/css/bootstrap-datepicker.css' %}">
+    <link rel="stylesheet" href="{% static 'user_side/css/jquery.timepicker.css' %}">
+
+    
+    <link rel="stylesheet" href="{% static 'user_side/css/flaticon.css' %}">
+    <link rel="stylesheet" href="{% static 'user_side/css/icomoon.css' %}">
+    <link rel="stylesheet" href="{% static 'user_side/css/style.css' %}">
+  </head>
+  <style>
+    .image-prod .img {
+    width: 80px;
+    height: 80px;
+    background-size: cover;
+    background-position: center;
+    border-radius: 8px;
+    margin: auto;
+}
+
+.btn-remove-item {
+    border: none;
+    background: none;
+    color: red;
+    font-weight: bold;
+    cursor: pointer;
+}
+
+  </style>
+  <body class="goto-here">
+	<nav class="navbar navbar-expand-lg navbar-dark ftco_navbar bg-dark ftco-navbar-light fixed-top" id="ftco-navbar">
+		<div class="container">
+		  <a class="navbar-brand" href="{% url 'home' %}" style="color: white;">Noirette</a>
+		  <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#ftco-nav" aria-controls="ftco-nav" aria-expanded="false" aria-label="Toggle navigation">
+			<span class="oi oi-menu"></span> Menu
+		  </button>
+	  
+		  <div class="collapse navbar-collapse" id="ftco-nav">
+			<ul class="navbar-nav ml-auto">
+			  <li class="nav-item active"><a href="{% url 'home' %}" class="nav-link" style="color: white;">Home</a></li>
+			  <li class="nav-item"><a href="{% url 'shop' %}" class="nav-link" style="color: white;">Shop</a></li>
+			  <li class="nav-item"><a href="about.html" class="nav-link" style="color: white;">About</a></li>
+			  <li class="nav-item"><a href="blog.html" class="nav-link" style="color: white;">Blog</a></li>
+			  <li class="nav-item"><a href="contact.html" class="nav-link" style="color: white;">Contact</a></li>
+			  <li class="nav-item cta cta-colored">
+				<a href="{% url 'view_cart' %}" class="nav-link" style="color: white;">
+					<span class="icon-shopping_cart"></span>[{{ cart_count|default:0 }}]
+				</a>
+			  </li>
+			  <li class="nav-item cta cta-colored">
+				<a href="{% url 'wishlist' %}" class="nav-link" style="color: white;">
+					<span class="icon-heart"></span>[0]
+				</a>
+			</li>
+			          <!-- Wallet Section -->
+					  {% if user.is_authenticated %}
+					  <li class="nav-item cta">
+						<a href="{% url 'wallet' %}" class="nav-link" style="color: white;">
+						  <span class="icon-wallet"></span> Wallet: ${{ user.wallet_balance|default:0.00 }}
+						</a>
+					  </li>
+					  {% endif %}
+			  <!-- Display Login or Username/Logout -->
+			  {% if user.is_authenticated %}
+			<li class="nav-item dropdown">
+			<a class="nav-link dropdown-toggle" href="#" id="userDropdown" role="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false" style="color: white;">
+				Welcome, {{ user.username }}
+			</a>
+			<div class="dropdown-menu" aria-labelledby="userDropdown">
+				<!-- User Profile Button -->
+				<a href="{% url 'user_profile' %}" class="dropdown-item" 
+				   style="display: flex; justify-content: center; align-items: center; text-decoration: none; 
+						  color: white; padding: 5px 10px; font-size: 14px;">
+					<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" 
+						 class="bi bi-person-circle me-2" viewBox="0 0 16 16">
+						<path d="M13 8a5 5 0 1 1-10 0 5 5 0 0 1 10 0z"/>
+						<path d="M11 8c0 1.105-.45 2.09-1.175 2.828A3.972 3.972 0 0 1 8 12c-.79 0-1.524-.268-2.175-.735C5.45 10.09 5 9.105 5 8c0-1.105.45-2.09 1.175-2.828A3.972 3.972 0 0 1 8 4c.79 0 1.524.268 2.175.735C10.55 5.91 11 6.895 11 8zm-3-1a1 1 0 1 0 0 2 1 1 0 0 0 0-2z"/>
+					</svg>
+					My Profile
+				</a>
+			
+				<!-- Logout Button -->
+				<form method="post" action="{% url 'logout' %}" style="display: inline;">
+					{% csrf_token %}
+					<button type="submit" class="dropdown-item" 
+							style="display: flex; justify-content: center; align-items: center; background: none; 
+								   border: none; padding: 5px 10px; font-size: 14px; cursor: pointer; color: white;">
+						<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" 
+							 class="bi bi-box-arrow-right me-2" viewBox="0 0 16 16">
+							<path fill-rule="evenodd" d="M10 15a1 1 0 0 1-1 1H5a2 2 0 0 1-2-2V2a2 2 0 0 1 2-2h4a1 1 0 0 1 1 1v1H5.5A1.5 1.5 0 0 0 4 3.5v9A1.5 1.5 0 0 0 5.5 14H10v1zm1-11a.5.5 0 0 0 0 1h4.5a.5.5 0 0 0 0-1H11zm3.646 3.646a.5.5 0 0 1 0 .708l-2.5 2.5a.5.5 0 0 1-.708-.708L13.293 8H8.5a.5.5 0 0 1 0-1h4.793l-1.647-1.646a.5.5 0 1 1 .708-.708l2.5 2.5z"/>
+						</svg>
+						Logout
+					</button>
+				</form>
+			</div>
+			
+			</li>
+			{% else %}
+			<li class="nav-item"><a href="{% url 'login' %}" class="nav-link" style="color: white;">Login</a></li>
+			{% endif %}
+			</ul>
+		  </div>
+		</div>
+	  </nav>
+
+    <!-- END nav -->
+
+	<div class="hero-wrap hero-bread" style="position: relative; margin-top: 0; padding: 0;">
+		<img src="{% static 'user_side/images/image2.jpg' %}" alt="Hero Image" style="width: 100%; height: 65vh; object-fit: cover;">
+		<div class="hero-text text-center" style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); color: #fff; text-shadow: 0 2px 4px rgba(0,0,0,0.7); z-index: 5;">
+			<p class="breadcrumbs">
+				<a href="{% url 'home' %}" style="color: #fff; text-decoration: none;">Home</a> 
+				<span style="color: #fff;">Cart</span>
+			</p>
+			<h1 class="mb-0 bread" style="font-size: 3rem; color: #fff; font-weight: bold;">Wallet</h1>
+		</div>
+	</div>
+
+  <section class="ftco-section ftco-wallet">
+    <div class="container">
+        <div class="row">
+            <div class="col-md-12">
+                <div class="wallet-balance text-center mb-5">
+                    <h2>My Wallet</h2>
+                    <div class="balance-card bg-primary text-white p-4 rounded">
+                        <h3>Current Balance</h3>
+                        <p class="display-4">₹{{ wallet.balance|floatformat:2 }}</p>
+                    </div>
+                    
+                    <!-- Add Funds Button -->
+                    <button class="btn btn-success mt-3" data-toggle="modal" data-target="#addFundsModal">
+                        Add Funds
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Add Funds Modal -->
+        <div class="modal fade" id="addFundsModal" tabindex="-1" role="dialog">
+            <div class="modal-dialog" role="document">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title">Add Funds to Wallet</h5>
+                        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                            <span aria-hidden="true">&times;</span>
+                        </button>
+                    </div>
+                    <div class="modal-body">
+                        <form id="addFundsForm">
+                            <div class="form-group">
+                                <label for="amount">Amount to Add</label>
+                                <input type="number" class="form-control" id="amount" name="amount" 
+                                       min="10" max="10000" placeholder="Enter amount (Min ₹10)" required>
+                                <small id="amountError" class="form-text text-danger" style="display: none;">Amount cannot exceed ₹10,000</small>
+                            </div>
+                        </form>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+                        <button type="button" class="btn btn-primary" id="proceedPayment">Proceed to Payment</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Transaction History -->
+        <div class="row">
+            <div class="col-md-12">
+                <h3>Transaction History</h3>
+                <div class="table-responsive">
+                    <table class="table table-striped">
+                        <thead>
+                            <tr>
+                                <th>Date</th>
+                                <th>Description</th>
+                                <th>Type</th>
+                                <th>Amount</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for transaction in transactions %}
+                                <tr class="{% if transaction.transaction_type == 'credit' %}text-success{% else %}text-danger{% endif %}">
+                                    <td>{{ transaction.timestamp|date:"Y-m-d H:i" }}</td>
+                                    <td>{{ transaction.description }}</td>
+                                    <td>{{ transaction.get_transaction_type_display }}</td>
+                                    <td>₹{{ transaction.amount|floatformat:2 }}</td>
+                                </tr>
+                            {% empty %}
+                                <tr>
+                                    <td colspan="4" class="text-center">No transactions found</td>
+                                </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+    
+    
+    <footer class="ftco-footer ftco-section">
+      <div class="container">
+      	<div class="row">
+      		<div class="mouse">
+						<a href="#" class="mouse-icon">
+							<div class="mouse-wheel"><span class="ion-ios-arrow-up"></span></div>
+						</a>
+					</div>
+      	</div>
+        <div class="row mb-5">
+          <div class="col-md">
+            <div class="ftco-footer-widget mb-4">
+              <h2 class="ftco-heading-2">Minishop</h2>
+              <p>Far far away, behind the word mountains, far from the countries Vokalia and Consonantia.</p>
+              <ul class="ftco-footer-social list-unstyled float-md-left float-lft mt-5">
+                <li class="ftco-animate"><a href="#"><span class="icon-twitter"></span></a></li>
+                <li class="ftco-animate"><a href="#"><span class="icon-facebook"></span></a></li>
+                <li class="ftco-animate"><a href="#"><span class="icon-instagram"></span></a></li>
+              </ul>
+            </div>
+          </div>
+          <div class="col-md">
+            <div class="ftco-footer-widget mb-4 ml-md-5">
+              <h2 class="ftco-heading-2">Menu</h2>
+              <ul class="list-unstyled">
+                <li><a href="#" class="py-2 d-block">Shop</a></li>
+                <li><a href="#" class="py-2 d-block">About</a></li>
+                <li><a href="#" class="py-2 d-block">Journal</a></li>
+                <li><a href="#" class="py-2 d-block">Contact Us</a></li>
+              </ul>
+            </div>
+          </div>
+          <div class="col-md-4">
+             <div class="ftco-footer-widget mb-4">
+              <h2 class="ftco-heading-2">Help</h2>
+              <div class="d-flex">
+	              <ul class="list-unstyled mr-l-5 pr-l-3 mr-4">
+	                <li><a href="#" class="py-2 d-block">Shipping Information</a></li>
+	                <li><a href="#" class="py-2 d-block">Returns &amp; Exchange</a></li>
+	                <li><a href="#" class="py-2 d-block">Terms &amp; Conditions</a></li>
+	                <li><a href="#" class="py-2 d-block">Privacy Policy</a></li>
+	              </ul>
+	              <ul class="list-unstyled">
+	                <li><a href="#" class="py-2 d-block">FAQs</a></li>
+	                <li><a href="#" class="py-2 d-block">Contact</a></li>
+	              </ul>
+	            </div>
+            </div>
+          </div>
+          <div class="col-md">
+            <div class="ftco-footer-widget mb-4">
+            	<h2 class="ftco-heading-2">Have a Questions?</h2>
+            	<div class="block-23 mb-3">
+	              <ul>
+	                <li><span class="icon icon-map-marker"></span><span class="text">203 Fake St. Mountain View, San Francisco, California, USA</span></li>
+	                <li><a href="#"><span class="icon icon-phone"></span><span class="text">+2 392 3929 210</span></a></li>
+	                <li><a href="#"><span class="icon icon-envelope"></span><span class="text">info@yourdomain.com</span></a></li>
+	              </ul>
+	            </div>
+            </div>
+          </div>
+        </div>
+        <div class="row">
+          <div class="col-md-12 text-center">
+
+          </div>
+        </div>
+      </div>
+    </footer>
+    
+  
+
+  <!-- loader -->
+ <div id="ftco-loader" class="show fullscreen"><svg class="circular" width="48px" height="48px"><circle class="path-bg" cx="24" cy="24" r="22" fill="none" stroke-width="4" stroke="#eeeeee"/><circle class="path" cx="24" cy="24" r="22" fill="none" stroke-width="4" stroke-miterlimit="10" stroke="#F96D00"/></svg></div> 
+ <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+
+<script>
+    $(document).ready(function() {
+        $('#proceedPayment').on('click', function() {
+            var amount = $('#amount').val();
+            
+            if (amount < 10) {
+                alert('Minimum amount is ₹10');
+                return;
+            }
+    
+            $.ajax({
+                url: "{% url 'create_wallet_razorpay_order' %}",
+                method: 'POST',
+                data: {
+                    'amount': amount,
+                    'csrfmiddlewaretoken': '{{ csrf_token }}'
+                },
+                success: function(response) {
+                    var options = {
+                        "key": response.key,
+                        "amount": response.amount,
+                        "currency": "INR",
+                        "name": response.name,
+                        "description": response.description,
+                        "image": response.image,
+                        "order_id": response.order_id,
+                        "handler": function (response) {
+                            // Verify payment on server
+                            $.ajax({
+                                url: "{% url 'wallet_payment_success' %}",
+                                method: 'POST',
+                                data: {
+                                    'razorpay_payment_id': response.razorpay_payment_id,
+                                    'razorpay_order_id': response.razorpay_order_id,
+                                    'razorpay_signature': response.razorpay_signature,
+                                    'csrfmiddlewaretoken': '{{ csrf_token }}'
+                                },
+                                success: function(result) {
+                                    alert('Funds added successfully!');
+                                    location.reload();
+                                },
+                                error: function(xhr) {
+                                    alert('Payment verification failed');
+                                }
+                            });
+                        },
+                        "prefill": response.prefill,
+                        "theme": {
+                            "color": "#3399cc"
+                        }
+                    };
+                    var rzp1 = new Razorpay(options);
+                    rzp1.open();
+                },
+                error: function(xhr) {
+                    alert('Failed to create Razorpay order');
+                }
+            });
+        });
+    });
+    </script>
+<script>
+    document.getElementById('proceedPayment').addEventListener('click', function() {
+        var amount = parseFloat(document.getElementById('amount').value);
+        if (amount > 10000) {
+            document.getElementById('amountError').style.display = 'block';
+        } else {
+            document.getElementById('amountError').style.display = 'none';
+            // Proceed with payment logic
+            var formData = new FormData(document.getElementById('addFundsForm'));
+            // Send formData to server for further processing
+        }
+    });
+</script>
+
+  <script src="{% static 'user_side/js/jquery.min.js' %}"></script>
+  <script src="{% static 'user_side/js/jquery-migrate-3.0.1.min.js' %}"></script>
+  <script src="{% static 'user_side/js/popper.min.js' %}"></script>
+  <script src="{% static 'user_side/js/bootstrap.min.js' %}"></script>
+  <script src="{% static 'user_side/js/jquery.easing.1.3.js' %}"></script>
+  <script src="{% static 'user_side/js/jquery.waypoints.min.js' %}"></script>
+  <script src="{% static 'user_side/js/jquery.stellar.min.js' %}"></script>
+  <script src="{% static 'user_side/js/owl.carousel.min.js' %}"></script>
+  <script src="{% static 'user_side/js/jquery.magnific-popup.min.js' %}"></script>
+  <script src="{% static 'user_side/js/aos.js' %}"></script>
+  <script src="{% static 'user_side/js/jquery.animateNumber.min.js' %}"></script>
+  <script src="{% static 'user_side/js/bootstrap-datepicker.js' %}"></script>
+  <script src="{% static 'user_side/js/scrollax.min.js' %}"></script>
+  <script src="https:/maps.googleapis.com/maps/api/js?key=AIzaSyBVWaKrjvy3MaE7SQ74_uJiULgl1JY0H2s&sensor=false"></script>
+  <script src="{% static 'user_side/js/google-map.js' %}"></script>
+  <script src="{% static 'user_side/js/main.js' %}"></script>
+  <script src="https://checkout.razorpay.com/v1/checkout.js"></script>
+    
+  </body>
+</html>

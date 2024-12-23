@@ -1,0 +1,384 @@
+{% extends 'admin_side/base.html' %}
+{% load static %}
+{% block title %}
+Sales-report
+{% endblock %}
+{% block content %}
+
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f7f8fa;
+            margin: 0;
+            padding: 20px;
+        }
+
+        .dashboard {
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 24px;
+        }
+
+        .title-section h1 {
+            margin: 0;
+            color: #1a1a1a;
+            font-size: 24px;
+        }
+
+        .title-section p {
+            margin: 4px 0 0;
+            color: #666;
+        }
+
+        .action-buttons {
+            display: flex;
+            gap: 12px;
+        }
+
+        .btn {
+            padding: 8px 16px;
+            border-radius: 6px;
+            border: none;
+            cursor: pointer;
+            font-weight: 500;
+            transition: all 0.2s;
+        }
+
+        .btn-primary {
+            background-color: #007bff;
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background-color: #0056b3;
+        }
+
+        .filters {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+            margin-bottom: 24px;
+        }
+
+        .filter-form {
+            display: flex;
+            gap: 16px;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+
+        .filter-group {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .filter-group label {
+            font-weight: 500;
+            color: #333;
+        }
+
+        .filter-group input {
+            padding: 8px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 20px;
+            margin-bottom: 24px;
+        }
+
+        .stat-card {
+            background: white;
+            padding: 24px;
+            border-radius: 8px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+            text-align: center;
+        }
+
+        .stat-card h3 {
+            margin: 0;
+            color: #666;
+            font-size: 16px;
+            font-weight: 500;
+        }
+
+        .stat-card .value {
+            font-size: 32px;
+            font-weight: 600;
+            color: #1a1a1a;
+            margin: 8px 0;
+        }
+
+        .orders-table {
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+            overflow: hidden;
+        }
+
+        .orders-table table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        .orders-table th {
+            background: #f8f9fa;
+            text-align: left;
+            padding: 12px 16px;
+            font-weight: 500;
+            color: #333;
+            border-bottom: 2px solid #dee2e6;
+        }
+
+        .orders-table td {
+            padding: 12px 16px;
+            border-bottom: 1px solid #dee2e6;
+            color: #444;
+        }
+
+        .status-badge {
+            padding: 4px 8px;
+            border-radius: 12px;
+            font-size: 14px;
+            font-weight: 500;
+        }
+
+        .status-completed { background: #d4edda; color: #155724; }
+        .status-pending { background: #fff3cd; color: #856404; }
+        .status-cancelled { background: #f8d7da; color: #721c24; }
+        .status-processing { background: #cce5ff; color: #004085; }
+
+        .pagination {
+            display: flex;
+            justify-content: center;
+            gap: 8px;
+            margin-top: 24px;
+        }
+
+        .page-link {
+            padding: 8px 12px;
+            border-radius: 4px;
+            border: 1px solid #dee2e6;
+            color: #007bff;
+            text-decoration: none;
+            transition: all 0.2s;
+        }
+
+        .page-link:hover {
+            background: #e9ecef;
+        }
+
+        .page-link.active {
+            background: #007bff;
+            color: white;
+            border-color: #007bff;
+        }
+    </style>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.26/jspdf.plugin.autotable.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.17.0/xlsx.full.min.js"></script>
+</head>
+<body>
+    <div class="dashboard">
+        <!-- Header Section -->
+        <div class="content-header">
+            <div>
+                <h2 class="content-title card-title">Sales Report </h2>
+            </div>
+            <div class="d-flex gap-2">
+                <button id="download-pdf" class="btn btn-primary">
+                    <i class="text-muted material-icons md-post_add"></i>Download as PDF
+                </button>
+                <button id="download-excel" class="btn btn-primary">
+                    <i class="text-muted material-icons md-post_add"></i>Download as Excel
+                </button>
+            </div>
+            
+        </div>
+
+        <!-- Change your filter form to this -->
+        <div class="filters">
+            <form class="filter-form" method="post" action="">
+                {% csrf_token %}
+                <div class="filter-group">
+                    <label for="start-date">Start Date:</label>
+                    <input type="date" id="start-date" name="start_date" class="form-control" value="{{ start_date }}">
+                </div>
+                <div class="filter-group">
+                    <label for="end-date">End Date:</label>
+                    <input type="date" id="end-date" name="end_date" class="form-control" value="{{ end_date }}">
+                </div>
+                <button type="submit" class="btn btn-primary">Apply Filter</button>
+                {% if filter_applied %}
+                    <a href="{% url 'sales_report' %}" class="btn btn-secondary">Clear Filter</a>
+                {% endif %}
+                <a href="?filter=weekly" class="btn btn-primary {% if filter_type == 'weekly' %}active{% endif %}">Weekly</a>
+                <a href="?filter=monthly" class="btn btn-primary {% if filter_type == 'monthly' %}active{% endif %}">Monthly</a>
+            </form>
+        </div>
+
+        <!-- Stats Cards -->
+        <div class="stats-grid">
+            <div class="stat-card">
+                <h3>Total Orders</h3>
+                <div id="total-orders" class="value">{{ total_orders }}</div>
+            </div>
+            <div class="stat-card">
+                <h3>Total Revenue</h3>
+                <div id="total-revenue" class="value">₹{{ total_order_amount }}</div>
+            </div>
+            <div class="stat-card">
+                <h3>Total Discounts</h3>
+                <div id="total-discounts" class="value">₹{{ total_discount }}</div>
+            </div>
+        </div>
+
+        <!-- Orders Table -->
+        <div class="orders-table">
+            <table id="sales-table">
+                <thead>
+                    <tr>
+                        <th>Date</th>
+                        <th>Order ID</th>
+                        <th>Customer</th>
+                        <th>Status</th>
+                        <th>Items</th>
+                        <th>Total</th>
+                        <th>Payment Method</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for order in orders %}
+                    <tr>
+                        <td>{{ order.created_at|date:"Y-m-d H:i" }}</td>
+                        <td>#{{ order.id }}</td>
+                        <td>{{ order.user.username }}</td>
+                        <td>
+                            <span class="status-badge status-{{ order.status|lower }}">
+                                {{ order.status }}
+                            </span>
+                        </td>
+                        <td>
+                            {% for item in order.items.all %}
+                                {{ item.quantity }}x {{ item.variant.variant_name }}<br>
+                            {% endfor %}
+                        </td>
+                        <td>₹{{ order.total_price }}</td>
+                        <td>{{ order.get_payment_method_display }}</td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="9" style="text-align: center;">No orders found</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+    <script>
+        document.getElementById('download-pdf').addEventListener('click', function () {
+            console.log('Download PDF button clicked');
+            
+            const { jsPDF } = window.jspdf;
+            const doc = new jsPDF();
+            const table = document.getElementById('sales-table');
+            
+            // Add title
+            doc.setFontSize(16);
+            doc.setFont("helvetica", "bold");
+            doc.text(" Noirette Sales Report", 14, 20);
+            
+            // Add summary
+            doc.setFontSize(12);
+            doc.setFont("helvetica", "normal");
+            doc.setTextColor(50); // Dark gray for subtle emphasis
+            doc.text(`Number of Orders: {{ total_orders }}`, 14, 30);
+            doc.text(`Total Order Amount: ₹{{ total_order_amount }}`, 14, 36);
+            doc.text(`Total Discount: ₹{{ total_discount }}`, 14, 42);
+            
+            // Add the table
+            doc.autoTable({
+                html: table,
+                startY: 50,
+                styles: {
+                    fontSize: 10,
+                    halign: 'center',
+                    valign: 'middle',
+                    fillColor: [255, 255, 255],
+                    textColor: [0, 0, 0],
+                },
+                headStyles: {
+                    fillColor: [0, 0, 0], // Black for header background
+                    textColor: [255, 255, 255], // White text
+                    fontStyle: 'bold',
+                    fontSize: 10,
+                },
+                bodyStyles: {
+                    fillColor: [255, 255, 255], // White for row background
+                    textColor: [0, 0, 0],
+                    fontSize: 10,
+                },
+                alternateRowStyles: {
+                    fillColor: [240, 240, 240], // Light gray for alternate rows
+                },
+                margin: { top: 50 },
+                tableLineColor: [0, 0, 0],
+                tableLineWidth: 0.75
+            });
+            
+            // Save the PDF
+            doc.save('sales_report.pdf');
+        });
+    
+        document.getElementById('download-excel').addEventListener('click', function () {
+            console.log('Download Excel button clicked');
+            
+            const table = document.getElementById('sales-table');
+            if (!table) {
+                console.error('Sales table not found');
+                return;
+            }
+    
+            const ws = XLSX.utils.table_to_sheet(table);
+            
+            // Add summary at the top
+            XLSX.utils.sheet_add_aoa(ws, [
+                ["Sales Report"],
+                ["Number of Orders", "{{ total_orders }}"],
+                ["Total Order Amount", "₹{{ total_order_amount }}"],
+                ["Total Discount", "₹{{ total_discount }}"]
+            ], { origin: 'A1' });
+        
+            // Adjust formatting for professional presentation
+            ws['A1'].s = { font: { sz: 16, bold: true } };  // Title style
+            ws['A2'].s = ws['A3'].s = ws['A4'].s = { font: { bold: true }, alignment: { horizontal: "left" } };
+            
+            // Create a new workbook and append the sheet
+            const wb = XLSX.utils.book_new();
+            XLSX.utils.book_append_sheet(wb, ws, "Sales Report");
+        
+            // Save the Excel file
+            XLSX.writeFile(wb, "sales_report.xlsx");
+        });
+    </script>
+    <script>
+        // Add click handlers for weekly and monthly filter buttons
+        document.querySelectorAll('[data-filter]').forEach(button => {
+            button.addEventListener('click', function() {
+                const filterType = this.getAttribute('data-filter');
+                window.location.href = `?filter=${filterType}`;
+            });
+        });
+    </script>
+{% endblock %}

@@ -1,0 +1,952 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <title></title>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+    
+    <link href="https://fonts.googleapis.com/css?family=Open+Sans:300,400,600,700,800" rel="stylesheet">
+
+    <link rel="stylesheet" href="{% static 'user_side/css/open-iconic-bootstrap.min.css' %}">
+    <link rel="stylesheet" href="{% static 'user_side/css/animate.css' %}">
+    
+    <link rel="stylesheet" href="{% static 'user_side/css/owl.carousel.min.css' %}">
+    <link rel="stylesheet" href="{% static 'user_side/css/owl.theme.default.min.css' %}">
+    <link rel="stylesheet" href="{% static 'user_side/css/magnific-popup.css' %}">
+
+    <link rel="stylesheet" href="{% static 'user_side/css/aos.css' %}">
+
+    <link rel="stylesheet" href="{% static 'user_side/css/ionicons.min.css' %}">
+
+    <link rel="stylesheet" href="{% static 'user_side/css/bootstrap-datepicker.css' %}">
+    <link rel="stylesheet" href="{% static 'user_side/css/jquery.timepicker.css' %}">
+
+    
+    <link rel="stylesheet" href="{% static 'user_side/css/flaticon.css' %}">
+    <link rel="stylesheet" href="{% static 'user_side/css/icomoon.css' %}">
+    <link rel="stylesheet" href="{% static 'user_side/css/style.css' %}">
+
+	<!-- Lightbox CSS -->
+<!-- <link href="https://cdn.jsdelivr.net/npm/lightbox2@2.11.3/dist/css/lightbox.min.css" rel="stylesheet">
+<!-- Lightbox JS -->
+<!-- <script src="https://cdn.jsdelivr.net/npm/lightbox2@2.11.3/dist/js/lightbox.min.js"></script> --> 
+
+<!-- Fancybox CSS -->
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fancyapps/ui@5.0.6/dist/fancybox.css">
+
+<!-- Fancybox JS -->
+<script src="https://cdn.jsdelivr.net/npm/@fancyapps/ui@5.0.6/dist/fancybox.umd.js"></script>
+
+
+
+  </head>
+  <style>
+
+.message-box {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    padding: 10px 15px;
+    background-color: #28a745; /* Green for success */
+    color: white;
+    border-radius: 5px;
+    font-size: 14px;
+    box-shadow: 0px 2px 10px rgba(0, 0, 0, 0.2);
+    display: none;
+    z-index: 1000;
+}
+
+.message-box.success {
+    display: block;
+}
+
+.img-zoom-result {
+    position: absolute;
+    border: 1px solid #d4d4d4;
+    width: 300px;
+    height: 300px;
+    top: 0;
+    left: 320px;
+    background-repeat: no-repeat;
+    background-size: cover;
+    display: none;
+    pointer-events: none; /* Ensures the zoom doesn't interfere with other interactions */
+    box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+}
+
+.btn-custom {
+    background-color: #000;
+    color: #fff;
+    border: none;
+    border-radius: 4px;
+    padding: 12px 20px;
+    font-size: 16px;
+    cursor: pointer;
+}
+
+.btn-custom:hover {
+    background-color: #444;
+}
+
+* {box-sizing: border-box;}
+
+.img-zoom-container {
+  position: relative;
+}
+
+.img-zoom-lens {
+    position: absolute;
+    border: 1px solid #d4d4d4;
+    width: 100px; /* Adjust size as needed */
+    height: 100px; /* Adjust size as needed */
+    background-color: rgba(255, 255, 255, 0.4);
+    cursor: crosshair;
+}
+.img-zoom-result {
+  border: 1px solid #d4d4d4;
+  /*set the size of the result div:*/
+  width: 300px;
+  height: 300px;
+}
+
+/* Main Product Image Styling */
+.prod-img-bg img {
+    border: 2px solid #ddd;
+    border-radius: 5px;
+    transition: transform 0.2s ease-in-out;
+}
+
+.prod-img-bg img:hover {
+    transform: scale(1.05); /* Slightly zoom-in effect on hover */
+}
+.icon-heart {
+    color: grey;
+}
+.icon-heart.active {
+    color: red;
+}
+
+
+
+/* Thumbnail Styling */
+.img-thumbnail {
+    max-width: 80px; /* Adjust as needed */
+    max-height: 80px; /* Adjust as needed */
+    object-fit: cover; /* Ensures the image fits within the thumbnail */
+    border: 1px solid #ddd;
+    margin-bottom: 10px;
+    cursor: pointer;
+    transition: transform 0.2s ease-in-out;
+}
+
+.img-thumbnail:hover {
+    transform: scale(1.1); /* Thumbnail zoom effect */
+}
+
+/* Fancybox Close Button Styling */
+.fancybox__button--close {
+    background-color: rgba(255, 255, 255, 0.6); /* White background with slight transparency */
+    color: #fff; /* White color for contrast */
+    border-radius: 50%; /* Round shape for the close button */
+    font-size: 24px; /* Larger icon size */
+    width: 40px; /* Button width */
+    height: 40px; /* Button height */
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer; /* Pointer on hover */
+    z-index: 1050; /* Ensure it's above other elements */
+}
+
+.fancybox__button--close:hover {
+    background-color: rgba(255, 255, 255, 1); /* Full white background on hover */
+    color: #000; /* Black icon on hover */
+}
+
+/* Active Thumbnail (highlighted) */
+.img-thumbnail.active {
+    border: 2px solid #007bff; /* Highlight active thumbnail with blue border */
+}
+
+
+#price-tag .text-muted {
+    text-decoration: line-through;
+    color: #6c757d; /* Muted gray */
+}
+
+#price-tag .text-success {
+    color: #28a745; /* Success green */
+    margin-left: 8px; /* Space between prices */
+}
+
+
+.image-zoom-container {
+        position: relative;
+        overflow: hidden;
+    }
+
+    #main-image {
+        transition: transform 0.25s ease; /* Smooth zoom transition */
+    }
+
+    .zoom-lens {
+        position: absolute;
+        pointer-events: none;
+        border: 2px solid #ccc;
+        background-color: rgba(255, 255, 255, 0.5);
+        cursor: zoom-in;
+    }
+
+  </style>
+  <body class="goto-here">
+	<nav class="navbar navbar-expand-lg navbar-dark ftco_navbar bg-dark ftco-navbar-light fixed-top" id="ftco-navbar">
+		<div class="container">
+		  <a class="navbar-brand" href="{% url 'home' %}" style="color: white;">Noirette</a>
+		  <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#ftco-nav" aria-controls="ftco-nav" aria-expanded="false" aria-label="Toggle navigation">
+			<span class="oi oi-menu"></span> Menu
+		  </button>
+	  
+		  <div class="collapse navbar-collapse" id="ftco-nav">
+			<ul class="navbar-nav ml-auto">
+			  <li class="nav-item active"><a href="{% url 'home' %}" class="nav-link" style="color: white;">Home</a></li>
+			  <li class="nav-item"><a href="{% url 'shop' %}" class="nav-link" style="color: white;">Shop</a></li>
+			  <li class="nav-item"><a href="about.html" class="nav-link" style="color: white;">About</a></li>
+			  <li class="nav-item"><a href="blog.html" class="nav-link" style="color: white;">Blog</a></li>
+			  <li class="nav-item"><a href="contact.html" class="nav-link" style="color: white;">Contact</a></li>
+			  <li class="nav-item cta cta-colored">
+				<a href="{% url 'view_cart' %}" class="nav-link" style="color: white;">
+					<span class="icon-shopping_cart"></span>[{{ cart_count|default:0 }}]
+				</a>
+			  </li>
+			  <li class="nav-item cta cta-colored">
+				<a href="{% url 'wishlist' %}" class="nav-link" style="color: white;">
+					<span class="icon-heart"></span>[0]
+				</a>
+			</li>
+			          <!-- Wallet Section -->
+					  {% if user.is_authenticated %}
+					  <li class="nav-item cta">
+						<a href="{% url 'wallet' %}" class="nav-link" style="color: white;">
+						  <span class="icon-wallet"></span> Wallet: ${{ user.wallet_balance|default:0.00 }}
+						</a>
+					  </li>
+					  {% endif %}
+			  <!-- Display Login or Username/Logout -->
+			  {% if user.is_authenticated %}
+			<li class="nav-item dropdown">
+			<a class="nav-link dropdown-toggle" href="#" id="userDropdown" role="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false" style="color: white;">
+				Welcome, {{ user.username }}
+			</a>
+			<div class="dropdown-menu" aria-labelledby="userDropdown">
+				<!-- User Profile Button -->
+				<a href="{% url 'user_profile' %}" class="dropdown-item" 
+				   style="display: flex; justify-content: center; align-items: center; text-decoration: none; 
+						  color: white; padding: 5px 10px; font-size: 14px;">
+					<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" 
+						 class="bi bi-person-circle me-2" viewBox="0 0 16 16">
+						<path d="M13 8a5 5 0 1 1-10 0 5 5 0 0 1 10 0z"/>
+						<path d="M11 8c0 1.105-.45 2.09-1.175 2.828A3.972 3.972 0 0 1 8 12c-.79 0-1.524-.268-2.175-.735C5.45 10.09 5 9.105 5 8c0-1.105.45-2.09 1.175-2.828A3.972 3.972 0 0 1 8 4c.79 0 1.524.268 2.175.735C10.55 5.91 11 6.895 11 8zm-3-1a1 1 0 1 0 0 2 1 1 0 0 0 0-2z"/>
+					</svg>
+					My Profile
+				</a>
+			
+				<!-- Logout Button -->
+				<form method="post" action="{% url 'logout' %}" style="display: inline;">
+					{% csrf_token %}
+					<button type="submit" class="dropdown-item" 
+							style="display: flex; justify-content: center; align-items: center; background: none; 
+								   border: none; padding: 5px 10px; font-size: 14px; cursor: pointer; color: white;">
+						<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" 
+							 class="bi bi-box-arrow-right me-2" viewBox="0 0 16 16">
+							<path fill-rule="evenodd" d="M10 15a1 1 0 0 1-1 1H5a2 2 0 0 1-2-2V2a2 2 0 0 1 2-2h4a1 1 0 0 1 1 1v1H5.5A1.5 1.5 0 0 0 4 3.5v9A1.5 1.5 0 0 0 5.5 14H10v1zm1-11a.5.5 0 0 0 0 1h4.5a.5.5 0 0 0 0-1H11zm3.646 3.646a.5.5 0 0 1 0 .708l-2.5 2.5a.5.5 0 0 1-.708-.708L13.293 8H8.5a.5.5 0 0 1 0-1h4.793l-1.647-1.646a.5.5 0 1 1 .708-.708l2.5 2.5z"/>
+						</svg>
+						Logout
+					</button>
+				</form>
+			</div>
+			
+			</li>
+			{% else %}
+			<li class="nav-item"><a href="{% url 'login' %}" class="nav-link" style="color: white;">Login</a></li>
+			{% endif %}
+			</ul>
+		  </div>
+		</div>
+	  </nav>
+    <!-- END nav -->
+	<div class="hero-wrap hero-bread" style="position: relative; margin-top: 0; padding: 0;">
+		<img src="{% static 'user_side/images/image2.jpg' %}" alt="Hero Image" style="width: 100%; height: 65vh; object-fit: cover;">
+		<div class="hero-text text-center" style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); color: #fff; text-shadow: 0 2px 4px rgba(0,0,0,0.7); z-index: 5;">
+			<p class="breadcrumbs">
+				<a href="{% url 'home' %}" style="color: #fff; text-decoration: none;">Home</a> 
+				<span style="color: #fff;">Shop</span>
+			</p>
+			<h1 class="mb-0 bread" style="font-size: 3rem; color: #fff; font-weight: bold;">Shop</h1>
+		</div>
+	</div>
+	
+<!-- Product Section -->
+<section class="ftco-section">
+    <div class="container">
+        <div class="row">
+            <!-- Left Column: Product Image and Thumbnails -->
+            <div class="col-lg-6 mb-5">
+                <!-- Main Product Image -->
+                <div class="img-zoom-container">
+                    <img 
+                        id="myimage" 
+                        src="{{ first_image_url }}" 
+                        class="img-fluid rounded shadow" 
+                        alt="{{ product.name }}" 
+                        width="300" 
+                        height="240">
+                    <div id="myresult" class="img-zoom-result"></div>
+                </div>
+
+                <!-- Thumbnail Gallery -->
+                <div class="row">
+                    {% for image in images %}
+                        <div class="col-3 mb-3">
+                            <a data-fancybox="gallery" href="{{ image.image_url.url }}" data-caption="{{ product.name }}">
+                                <img src="{{ image.image_url.url }}" class="img-thumbnail" alt="{{ product.name }}">
+                            </a>
+                        </div>
+                    {% endfor %}
+                </div>
+            </div>
+
+            <!-- Right Column: Product Details -->
+            <div class="col-lg-6 product-details pl-md-5">
+                <!-- Product Name -->
+                <h3 class="font-weight-bold">{{ product.name }}</h3>
+
+                <!-- Rating Section -->
+                <div class="rating d-flex align-items-center mb-3">
+                    <div class="stars mr-2">
+                        <span class="text-warning ion-ios-star"></span>
+                        <span class="text-warning ion-ios-star"></span>
+                        <span class="text-warning ion-ios-star"></span>
+                        <span class="text-warning ion-ios-star"></span>
+                        <span class="text-warning ion-ios-star-half"></span>
+                    </div>
+                    <p class="text-muted mb-0 ml-2">
+                        <!-- {{ product.total_ratings }} Ratings | {{ product.total_sold }} Sold -->
+                    </p>
+                </div>
+
+                <!-- Price and Wishlist Section -->
+<div class="d-flex align-items-center mb-3">
+    <p id="price-tag" class="price h4 font-weight-bold text-black mb-0">
+        {% if product.offer_percentage %}
+            <span class="text-muted" style="text-decoration: line-through;">
+                ₹{{ variants.0.variant_price|floatformat:2 }}
+            </span>
+            <span class="text-success ms-2">
+                ₹{{ variants.0.discounted_price|floatformat:2 }}
+            </span>
+        {% else %}
+            ₹{{ variants.0.variant_price|floatformat:2 }}
+        {% endif %}
+    </p>
+    <span
+        id="wishlist-icon"
+        class="icon-heart ml-3 {% if variants.0.id in wishlist_variant_ids %}active{% endif %}"
+        style="font-size: 1.5rem; cursor: pointer;"
+        title="Add to Wishlist"
+        data-variant-id="{{ variants.0.id }}">
+    </span>
+</div>
+
+
+
+                <!-- Description -->
+                <p class="text-muted">{{ product.description }}</p>
+
+<!-- Stock Display -->
+{% if variants %}
+<p id="stock-display" class="text-muted">
+    In Stock: {{ variants.0.stock }}
+</p>
+{% else %}
+<p id="stock-display" class="text-muted">
+    Available Stock: {{ product.stock }}
+</p>
+{% endif %}
+
+<!-- Add to Cart Form -->
+<form 
+id="add-to-cart-form" 
+action="{% url 'add_to_cart' %}" 
+method="post" 
+data-url="{% url 'add_to_cart' %}">
+{% csrf_token %}
+<input type="hidden" name="variant_id" value="{{ variants.0.id }}"> <!-- Set a default variant if available -->
+
+{% if variants %}
+    <div class="form-group mt-4">
+        <label for="variant" class="font-weight-bold">Choose a Variant:</label>
+        <select name="variant_id" id="variant" class="form-control">
+            {% for variant in variants %}
+                <option 
+                    value="{{ variant.id }}" 
+                    data-stock="{{ variant.stock }}" 
+                    data-price="{{ variant.variant_price|floatformat:2 }}"
+                    data-discounted-price="{{ variant.discounted_price|floatformat:2 }}"
+                    {% if variant.id == variants.0.id %}selected{% endif %}>
+                    {{ variant.variant_name }} 
+                    {% if product.offer_percentage %}
+                        - ₹{{ variant.discounted_price|floatformat:2 }}
+                    {% else %}
+                        - ₹{{ variant.variant_price|floatformat:2 }}
+                    {% endif %}
+                </option>
+            {% endfor %}
+        </select>
+    </div>
+{% endif %}
+<div id="cart-message-box" class="message-box"></div> <!-- Message box for success or error messages -->
+<button id="add-to-cart-button" type="submit" class="btn-custom mt-3" {% if variants.0.stock == 0 %}disabled{% endif %}>Add to Cart</button>
+</form>
+
+
+
+                <!-- Optional: To show success or error messages dynamically -->
+                <div id="message-box"></div>
+
+                <!-- Buy Now Button -->
+                <p>
+                    <a href="{% url 'checkout' %}" class="btn btn-primary py-3 px-5">Buy now</a>
+                </p>
+            </div>
+
+			</div>
+		</div>
+
+		<div class="row mt-5">
+			<div class="col-md-12 nav-link-wrap">
+				<div class="nav nav-pills d-flex text-center" id="v-pills-tab" role="tablist" aria-orientation="vertical">
+					<a class="nav-link ftco-animate active mr-lg-1" id="v-pills-1-tab" data-toggle="pill" href="#v-pills-1" role="tab" aria-controls="v-pills-1" aria-selected="true">Description</a>
+
+					<a class="nav-link ftco-animate mr-lg-1" id="v-pills-2-tab" data-toggle="pill" href="#v-pills-2" role="tab" aria-controls="v-pills-2" aria-selected="false">Manufacturer</a>
+
+					<a class="nav-link ftco-animate" id="v-pills-3-tab" data-toggle="pill" href="#v-pills-3" role="tab" aria-controls="v-pills-3" aria-selected="false">Reviews</a>
+				</div>
+			</div>
+			<div class="col-md-12 tab-wrap">
+				
+				<div class="tab-content bg-light" id="v-pills-tabContent">
+
+					<div class="tab-pane fade show active" id="v-pills-1" role="tabpanel" aria-labelledby="day-1-tab">
+						<div class="p-4">
+							<h3 class="mb-4">{{ product.name }}</h3>
+							<p>{{ product.description }}</p>
+						</div>
+					</div>
+
+              <div class="tab-pane fade" id="v-pills-2" role="tabpanel" aria-labelledby="v-pills-day-2-tab">
+              	<div class="p-4">
+	              	<h3 class="mb-4">Manufactured By Nike</h3>
+	              	<p>On her way she met a copy. The copy warned the Little Blind Text, that where it came from it would have been rewritten a thousand times and everything that was left from its origin would be the word "and" and the Little Blind Text should turn around and return to its own, safe country. But nothing the copy said could convince her and so it didn’t take long until a few insidious Copy Writers ambushed her, made her drunk with Longe and Parole and dragged her into their agency, where they abused her for their.</p>
+              	</div>
+              </div>
+              <div class="tab-pane fade" id="v-pills-3" role="tabpanel" aria-labelledby="v-pills-day-3-tab">
+              	<div class="row p-4">
+						   		<div class="col-md-7">
+						   			<h3 class="mb-4">23 Reviews</h3>
+						   			<div class="review">
+								   		<div class="user-img" style="background-image: url(images/person_1.jpg)"></div>
+								   		<div class="desc">
+								   			<h4>
+								   				<span class="text-left">Jacob Webb</span>
+								   				<span class="text-right">14 March 2018</span>
+								   			</h4>
+								   			<p class="star">
+								   				<span>
+								   					<i class="ion-ios-star-outline"></i>
+								   					<i class="ion-ios-star-outline"></i>
+								   					<i class="ion-ios-star-outline"></i>
+								   					<i class="ion-ios-star-outline"></i>
+								   					<i class="ion-ios-star-outline"></i>
+							   					</span>
+							   					<span class="text-right"><a href="#" class="reply"><i class="icon-reply"></i></a></span>
+								   			</p>
+								   			<p>When she reached the first hills of the Italic Mountains, she had a last view back on the skyline of her hometown Bookmarksgrov</p>
+								   		</div>
+								   	</div>
+								   	<div class="review">
+								   		<div class="user-img" style="background-image: url(images/person_2.jpg)"></div>
+								   		<div class="desc">
+								   			<h4>
+								   				<span class="text-left">Jacob Webb</span>
+								   				<span class="text-right">14 March 2018</span>
+								   			</h4>
+								   			<p class="star">
+								   				<span>
+								   					<i class="ion-ios-star-outline"></i>
+								   					<i class="ion-ios-star-outline"></i>
+								   					<i class="ion-ios-star-outline"></i>
+								   					<i class="ion-ios-star-outline"></i>
+								   					<i class="ion-ios-star-outline"></i>
+							   					</span>
+							   					<span class="text-right"><a href="#" class="reply"><i class="icon-reply"></i></a></span>
+								   			</p>
+								   			<p>When she reached the first hills of the Italic Mountains, she had a last view back on the skyline of her hometown Bookmarksgrov</p>
+								   		</div>
+								   	</div>
+								   	<div class="review">
+								   		<div class="user-img" style="background-image: url(images/person_3.jpg)"></div>
+								   		<div class="desc">
+								   			<h4>
+								   				<span class="text-left">Jacob Webb</span>
+								   				<span class="text-right">14 March 2018</span>
+								   			</h4>
+								   			<p class="star">
+								   				<span>
+								   					<i class="ion-ios-star-outline"></i>
+								   					<i class="ion-ios-star-outline"></i>
+								   					<i class="ion-ios-star-outline"></i>
+								   					<i class="ion-ios-star-outline"></i>
+								   					<i class="ion-ios-star-outline"></i>
+							   					</span>
+							   					<span class="text-right"><a href="#" class="reply"><i class="icon-reply"></i></a></span>
+								   			</p>
+								   			<p>When she reached the first hills of the Italic Mountains, she had a last view back on the skyline of her hometown Bookmarksgrov</p>
+								   		</div>
+								   	</div>
+						   		</div>
+						   		<div class="col-md-4">
+						   			<div class="rating-wrap">
+							   			<h3 class="mb-4">Give a Review</h3>
+							   			<p class="star">
+							   				<span>
+							   					<i class="ion-ios-star-outline"></i>
+							   					<i class="ion-ios-star-outline"></i>
+							   					<i class="ion-ios-star-outline"></i>
+							   					<i class="ion-ios-star-outline"></i>
+							   					<i class="ion-ios-star-outline"></i>
+							   					(98%)
+						   					</span>
+						   					<span>20 Reviews</span>
+							   			</p>
+							   			<p class="star">
+							   				<span>
+							   					<i class="ion-ios-star-outline"></i>
+							   					<i class="ion-ios-star-outline"></i>
+							   					<i class="ion-ios-star-outline"></i>
+							   					<i class="ion-ios-star-outline"></i>
+							   					<i class="ion-ios-star-outline"></i>
+							   					(85%)
+						   					</span>
+						   					<span>10 Reviews</span>
+							   			</p>
+							   			<p class="star">
+							   				<span>
+							   					<i class="ion-ios-star-outline"></i>
+							   					<i class="ion-ios-star-outline"></i>
+							   					<i class="ion-ios-star-outline"></i>
+							   					<i class="ion-ios-star-outline"></i>
+							   					<i class="ion-ios-star-outline"></i>
+							   					(98%)
+						   					</span>
+						   					<span>5 Reviews</span>
+							   			</p>
+							   			<p class="star">
+							   				<span>
+							   					<i class="ion-ios-star-outline"></i>
+							   					<i class="ion-ios-star-outline"></i>
+							   					<i class="ion-ios-star-outline"></i>
+							   					<i class="ion-ios-star-outline"></i>
+							   					<i class="ion-ios-star-outline"></i>
+							   					(98%)
+						   					</span>
+						   					<span>0 Reviews</span>
+							   			</p>
+							   			<p class="star">
+							   				<span>
+							   					<i class="ion-ios-star-outline"></i>
+							   					<i class="ion-ios-star-outline"></i>
+							   					<i class="ion-ios-star-outline"></i>
+							   					<i class="ion-ios-star-outline"></i>
+							   					<i class="ion-ios-star-outline"></i>
+							   					(98%)
+						   					</span>
+						   					<span>0 Reviews</span>
+							   			</p>
+							   		</div>
+						   		</div>
+						   	</div>
+              </div>
+            </div>
+          </div>
+        </div>
+    	</div>
+    </section>
+		
+
+    <footer class="ftco-footer ftco-section">
+      <div class="container">
+      	<div class="row">
+      		<div class="mouse">
+						<a href="#" class="mouse-icon">
+							<div class="mouse-wheel"><span class="ion-ios-arrow-up"></span></div>
+						</a>
+					</div>
+      	</div>
+        <div class="row mb-5">
+          <div class="col-md">
+            <div class="ftco-footer-widget mb-4">
+              <h2 class="ftco-heading-2">Minishop</h2>
+              <p>Far far away, behind the word mountains, far from the countries Vokalia and Consonantia.</p>
+              <ul class="ftco-footer-social list-unstyled float-md-left float-lft mt-5">
+                <li class="ftco-animate"><a href="#"><span class="icon-twitter"></span></a></li>
+                <li class="ftco-animate"><a href="#"><span class="icon-facebook"></span></a></li>
+                <li class="ftco-animate"><a href="#"><span class="icon-instagram"></span></a></li>
+              </ul>
+            </div>
+          </div>
+          <div class="col-md">
+            <div class="ftco-footer-widget mb-4 ml-md-5">
+              <h2 class="ftco-heading-2">Menu</h2>
+              <ul class="list-unstyled">
+                <li><a href="#" class="py-2 d-block">Shop</a></li>
+                <li><a href="#" class="py-2 d-block">About</a></li>
+                <li><a href="#" class="py-2 d-block">Journal</a></li>
+                <li><a href="#" class="py-2 d-block">Contact Us</a></li>
+              </ul>
+            </div>
+          </div>
+          <div class="col-md-4">
+             <div class="ftco-footer-widget mb-4">
+              <h2 class="ftco-heading-2">Help</h2>
+              <div class="d-flex">
+	              <ul class="list-unstyled mr-l-5 pr-l-3 mr-4">
+	                <li><a href="#" class="py-2 d-block">Shipping Information</a></li>
+	                <li><a href="#" class="py-2 d-block">Returns &amp; Exchange</a></li>
+	                <li><a href="#" class="py-2 d-block">Terms &amp; Conditions</a></li>
+	                <li><a href="#" class="py-2 d-block">Privacy Policy</a></li>
+	              </ul>
+	              <ul class="list-unstyled">
+	                <li><a href="#" class="py-2 d-block">FAQs</a></li>
+	                <li><a href="#" class="py-2 d-block">Contact</a></li>
+	              </ul>
+	            </div>
+            </div>
+          </div>
+          <div class="col-md">
+            <div class="ftco-footer-widget mb-4">
+            	<h2 class="ftco-heading-2">Have a Questions?</h2>
+            	<div class="block-23 mb-3">
+	              <ul>
+	                <li><span class="icon icon-map-marker"></span><span class="text">203 Fake St. Mountain View, San Francisco, California, USA</span></li>
+	                <li><a href="#"><span class="icon icon-phone"></span><span class="text">+2 392 3929 210</span></a></li>
+	                <li><a href="#"><span class="icon icon-envelope"></span><span class="text">info@yourdomain.com</span></a></li>
+	              </ul>
+	            </div>
+            </div>
+          </div>
+        </div>
+        <div class="row">
+          <div class="col-md-12 text-center">
+
+            
+          </div>
+        </div>
+      </div>
+    </footer>
+    
+  
+
+  <!-- loader -->
+  <div id="ftco-loader" class="show fullscreen"><svg class="circular" width="48px" height="48px"><circle class="path-bg" cx="24" cy="24" r="22" fill="none" stroke-width="4" stroke="#eeeeee"/><circle class="path" cx="24" cy="24" r="22" fill="none" stroke-width="4" stroke-miterlimit="10" stroke="#F96D00"/></svg></div>
+
+
+  <script src="{% static 'user_side/js/jquery.min.js' %}"></script>
+  <script src="{% static 'user_side/js/jquery-migrate-3.0.1.min.js' %}"></script>
+  <script src="{% static 'user_side/js/popper.min.js' %}"></script>
+  <script src="{% static 'user_side/js/bootstrap.min.js' %}"></script>
+  <script src="{% static 'user_side/js/jquery.easing.1.3.js' %}"></script>
+  <script src="{% static 'user_side/js/jquery.waypoints.min.js' %}"></script>
+  <script src="{% static 'user_side/js/jquery.stellar.min.js' %}"></script>
+  <script src="{% static 'user_side/js/owl.carousel.min.js' %}"></script>
+  <script src="{% static 'user_side/js/jquery.magnific-popup.min.js' %}"></script>
+  <script src="{% static 'user_side/js/aos.js' %}"></script>
+  <script src="{% static 'user_side/js/jquery.animateNumber.min.js' %}"></script>
+  <script src="{% static 'user_side/js/bootstrap-datepicker.js' %}"></script>
+  <script src="{% static 'user_side/js/scrollax.min.js' %}"></script>
+  <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyBVWaKrjvy3MaE7SQ74_uJiULgl1JY0H2s&sensor=false"></script>
+  <script src="{% static 'user_side/js/google-map.js' %}"></script>
+  <script src="{% static 'user_side/js/main.js' %}"></script>
+
+  <!-- The script -->
+  <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+<script>
+    $(document).ready(function () {
+        // Intercept form submission for "Add to Cart"
+        $('#add-to-cart-form').on('submit', function (event) {
+            event.preventDefault(); // Prevent default form submission
+
+            // Collect form data
+            var formData = {
+                'variant_id': $('#variant').val(),
+                'quantity': $('#quantity').val(),
+                'csrfmiddlewaretoken': $('input[name="csrfmiddlewaretoken"]').val()
+            };
+
+            // Debugging: Log form data to console
+            console.log(formData);
+
+            // AJAX POST request to add the item to the cart
+            $.ajax({
+                url: "{% url 'add_to_cart' %}",
+                type: "POST",
+                data: formData,
+                success: function (response) {
+                    if (response.message) {
+                        // Show success message using SweetAlert
+                        Swal.fire({
+                            toast: true,
+                            position: 'top-right',
+                            icon: 'success',
+                            title: 'Item added to cart successfully!',
+                            showConfirmButton: false,
+                            timer: 3000
+                        });
+
+                        // Update cart total items dynamically
+                        $('#cart-total-items').text(response.cart_total_items);
+                    }
+                },
+            });
+        });
+
+        // Quantity increment/decrement handlers
+        $(".quantity-left-minus").click(function (e) {
+            e.preventDefault();
+            var value = parseInt($("#quantity").val(), 10);
+            if (value > 1) {
+                $("#quantity").val(value - 1);
+            }
+        });
+
+        $(".quantity-right-plus").click(function (e) {
+            e.preventDefault();
+            var value = parseInt($("#quantity").val(), 10);
+            var stock = parseInt("{{ product.stock|default:0 }}", 10); // Ensure stock is numeric
+            if (value < stock) {
+                $("#quantity").val(value + 1);
+            }
+        });
+
+        // Fancybox configuration for image gallery
+        Fancybox.bind("[data-fancybox]", {
+            closeButton: "inside",
+            infinite: false
+        });
+
+        // Lightbox configuration for image viewing
+        lightbox.option({
+            'resizeDuration': 200,
+            'wrapAround': true,
+            'fadeDuration': 200,
+            'imageFadeDuration': 200
+        });
+    });
+
+    document.addEventListener('DOMContentLoaded', function () {
+        const variantSelect = document.getElementById('variant');
+        const priceTag = document.getElementById('price-tag');
+
+        // Update price when variant is changed
+        variantSelect.addEventListener('change', function () {
+            const selectedOption = variantSelect.options[variantSelect.selectedIndex];
+            const price = selectedOption.getAttribute('data-price');
+            priceTag.textContent = `₹${parseFloat(price).toFixed(2)}`;
+        });
+    });
+
+    document.getElementById('variant').addEventListener('change', function () {
+        const selectedOption = this.options[this.selectedIndex];
+        const maxStock = selectedOption.getAttribute('data-stock');
+        const quantityInput = document.getElementById('quantity');
+        quantityInput.max = maxStock;
+    });
+
+    document.addEventListener('DOMContentLoaded', function () {
+        const wishlistIcon = document.getElementById('wishlist-icon');
+
+        wishlistIcon.addEventListener('click', function () {
+            const variantId = this.getAttribute('data-variant-id');
+            const isActive = this.classList.contains('active'); // Check current state
+            const action = isActive ? 'remove' : 'add'; // Determine action
+
+            // AJAX request to update the wishlist
+            fetch(`/cart/wishlist/${action}/${variantId}/`, {
+                method: 'POST',
+                headers: {
+                    'X-CSRFToken': '{{ csrf_token }}', // CSRF token for security
+                    'Content-Type': 'application/json'
+                }
+            })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.error) {
+                        Swal.fire({
+                            toast: true,
+                            position: 'top-right',
+                            icon: 'error',
+                            title: data.error,
+                            showConfirmButton: false,
+                            timer: 3000
+                        });
+                    } else {
+                        // Toggle the class only on successful response
+                        this.classList.toggle('active', action === 'add');
+
+                        // Show success message
+                        Swal.fire({
+                            toast: true,
+                            position: 'top-right',
+                            icon: action === 'add' ? 'success' : 'info',
+                            title: action === 'add' ? 'Added to Wishlist!' : 'Removed from Wishlist!',
+                            showConfirmButton: false,
+                            timer: 3000
+                        });
+                    }
+                })
+                .catch(error => {
+                    Swal.fire({
+                        toast: true,
+                        position: 'top-right',
+                        icon: 'error',
+                        title: 'An error occurred while updating the wishlist.',
+                        showConfirmButton: false,
+                        timer: 3000
+                    });
+                });
+        });
+    });
+
+    document.addEventListener("DOMContentLoaded", function () {
+    const addToCartForm = document.querySelector("#add-to-cart-form");
+    const variantSelect = document.querySelector("#variant");
+    const stockDisplay = document.querySelector("#stock-display");
+    const addToCartButton = document.querySelector("#add-to-cart-button");
+    const messageBox = document.querySelector("#cart-message-box");
+    const quantityInput = document.querySelector("#quantity");
+
+    if (variantSelect) {
+        // Update stock and disable "Add to Cart" when stock is zero
+        variantSelect.addEventListener("change", function () {
+            const selectedOption = variantSelect.options[variantSelect.selectedIndex];
+            const stock = parseInt(selectedOption.getAttribute("data-stock"), 10);
+
+            stockDisplay.textContent = stock > 0 ? `In Stock: ${stock}` : "Out of Stock";
+            addToCartButton.disabled = stock <= 0;
+
+            if (stock <= 0) {
+                showMessage("This variant is currently out of stock.", "error");
+            }
+        });
+    }
+
+    if (addToCartForm) {
+        addToCartForm.addEventListener("submit", function (e) {
+            e.preventDefault(); // Prevent default form submission
+            const formData = new FormData(addToCartForm);
+            const actionUrl = addToCartForm.getAttribute("data-url");
+
+            fetch(actionUrl, {
+                method: "POST",
+                headers: {
+                    "X-CSRFToken": formData.get("csrfmiddlewaretoken"),
+                    "X-Requested-With": "XMLHttpRequest",
+                },
+                body: formData,
+            })
+                .then((response) => {
+                    if (!response.ok) {
+                        throw new Error("Network response was not ok.");
+                    }
+                    return response.json();
+                })
+                .then((data) => {
+                    if (data.success) {
+                        showMessage(data.message, "success");
+                        quantityInput.value = 1; // Reset quantity to 1
+                        stockDisplay.textContent = `In Stock: ${data.remaining_stock}`;
+                        if (data.remaining_stock <= 0) {
+                            addToCartButton.disabled = true;
+                            showMessage("This variant is now out of stock.", "error");
+                        }
+                    } else {
+                        showMessage(data.message, "error");
+                    }
+                })
+                .catch((error) => {
+                    console.error("Error:", error);
+                    showMessage("An unexpected error occurred. Please try again.", "error");
+                });
+        });
+    }
+
+    function showMessage(message, type) {
+        if (messageBox) {
+            messageBox.textContent = message;
+            messageBox.className = `message-box ${type}`;
+            messageBox.style.display = "block";
+
+            setTimeout(() => {
+                messageBox.style.display = "none";
+                messageBox.className = "message-box";
+                messageBox.textContent = "";
+            }, 3000);
+        }
+    }
+});
+
+
+document.addEventListener("DOMContentLoaded", function () {
+    const variantDropdown = document.querySelector("#variant");
+    const stockDisplay = document.querySelector("#stock-display");
+    const priceTag = document.querySelector("#price-tag");
+    const addToCartButton = document.querySelector("#add-to-cart-button");
+
+    if (variantDropdown) {
+        variantDropdown.addEventListener("change", function () {
+            const selectedOption = variantDropdown.options[variantDropdown.selectedIndex];
+            const stock = selectedOption.getAttribute("data-stock");
+            const price = selectedOption.getAttribute("data-price");
+            const discountedPrice = selectedOption.getAttribute("data-discounted-price");
+
+            // Update stock display
+            if (stockDisplay) {
+                stockDisplay.textContent = `In Stock: ${stock}`;
+            }
+
+            // Update price display
+            if (priceTag) {
+                if (discountedPrice) {
+                    priceTag.innerHTML = `
+                        <span class="text-muted" style="text-decoration: line-through;">
+                            ₹${parseFloat(price).toFixed(2)}
+                        </span>
+                        <span class="text-success ms-2">
+                            ₹${parseFloat(discountedPrice).toFixed(2)}
+                        </span>
+                    `;
+                } else {
+                    priceTag.textContent = `₹${parseFloat(price).toFixed(2)}`;
+                }
+            }
+
+            // Enable/disable add-to-cart button based on stock
+            if (addToCartButton) {
+                addToCartButton.disabled = parseInt(stock) === 0;
+            }
+        });
+    }
+});
+</script>
+</body>
+</html>	

@@ -1,0 +1,193 @@
+
+{% extends "admin_side/base.html" %}
+
+{% block title %}Dashboard{% endblock %}
+
+{% block content %}
+<style>
+    body {
+        background-color: #f7f8fa;
+    }
+    .sidebar {
+        width: 250px;
+        background-color: #fff;
+        padding: 20px;
+        min-height: 100vh;
+    }
+    .sidebar .nav-link {
+        color: #333;
+        display: flex;
+        align-items: center;
+    }
+    .sidebar .nav-link.active {
+        font-weight: bold;
+        color: #007bff;
+    }
+    .sidebar .nav-link i {
+        margin-right: 15px; 
+    }
+    .content {
+        flex-grow: 1;
+        padding: 20px;
+    }
+    .top-nav {
+        padding: 10px 20px;
+        box-shadow: 0 1px 5px rgba(0, 0, 0, 0.1);
+        background-color: #fff;
+    }
+    .card-custom {
+        margin-bottom: 20px;
+    }
+</style>
+<style>
+  /* General styles for the badge */
+  .badge {
+      font-size: 14px;
+      padding: 5px;
+      color: white;
+  }
+
+  /* Status-based visibility with colors */
+  .badge-pending {
+      background-color: #ffc107; /* Yellow */
+  }
+
+  .badge-processing {
+      background-color: #17a2b8; /* Blue */
+  }
+
+  .badge-shipped {
+      background-color: #28a745; /* Green */
+  }
+
+  .badge-completed {
+      background-color: #6c757d; /* Grey */
+  }
+
+  .badge-cancelled {
+      background-color: #dc3545; /* Red */
+  }
+</style>
+
+<div class="container my-4">
+    <div class="py-5">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <h2>Orders</h2>
+        </div>
+
+        <!-- Search and Filter -->
+        <div class="d-flex justify-content-between align-items-center mb-3">
+            <div class="input-group" style="width: 300px;">
+                <input type="text" class="form-control" placeholder="Search orders...">
+                <div class="input-group-append">
+                    <button class="btn btn-outline-secondary" type="button">
+                        <i class="fas fa-search"></i>
+                    </button>
+                </div>
+            </div>
+            <button class="btn btn-outline-secondary">
+                <i class="fas fa-filter mr-1"></i> Filter
+            </button>
+        </div>
+
+        <!-- Orders Table -->
+        <table class="table table-hover">
+            <thead>
+                <tr>
+                    <th>Order ID</th>
+                    <th>Customer</th>
+                    <th>Date</th>
+                    <th>Total</th>
+                    <th>Status</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody id="orders-table-body">
+              {% if orders %}
+                  {% for order in orders %}
+                      <tr>
+                          <td>#{{ order.id }}</td>
+                          <td>{{ order.user.username }}</td>
+                          <td>{{ order.created_at|date:"Y-m-d" }}</td>
+                          <td>${{ order.total_price }}</td>
+                          <td>
+                              <!-- Dropdown for status -->
+                              <select class="form-control status-dropdown" data-order-id="{{ order.id }}">
+                                  <option value="Pending" {% if order.status == 'Pending' %}selected{% endif %}>Pending</option>
+                                  <option value="Processing" {% if order.status == 'Processing' %}selected{% endif %}>Processing</option>
+                                  <option value="Shipped" {% if order.status == 'Shipped' %}selected{% endif %}>Shipped</option>
+                                  <option value="Completed" {% if order.status == 'Completed' %}selected{% endif %}>Completed</option>
+                                  <option value="Cancelled" {% if order.status == 'Cancelled' %}selected{% endif %}>Cancelled</option>
+                              </select>
+                          </td>
+                          <td>
+                              <button class="btn btn-sm btn-danger" onclick="deleteOrder({{ order.id }})">Delete</button>
+                          </td>
+                      </tr>
+                  {% endfor %}
+              {% else %}
+                  <tr>
+                      <td colspan="6" class="text-center">No orders found.</td>
+                  </tr>
+              {% endif %}
+          </tbody>
+          
+
+<!-- Include jQuery and Bootstrap's JavaScript -->
+<script src="https://code.jquery.com/jquery-3.5.1.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.16.1/umd/popper.min.js"></script>
+<script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/toastr.min.css">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/toastr.min.js"></script>
+<script>
+$(document).ready(function () {
+    // Handle status change via dropdown
+    $('.status-dropdown').on('change', function () {
+        const orderId = $(this).data('order-id');
+        const newStatus = $(this).val();
+
+        $.ajax({
+            url: `/order/update-order-status/${orderId}/`,  // Corrected URL path to match 'order' prefix
+
+            type: 'POST',
+            data: {
+                status: newStatus,
+                csrfmiddlewaretoken: '{{ csrf_token }}'  // Ensure CSRF token is properly included
+            },
+            dataType: 'json',
+            success: function (response) {
+                toastr.success(response.message); // Notify user
+            },
+            error: function (xhr) {
+                const errorMsg = xhr.responseJSON ? xhr.responseJSON.error : 'An error occurred';
+                toastr.error(errorMsg); // Notify error
+            }
+        });
+    });
+});
+
+
+window.deleteOrder = function (orderId) {
+    if (confirm(`Are you sure you want to delete Order #${orderId}?`)) {
+        $.ajax({
+            url: `/order/delete-order/${orderId}/`,
+            type: 'POST',
+            data: {
+                csrfmiddlewaretoken: '{{ csrf_token }}'
+            },
+            dataType: 'json',
+            success: function (response) {
+                $(`tr:has(select[data-order-id="${orderId}"])`).remove(); // Remove row from table
+                toastr.success(response.message); // Notify success
+            },
+            error: function (xhr) {
+                const errorMsg = xhr.responseJSON ? xhr.responseJSON.error : 'An error occurred';
+                toastr.error(errorMsg); // Notify error
+            }
+        });
+    }
+};
+
+  </script>
+
+{% endblock %}

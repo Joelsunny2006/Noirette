@@ -1,0 +1,142 @@
+{% extends "admin_side/base.html" %}
+
+{% block title %}
+Dashboard
+{% endblock %}
+
+{% block content %}
+    <title>Settings Page</title>
+</head>
+
+<body>
+    <style>
+        body {
+          background-color: #f7f8fa;
+        }
+        body {
+            transition: background-color 0.5s, color 0.5s;
+        }
+        
+        .light-mode {
+            background-color: white;
+            color: black;
+        }
+        
+        .dark-mode {
+            background-color: #121212;
+            color: white;
+        }
+        .sidebar {
+          width: 250px;
+          background-color: #fff;
+          padding: 20px;
+          min-height: 100vh;
+        }
+        .sidebar .nav-link {
+          color: #333;
+        }
+        .sidebar .nav-link.active {
+          font-weight: bold;
+          color: #007bff;
+        }
+        .content {
+          flex-grow: 1;
+          padding: 20px;
+        }
+        .top-nav {
+          padding: 10px 20px;
+          box-shadow: 0 1px 5px rgba(0, 0, 0, 0.1);
+          background-color: #fff;
+        }
+        .card-custom {
+          margin-bottom: 20px;
+        }
+      </style>
+    </head>
+    <body>
+    
+    <div class="d-flex">
+      <!-- Sidebar -->
+
+    
+    <div class="container mx-auto px-4 py-4">
+        <h1 class="text-2xl font-semibold mb-6">Settings</h1>
+        <ul class="nav nav-tabs" id="myTab" role="tablist">
+            <li class="nav-item">
+                <a class="nav-link active" id="general-tab" data-toggle="tab" href="#general" role="tab"
+                    aria-controls="general" aria-selected="true">General</a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link" id="notifications-tab" data-toggle="tab" href="#notifications" role="tab"
+                    aria-controls="notifications" aria-selected="false">Notifications</a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link" id="security-tab" data-toggle="tab" href="#security" role="tab"
+                    aria-controls="security" aria-selected="false">Security</a>
+            </li>
+        </ul>
+        <div class="tab-content" id="myTabContent">
+            <div class="tab-pane fade show active" id="general" role="tabpanel" aria-labelledby="general-tab">
+                <div class="space-y-4">
+                    <div class="form-group">
+                        <label for="storeName">Store Name</label>
+                        <input type="text" class="form-control" id="storeName" placeholder="Your Store Name">
+                    </div>
+                    <div class="form-group">
+                        <label for="storeUrl">Store URL</label>
+                        <input type="url" class="form-control" id="storeUrl" placeholder="https://yourstore.com">
+                    </div>
+                    <div class="form-group">
+                        <label for="supportEmail">Support Email</label>
+                        <input type="email" class="form-control" id="supportEmail" placeholder="support@yourstore.com">
+                    </div>
+                    <div class="form-group">
+                        <label for="timezone">Timezone</label>
+                        <select class="form-control" id="timezone">
+                            <option value="" disabled selected>Select timezone</option>
+                            <option value="utc">UTC</option>
+                            <option value="est">Eastern Time</option>
+                            <option value="cst">Central Time</option>
+                            <option value="pst">Pacific Time</option>
+                        </select>
+                    </div>
+                    <button class="btn btn-primary">Save Changes</button>
+                </div>
+            </div>
+            <div class="tab-pane fade" id="notifications" role="tabpanel" aria-labelledby="notifications-tab">
+                <div class="form-check">
+                    <input class="form-check-input" type="checkbox" id="email-notifications" checked>
+                    <label class="form-check-label" for="email-notifications">Email Notifications</label>
+                </div>
+                <div class="form-check">
+                    <input class="form-check-input" type="checkbox" id="push-notifications">
+                    <label class="form-check-label" for="push-notifications">Push Notifications</label>
+                </div>
+                <div class="form-check">
+                    <input class="form-check-input" type="checkbox" id="sms-notifications" checked>
+                    <label class="form-check-label" for="sms-notifications">SMS Notifications</label>
+                </div>
+                <button class="btn btn-primary">Save Preferences</button>
+            </div>
+            <div class="tab-pane fade" id="security" role="tabpanel" aria-labelledby="security-tab">
+                <div class="form-group">
+                    <label for="currentPassword">Current Password</label>
+                    <input type="password" class="form-control" id="currentPassword">
+                </div>
+                <div class="form-group">
+                    <label for="newPassword">New Password</label>
+                    <input type="password" class="form-control" id="newPassword">
+                </div>
+                <div class="form-group">
+                    <label for="confirmPassword">Confirm New Password</label>
+                    <input type="password" class="form-control" id="confirmPassword">
+                </div>
+                <button class="btn btn-primary">Change Password</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.9.3/dist/umd/popper.min.js"></script>
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+{%endblock%}

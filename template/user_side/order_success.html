@@ -1,0 +1,59 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Order Placed Successfully</title>
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+    <style>
+        .hero-image {
+            position: relative;
+            width: 100%;
+            height: 65vh;
+            object-fit: cover;
+            z-index: -1;
+        }
+        .overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 65vh;
+            background: rgba(0, 0, 0, 0.5);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .content {
+            z-index: 1;
+            color: white;
+            text-shadow: 0 2px 4px rgba(0, 0, 0, 0.8);
+        }
+    </style>
+</head>
+<body class="h-screen bg-gray-100">
+    <header>
+        <img src="{% static 'user_side/images/image2.jpg' %}" alt="Hero Image" class="hero-image">
+        <div class="overlay">
+            <div class="text-center content">
+                <h1 class="text-5xl font-bold mb-4">🎉 Order Placed Successfully!</h1>
+                <p class="text-xl mb-6">Thank you for shopping with us. Your order is now being processed.</p>
+                <a href="{% url 'view_cart' %}" class="bg-green-600 text-white px-6 py-3 rounded-lg font-semibold hover:bg-green-700 transition">Go to Cart</a>
+            </div>
+        </div>
+    </header>
+
+    <main class="container mx-auto mt-8 px-4">
+        <div class="bg-white rounded-lg shadow-md p-6 text-center">
+            <h2 class="text-3xl font-semibold text-gray-800">Your Order is on its Way! 🚚</h2>
+            <p class="text-gray-600 mt-4">We’re preparing your items for shipping. You’ll receive a confirmation email soon.</p>
+
+            <div class="mt-6">
+                <a href="{% url 'shop' %}" class="inline-block bg-blue-500 text-white px-6 py-3 rounded-lg font-semibold hover:bg-blue-600 transition">Continue Shopping</a>
+                <a href="{% url 'view_cart' %}" class="inline-block bg-green-600 text-white px-6 py-3 rounded-lg font-semibold hover:bg-green-700 transition ml-4">View Cart</a>
+            </div>
+        </div>
+    </main>
+</body>
+</html>

@@ -1,0 +1,97 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>{% block title %}My Website{% endblock %}</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <style>
+    body {
+      background-color: #f7f8fa;
+    }
+    .sidebar {
+      width: 250px;
+      background-color: #fff;
+      padding: 20px;
+      min-height: 100vh;
+    }
+    .sidebar .nav-link {
+      color: #333;
+    }
+    .sidebar .nav-link.active {
+      font-weight: bold;
+      color: #007bff;
+    }
+    .content {
+      flex-grow: 1;
+      padding: 20px;
+    }
+    .top-nav {
+      padding: 10px 20px;
+      box-shadow: 0 1px 5px rgba(0, 0, 0, 0.1);
+      background-color: #fff;
+    }
+    .card-custom {
+      margin-bottom: 20px;
+    }
+  </style>
+</head>
+<body>
+
+<div class="d-flex">
+  <!-- Sidebar -->
+  <div class="sidebar border-end">
+    <h5 class="mb-4 d-flex align-items-center">
+        <i class="fas fa-columns me-2 text-primary"></i> Admin Panel
+    </h5>
+    <nav class="nav flex-column">
+        <a class="nav-link active" href="{% url 'admin_dashboard' %}"><i class="fas fa-columns me-2"></i> Dashboard</a>
+        <a class="nav-link" href="{% url 'product_list' %}"><i class="fas fa-box me-2"></i> Products</a>
+        <a class="nav-link" href="{% url 'category' %}"><i class="fas fa-list me-2"></i> Category</a>
+        <a class="nav-link" href="{% url 'brand' %}"><i class="fas fa-users me-2"></i> Brand</a>
+        <a class="nav-link" href="{% url 'order:orders' %}"><i class="fas fa-shopping-cart me-2"></i> Orders</a>
+        <a class="nav-link" href="{% url 'customer' %}"><i class="fas fa-users me-2"></i> Customers</a>
+        <a class="nav-link" href="{% url 'coupon_list' %}"><i class="fas fa-tags me-2"></i> Coupon</a> <!-- Updated icon -->
+        <a class="nav-link" href="{% url 'salesanalytics' %}"><i class="fas fa-chart-line me-2"></i> Sales & Analytics</a>
+        <a class="nav-link" href="{% url 'contents' %}"><i class="fas fa-file-alt me-2"></i> Content</a>
+        <a class="nav-link" href="{% url 'settings' %}"><i class="fas fa-cog me-2"></i> Settings</a>
+    </nav>
+</div>
+
+
+{% block content %}
+        <!-- Default content -->
+{% endblock %}
+
+  
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.bundle.min.js"></script>
+<script>
+  // Chart.js code to display the chart
+  const ctx = document.getElementById('revenueChart').getContext('2d');
+  const revenueChart = new Chart(ctx, {
+      type: 'line',
+      data: {
+          labels: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun'],
+          datasets: [{
+              label: 'Revenue',
+              data: [4000, 3000, 5000, 4500, 6000, 5500],
+              borderColor: 'rgba(75, 192, 192, 1)',
+              fill: false
+          }]
+      },
+      options: {
+          responsive: true,
+          scales: {
+              x: { title: { display: true, text: 'Month' }},
+              y: { title: { display: true, text: 'Revenue in USD' }}
+          }
+      }
+  });
+</script>
+</body>
+</html>

@@ -1,0 +1,127 @@
+{% extends "admin_side/base.html" %}
+
+{% block title %}
+Brands
+{% endblock %}
+
+{% block content %}
+<div class="main-content">
+    <div class="top-nav">
+        <h2 class="mb-0">Brands</h2>
+        <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#brandModal">
+            <i class="fas fa-plus"></i> Add Brand
+        </button>
+    </div>
+
+    {% if messages %}
+    <div class="messages">
+        {% for message in messages %}
+        <div class="alert {% if message.tags %}alert-{{ message.tags }}{% endif %}">
+            {{ message }}
+        </div>
+        {% endfor %}
+    </div>
+    {% endif %}
+
+    <div class="card">
+        <div class="card-header">Brand List</div>
+        <div class="card-body">
+            <table class="table table-hover">
+                <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>Name</th>
+                        <th>Status</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for brand in brands %}
+                    <tr>
+                        <td>{{ brand.id }}</td>
+                        <td>{{ brand.name }}</td>
+                        <td>
+                            <span class="badge {% if brand.status == 'active' %}bg-success{% else %}bg-secondary{% endif %}">
+                                {{ brand.status|title }}
+                            </span>
+                        </td>
+                        <td>
+                            <button class="btn btn-sm btn-outline-primary edit-brand" 
+                                    data-bs-toggle="modal" 
+                                    data-bs-target="#brandModal"
+                                    data-brand-id="{{ brand.id }}"
+                                    data-brand-name="{{ brand.name }}"
+                                    data-brand-status="{{ brand.status }}">
+                                Edit
+                            </button>
+                            <a href="{% url 'delete_brand' brand.id %}" class="btn btn-sm btn-outline-danger"
+                               onclick="return confirm('Are you sure you want to delete this brand?');">Delete</a>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<!-- Brand Modal -->
+<div class="modal fade" id="brandModal" tabindex="-1" aria-labelledby="brandModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <form method="post" action="{% url 'add_brand' %}">
+            {% csrf_token %}
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="brandModalLabel">Add Brand</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <input type="hidden" name="brandId" id="brandId">
+                    <div class="mb-3">
+                        <label for="brandName" class="form-label">Brand Name</label>
+                        <input type="text" class="form-control" id="brandName" name="brandName" maxlength="100" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="brandStatus" class="form-label">Status</label>
+                        <select id="brandStatus" name="brandStatus" class="form-select" required>
+                            <option value="active">Active</option>
+                            <option value="inactive">Inactive</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                    <button type="submit" class="btn btn-primary">Save Brand</button>
+                </div>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const editButtons = document.querySelectorAll('.edit-brand');
+    const modalTitle = document.getElementById('brandModalLabel');
+    const brandIdInput = document.getElementById('brandId');
+    const brandNameInput = document.getElementById('brandName');
+    const brandStatusInput = document.getElementById('brandStatus');
+
+    editButtons.forEach(button => {
+        button.addEventListener('click', function() {
+            modalTitle.textContent = 'Edit Brand';
+            brandIdInput.value = this.getAttribute('data-brand-id');
+            brandNameInput.value = this.getAttribute('data-brand-name');
+            brandStatusInput.value = this.getAttribute('data-brand-status');
+        });
+    });
+
+    // Reset modal when closed
+    document.getElementById('brandModal').addEventListener('hidden.bs.modal', function () {
+        modalTitle.textContent = 'Add Brand';
+        brandIdInput.value = '';
+        brandNameInput.value = '';
+        brandStatusInput.value = 'active';
+    });
+});
+</script>
+{% endblock %}
