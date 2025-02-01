@@ -5,23 +5,43 @@ from django.contrib import messages
 from django.core.validators import RegexValidator
 
 class AddressForm(forms.ModelForm):
-    # Regex validator for validating phone numbers
-    phone = forms.CharField(
-        validators=[
-            RegexValidator(
-                regex=r'^\+?1?\d{9,15}$', 
-                message="Phone number must be entered in the format: '+999999999'. Up to 10 digits allowed."
-            )
-        ]
+    # First Name, Last Name, City, and State: Only alphabets, no spaces or numbers
+    alpha_validator = RegexValidator(
+        regex=r'^[A-Za-z]+$',
+        message="Only alphabets are allowed (No spaces or numbers)."
     )
     
+    first_name = forms.CharField(validators=[alpha_validator], max_length=50)
+    last_name = forms.CharField(validators=[alpha_validator], max_length=50)
+    city = forms.CharField(validators=[alpha_validator], max_length=50)
+    state = forms.CharField(validators=[alpha_validator], max_length=50)
+
+    # Phone Number: Only digits (10-15 characters, no spaces)
+    phone = forms.CharField(
+        validators=[RegexValidator(regex=r'^\d{10,15}$', message="Only digits allowed (10-15 numbers, no spaces).")],
+        max_length=15
+    )
+
+    # Postcode: Only digits (5-10 characters, no spaces)
+    postcode = forms.CharField(
+        validators=[RegexValidator(regex=r'^\d{5,10}$', message="Only digits allowed (5-10 numbers, no spaces).")],
+        max_length=10
+    )
 
     class Meta:
         model = Address
         fields = [
             'first_name', 'last_name', 'street_address', 'apartment', 
-            'city', 'state', 'postcode', 'phone', 'email', 'is_default', 
+            'city', 'state', 'postcode', 'phone', 'email', 'is_default'
         ]
+    def clean(self):
+        cleaned_data = super().clean()
+        required_fields = ['first_name', 'last_name', 'street_address', 'city', 'state', 'postcode', 'phone', 'email']
+        for field in required_fields:
+            if not cleaned_data.get(field):
+                self.add_error(field, f"{field.replace('_', ' ').title()} is required.")
+        return cleaned_data
+    
 
     # forms.py
 from django import forms

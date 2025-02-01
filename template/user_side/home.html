@@ -29,6 +29,22 @@
     <link rel="stylesheet" href="{% static 'user_side/css/icomoon.css' %}">
     <link rel="stylesheet" href="{% static 'user_side/css/style.css' %}">
   </head>
+  <style>
+	#timer .time {
+    text-align: center;
+    padding: 10px;
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 5px;
+    margin: 0 5px;
+}
+
+#timer .time span {
+    display: block;
+    font-size: 12px;
+    text-transform: uppercase;
+    margin-top: 5px;
+}
+  </style>
   <body class="goto-here">
 		
 	<nav class="navbar navbar-expand-lg navbar-dark ftco_navbar bg-dark ftco-navbar-light fixed-top" id="ftco-navbar">
@@ -341,297 +357,306 @@
 	</section>
 	
 	
-
-    <section class="ftco-section ftco-deal bg-primary">
-    	<div class="container">
-    		<div class="row">
-    			<div class="col-md-6">
-    				<img src="{% static 'user_side/images/prod-1.png' %}" class="img-fluid" alt="">
-    			</div>
-    			<div class="col-md-6">
-    				<div class="heading-section heading-section-white">
-    					<span class="subheading">Deal of the month</span>
-	            <h2 class="mb-3">Deal of the month</h2>
-	          </div>
-    				<div id="timer" class="d-flex mb-4">
-						  <div class="time" id="days"></div>
-						  <div class="time pl-4" id="hours"></div>
-						  <div class="time pl-4" id="minutes"></div>
-						  <div class="time pl-4" id="seconds"></div>
-						</div>
-						<div class="text-deal">
-							<h2><a href="#">Nike Free RN 2019 iD</a></h2>
-							<p class="price"><span class="mr-2 price-dc">$120.00</span><span class="price-sale">$80.00</span></p>
-							<ul class="thumb-deal d-flex mt-4">
-								<li class="img" style="background-image: url(images/product-6.png);"></li>
-								<li class="img" style="background-image: url(images/product-2.png);"></li>
-								<li class="img" style="background-image: url(images/product-4.png);"></li>
-							</ul>
-						</div>
-    			</div>
-    		</div>
-    	</div>
-    </section>
-
-    <section class="ftco-section testimony-section">
-      <div class="container">
-        <div class="row">
-        	<div class="col-lg-5">
-        		<div class="services-flow">
-        			<div class="services-2 p-4 d-flex ftco-animate">
-        				<div class="icon">
-        					<span class="flaticon-bag"></span>
-        				</div>
-        				<div class="text">
-	        				<h3>Free Shipping</h3>
-	        				<p class="mb-0">Separated they live in. A small river named Duden flows</p>
-        				</div>
-        			</div>
-        			<div class="services-2 p-4 d-flex ftco-animate">
-        				<div class="icon">
-        					<span class="flaticon-heart-box"></span>
-        				</div>
-        				<div class="text">
-	        				<h3>Valuable Gifts</h3>
-	        				<p class="mb-0">Separated they live in. A small river named Duden flows</p>
-	        			</div>
-        			</div>
-        			<div class="services-2 p-4 d-flex ftco-animate">
-        				<div class="icon">
-        					<span class="flaticon-payment-security"></span>
-        				</div>
-        				<div class="text">
-	        				<h3>All Day Support</h3>
-	        				<p class="mb-0">Separated they live in. A small river named Duden flows</p>
-	        			</div>
-        			</div>
-        			<div class="services-2 p-4 d-flex ftco-animate">
-        				<div class="icon">
-        					<span class="flaticon-customer-service"></span>
-        				</div>
-        				<div class="text">
-	        				<h3>All Day Support</h3>
-	        				<p class="mb-0">Separated they live in. A small river named Duden flows</p>
-	        			</div>
-        			</div>
-        		</div>
-        	</div>
-          <div class="col-lg-7">
-          	<div class="heading-section ftco-animate mb-5">
-	            <h2 class="mb-4">Our satisfied customer says</h2>
-	            <p>Far far away, behind the word mountains, far from the countries Vokalia and Consonantia, there live the blind texts. Separated they live in</p>
-	          </div>
-            <div class="carousel-testimony owl-carousel">
-              <div class="item">
-                <div class="testimony-wrap">
-                  <div class="user-img mb-4" style="background-image: url(images/person_1.jpg)">
-                    <span class="quote d-flex align-items-center justify-content-center">
-                      <i class="icon-quote-left"></i>
-                    </span>
-                  </div>
-                  <div class="text">
-                    <p class="mb-4 pl-4 line">Far far away, behind the word mountains, far from the countries Vokalia and Consonantia, there live the blind texts.</p>
-                    <p class="name">Garreth Smith</p>
-                    <span class="position">Marketing Manager</span>
-                  </div>
-                </div>
-              </div>
-              <div class="item">
-                <div class="testimony-wrap">
-                  <div class="user-img mb-4" style="background-image: url(images/person_2.jpg)">
-                    <span class="quote d-flex align-items-center justify-content-center">
-                      <i class="icon-quote-left"></i>
-                    </span>
-                  </div>
-                  <div class="text">
-                    <p class="mb-4 pl-4 line">Far far away, behind the word mountains, far from the countries Vokalia and Consonantia, there live the blind texts.</p>
-                    <p class="name">Garreth Smith</p>
-                    <span class="position">Interface Designer</span>
-                  </div>
-                </div>
-              </div>
-              <div class="item">
-                <div class="testimony-wrap">
-                  <div class="user-img mb-4" style="background-image: url(images/person_3.jpg)">
-                    <span class="quote d-flex align-items-center justify-content-center">
-                      <i class="icon-quote-left"></i>
-                    </span>
-                  </div>
-                  <div class="text">
-                    <p class="mb-4 pl-4 line">Far far away, behind the word mountains, far from the countries Vokalia and Consonantia, there live the blind texts.</p>
-                    <p class="name">Garreth Smith</p>
-                    <span class="position">UI Designer</span>
-                  </div>
-                </div>
-              </div>
-              <div class="item">
-                <div class="testimony-wrap">
-                  <div class="user-img mb-4" style="background-image: url(images/person_1.jpg)">
-                    <span class="quote d-flex align-items-center justify-content-center">
-                      <i class="icon-quote-left"></i>
-                    </span>
-                  </div>
-                  <div class="text">
-                    <p class="mb-4 pl-4 line">Far far away, behind the word mountains, far from the countries Vokalia and Consonantia, there live the blind texts.</p>
-                    <p class="name">Garreth Smith</p>
-                    <span class="position">Web Developer</span>
-                  </div>
-                </div>
-              </div>
-              <div class="item">
-                <div class="testimony-wrap">
-                  <div class="user-img mb-4" style="background-image: url(images/person_1.jpg)">
-                    <span class="quote d-flex align-items-center justify-content-center">
-                      <i class="icon-quote-left"></i>
-                    </span>
-                  </div>
-                  <div class="text">
-                    <p class="mb-4 pl-4 line">Far far away, behind the word mountains, far from the countries Vokalia and Consonantia, there live the blind texts.</p>
-                    <p class="name">Garreth Smith</p>
-                    <span class="position">System Analyst</span>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-    </section>
-
-    <section class="ftco-gallery">
-    	<div class="container">
-    		<div class="row justify-content-center">
-    			<div class="col-md-8 heading-section text-center mb-4 ftco-animate">
-            <h2 class="mb-4">Follow Us On Instagram</h2>
-            <p>Far far away, behind the word mountains, far from the countries Vokalia and Consonantia, there live the blind texts. Separated they live in</p>
-          </div>
-    		</div>
-    	</div>
-    	<div class="container-fluid px-0">
-    		<div class="row no-gutters">
-					<div class="col-md-4 col-lg-2 ftco-animate">
-						<a href="images/gallery-1.jpg" class="gallery image-popup img d-flex align-items-center" style="background-image: url(images/gallery-1.jpg);">
-							<div class="icon mb-4 d-flex align-items-center justify-content-center">
-    						<span class="icon-instagram"></span>
-    					</div>
-						</a>
+	<section class="ftco-section ftco-deal bg-primary" style="padding: 0;">
+		<div class="container-fluid">
+			<div class="row no-gutters">
+				<!-- Image Column -->
+				<div class="col-md-6 d-flex align-items-start">
+					<img src="{% static 'user_side/images/without_background.png' %}" 
+						 class="img-fluid" 
+						 alt="Noirette Chocolate Deal" 
+						 style="width: 100%; height: 100%; object-fit: contain; margin: 0; padding: 0;">
+				</div>
+				<!-- Content Column -->
+				<div class="col-md-6 d-flex flex-column justify-content-center">
+					<div class="heading-section heading-section-white">
+						<span class="subheading">Deal of the Month</span>
+						<h2 class="mb-3">Indulge in Luxury</h2>
 					</div>
-					<div class="col-md-4 col-lg-2 ftco-animate">
-						<a href="images/gallery-2.jpg" class="gallery image-popup img d-flex align-items-center" style="background-image: url(images/gallery-2.jpg);">
-							<div class="icon mb-4 d-flex align-items-center justify-content-center">
-    						<span class="icon-instagram"></span>
-    					</div>
-						</a>
-					</div>
-					<div class="col-md-4 col-lg-2 ftco-animate">
-						<a href="images/gallery-3.jpg" class="gallery image-popup img d-flex align-items-center" style="background-image: url(images/gallery-3.jpg);">
-							<div class="icon mb-4 d-flex align-items-center justify-content-center">
-    						<span class="icon-instagram"></span>
-    					</div>
-						</a>
-					</div>
-					<div class="col-md-4 col-lg-2 ftco-animate">
-						<a href="images/gallery-4.jpg" class="gallery image-popup img d-flex align-items-center" style="background-image: url(images/gallery-4.jpg);">
-							<div class="icon mb-4 d-flex align-items-center justify-content-center">
-    						<span class="icon-instagram"></span>
-    					</div>
-						</a>
-					</div>
-					<div class="col-md-4 col-lg-2 ftco-animate">
-						<a href="images/gallery-5.jpg" class="gallery image-popup img d-flex align-items-center" style="background-image: url(images/gallery-5.jpg);">
-							<div class="icon mb-4 d-flex align-items-center justify-content-center">
-    						<span class="icon-instagram"></span>
-    					</div>
-						</a>
-					</div>
-					<div class="col-md-4 col-lg-2 ftco-animate">
-						<a href="images/gallery-6.jpg" class="gallery image-popup img d-flex align-items-center" style="background-image: url(images/gallery-6.jpg);">
-							<div class="icon mb-4 d-flex align-items-center justify-content-center">
-    						<span class="icon-instagram"></span>
-    					</div>
-						</a>
-					</div>
-        </div>
-    	</div>
-    </section>
-
-    <footer class="ftco-footer ftco-section">
-      <div class="container">
-      	<div class="row">
-      		<div class="mouse">
-						<a href="#" class="mouse-icon">
-							<div class="mouse-wheel"><span class="ion-ios-arrow-up"></span></div>
-						</a>
-					</div>
-      	</div>
-        <div class="row mb-5">
-          <div class="col-md">
-            <div class="ftco-footer-widget mb-4">
-              <h2 class="ftco-heading-2">Minishop</h2>
-              <p>Far far away, behind the word mountains, far from the countries Vokalia and Consonantia.</p>
-              <ul class="ftco-footer-social list-unstyled float-md-left float-lft mt-5">
-                <li class="ftco-animate"><a href="#"><span class="icon-twitter"></span></a></li>
-                <li class="ftco-animate"><a href="#"><span class="icon-facebook"></span></a></li>
-                <li class="ftco-animate"><a href="#"><span class="icon-instagram"></span></a></li>
-              </ul>
-            </div>
-          </div>
-          <div class="col-md">
-            <div class="ftco-footer-widget mb-4 ml-md-5">
-              <h2 class="ftco-heading-2">Menu</h2>
-              <ul class="list-unstyled">
-                <li><a href="#" class="py-2 d-block">Shop</a></li>
-                <li><a href="#" class="py-2 d-block">About</a></li>
-                <li><a href="#" class="py-2 d-block">Journal</a></li>
-                <li><a href="#" class="py-2 d-block">Contact Us</a></li>
-              </ul>
-            </div>
-          </div>
-          <div class="col-md-4">
-             <div class="ftco-footer-widget mb-4">
-              <h2 class="ftco-heading-2">Help</h2>
-              <div class="d-flex">
-	              <ul class="list-unstyled mr-l-5 pr-l-3 mr-4">
-	                <li><a href="#" class="py-2 d-block">Shipping Information</a></li>
-	                <li><a href="#" class="py-2 d-block">Returns &amp; Exchange</a></li>
-	                <li><a href="#" class="py-2 d-block">Terms &amp; Conditions</a></li>
-	                <li><a href="#" class="py-2 d-block">Privacy Policy</a></li>
-	              </ul>
-	              <ul class="list-unstyled">
-	                <li><a href="#" class="py-2 d-block">FAQs</a></li>
-	                <li><a href="#" class="py-2 d-block">Contact</a></li>
-	              </ul>
-	            </div>
-            </div>
-          </div>
-          <div class="col-md">
-            <div class="ftco-footer-widget mb-4">
-            	<h2 class="ftco-heading-2">Have a Questions?</h2>
-            	<div class="block-23 mb-3">
-	              <ul>
-	                <li><span class="icon icon-map-marker"></span><span class="text">203 Fake St. Mountain View, San Francisco, California, USA</span></li>
-	                <li><a href="#"><span class="icon icon-phone"></span><span class="text">+2 392 3929 210</span></a></li>
-	                <li><a href="#"><span class="icon icon-envelope"></span><span class="text">info@yourdomain.com</span></a></li>
-	              </ul>
-	            </div>
-            </div>
-          </div>
-        </div>
-        <div class="row">
-          <div class="col-md-12 text-center">
-
-            <p><!-- Link back to Colorlib can't be removed. Template is licensed under CC BY 3.0. -->
-						  Copyright &copy;<script>document.write(new Date().getFullYear());</script> All rights reserved | This template is made with <i class="icon-heart color-danger" aria-hidden="true"></i> by <a href="https://colorlib.com" target="_blank">Colorlib</a>
-						  <!-- Link back to Colorlib can't be removed. Template is licensed under CC BY 3.0. -->
+					<div id="timer" class="d-flex mb-4">
+						<div class="time" id="days"></div>
+						<div class="time pl-4" id="hours"></div>
+						<div class="time pl-4" id="minutes"></div>
+						<div class="time pl-4" id="seconds"></div>
+					</div>					
+					<div class="text-deal">
+						{% if best_selling_product %}
+						<!-- Display the product name -->
+						<h2>
+							<a href="{% url 'product' best_selling_product.serial_number %}">
+								{{ best_selling_product.name }}
+							</a>
+						</h2>
+						<!-- Display the product prices -->
+						<p class="price">
+							<span class="mr-2 price-dc">₹{{ best_selling_product.variants.first.variant_price }}</span>
+							{% if best_selling_product.variants.first.discounted_price %}
+							<span class="price-sale">₹{{ best_selling_product.variants.first.discounted_price }}</span>
+							{% endif %}
 						</p>
-          </div>
-        </div>
-      </div>
-    </footer>
+						
+						{% endif %}
+					</div>
+				</div>
+			</div>
+		</div>
+	</section>
+		
+
+	<section class="ftco-section testimony-section">
+		<div class="container">
+		  <div class="row">
+			  <div class="col-lg-5">
+				  <div class="services-flow">
+					  <div class="services-2 p-4 d-flex ftco-animate">
+						  <div class="icon">
+							  <span class="flaticon-bag"></span>
+						  </div>
+						  <div class="text">
+							  <h3>Free Delivery</h3>
+							  <p class="mb-0">Experience the joy of free delivery with every box of our luxurious chocolates.</p>
+						  </div>
+					  </div>
+					  <div class="services-2 p-4 d-flex ftco-animate">
+						  <div class="icon">
+							  <span class="flaticon-heart-box"></span>
+						  </div>
+						  <div class="text">
+							  <h3>Exclusive Gifts</h3>
+							  <p class="mb-0">Indulge your loved ones with our specially crafted chocolate gift boxes.</p>
+						  </div>
+					  </div>
+					  <div class="services-2 p-4 d-flex ftco-animate">
+						  <div class="icon">
+							  <span class="flaticon-payment-security"></span>
+						  </div>
+						  <div class="text">
+							  <h3>Premium Quality</h3>
+							  <p class="mb-0">Our chocolates are made with the finest ingredients for a superior taste experience.</p>
+						  </div>
+					  </div>
+					  <div class="services-2 p-4 d-flex ftco-animate">
+						  <div class="icon">
+							  <span class="flaticon-customer-service"></span>
+						  </div>
+						  <div class="text">
+							  <h3>Customer Support</h3>
+							  <p class="mb-0">We’re here to help you with all your chocolate needs, anytime you need us.</p>
+						  </div>
+					  </div>
+				  </div>
+			  </div>
+			<div class="col-lg-7">
+				<div class="heading-section ftco-animate mb-5">
+				  <h2 class="mb-4">What our happy customers say</h2>
+				  <p>Discover what makes our chocolates unforgettable. See what our delighted customers have to share about their sweet experiences.</p>
+				</div>
+			  <div class="carousel-testimony owl-carousel">
+				<div class="item">
+				  <div class="testimony-wrap">
+					<div class="user-img mb-4" style="background-image: url(images/person_1.jpg)">
+					  <span class="quote d-flex align-items-center justify-content-center">
+						<i class="icon-quote-left"></i>
+					  </span>
+					</div>
+					<div class="text">
+					  <p class="mb-4 pl-4 line">The truffles are heavenly! I’ve never tasted chocolate so rich and velvety.</p>
+					  <p class="name">Garreth Smith</p>
+					  <span class="position">Chocolate Enthusiast</span>
+					</div>
+				  </div>
+				</div>
+				<div class="item">
+				  <div class="testimony-wrap">
+					<div class="user-img mb-4" style="background-image: url(images/person_2.jpg)">
+					  <span class="quote d-flex align-items-center justify-content-center">
+						<i class="icon-quote-left"></i>
+					  </span>
+					</div>
+					<div class="text">
+					  <p class="mb-4 pl-4 line">I ordered a gift box for my friend, and she couldn’t stop raving about it!</p>
+					  <p class="name">Emily Johnson</p>
+					  <span class="position">Gift Giver</span>
+					</div>
+				  </div>
+				</div>
+				<div class="item">
+				  <div class="testimony-wrap">
+					<div class="user-img mb-4" style="background-image: url(images/person_3.jpg)">
+					  <span class="quote d-flex align-items-center justify-content-center">
+						<i class="icon-quote-left"></i>
+					  </span>
+					</div>
+					<div class="text">
+					  <p class="mb-4 pl-4 line">The packaging is elegant, and the flavors are absolutely divine. Worth every penny!</p>
+					  <p class="name">Jonathan Lee</p>
+					  <span class="position">Food Critic</span>
+					</div>
+				  </div>
+				</div>
+				<div class="item">
+				  <div class="testimony-wrap">
+					<div class="user-img mb-4" style="background-image: url(images/person_1.jpg)">
+					  <span class="quote d-flex align-items-center justify-content-center">
+						<i class="icon-quote-left"></i>
+					  </span>
+					</div>
+					<div class="text">
+					  <p class="mb-4 pl-4 line">The dark chocolate collection is my personal favorite. Perfectly balanced and decadent!</p>
+					  <p class="name">Sophia Brown</p>
+					  <span class="position">Dark Chocolate Lover</span>
+					</div>
+				  </div>
+				</div>
+				<div class="item">
+				  <div class="testimony-wrap">
+					<div class="user-img mb-4" style="background-image: url(images/person_1.jpg)">
+					  <span class="quote d-flex align-items-center justify-content-center">
+						<i class="icon-quote-left"></i>
+					  </span>
+					</div>
+					<div class="text">
+					  <p class="mb-4 pl-4 line">Every bite feels like a luxurious escape. I’m hooked on these chocolates!</p>
+					  <p class="name">Michael Carter</p>
+					  <span class="position">Luxury Chocolate Aficionado</span>
+					</div>
+				  </div>
+				</div>
+			  </div>
+			</div>
+		  </div>
+		</div>
+	  </section>
+  
+
+   
+	  <footer class="ftco-footer ftco-section">
+		<div class="container">
+			<div class="row">
+				<div class="mouse">
+						  <a href="#" class="mouse-icon">
+							  <div class="mouse-wheel"><span class="ion-ios-arrow-up"></span></div>
+						  </a>
+					  </div>
+			</div>
+		  <div class="row mb-5">
+			<div class="col-md">
+			  <div class="ftco-footer-widget mb-4">
+				<h2 class="ftco-heading-2">Noirette</h2>
+				<p>Indulge in the art of fine chocolate. At Noirette, we craft every piece with love and passion to deliver the ultimate chocolate experience.</p>
+				<ul class="ftco-footer-social list-unstyled float-md-left float-lft mt-5">
+				  <li class="ftco-animate"><a href="#"><span class="icon-twitter"></span></a></li>
+				  <li class="ftco-animate"><a href="#"><span class="icon-facebook"></span></a></li>
+				  <li class="ftco-animate"><a href="#"><span class="icon-instagram"></span></a></li>
+				</ul>
+			  </div>
+			</div>
+			<div class="col-md">
+			  <div class="ftco-footer-widget mb-4 ml-md-5">
+				<h2 class="ftco-heading-2">Menu</h2>
+				<ul class="list-unstyled">
+				  <li><a href="{% url 'shop' %}" class="py-2 d-block">Shop Chocolates</a></li>
+				  <li><a href="#" class="py-2 d-block">About Noirette</a></li>
+				  <li><a href="#" class="py-2 d-block">Our Journal</a></li>
+				  <li><a href="#" class="py-2 d-block">Contact Us</a></li>
+				</ul>
+			  </div>
+			</div>
+			<div class="col-md-4">
+			   <div class="ftco-footer-widget mb-4">
+				<h2 class="ftco-heading-2">Help</h2>
+				<div class="d-flex">
+					<ul class="list-unstyled mr-l-5 pr-l-3 mr-4">
+					  <li><a href="#" class="py-2 d-block">Shipping Information</a></li>
+					  <li><a href="#" class="py-2 d-block">Returns &amp; Exchanges</a></li>
+					  <li><a href="#" class="py-2 d-block">Terms &amp; Conditions</a></li>
+					  <li><a href="#" class="py-2 d-block">Privacy Policy</a></li>
+					</ul>
+					<ul class="list-unstyled">
+					  <li><a href="#" class="py-2 d-block">FAQs</a></li>
+					  <li><a href="#" class="py-2 d-block">Contact Support</a></li>
+					</ul>
+				  </div>
+			  </div>
+			</div>
+			<div class="col-md">
+			  <div class="ftco-footer-widget mb-4">
+				  <h2 class="ftco-heading-2">Have Questions?</h2>
+				  <div class="block-23 mb-3">
+					<ul>
+					  <li><span class="icon icon-map-marker"></span><span class="text">Noirette , Kochi, Ernakulam, Kerala, India</span></li>
+					  <li><a href="#"><span class="icon icon-phone"></span><span class="text">+91 9633558031</span></a></li>
+					  <li><a href="#"><span class="icon icon-envelope"></span><span class="text">support@noirette.com</span></a></li>
+					</ul>
+				  </div>
+			  </div>
+			</div>
+		  </div>
+		  <div class="row">
+			
+		  </div>
+		</div>
+	  </footer>
+  
     
 	<div id="ftco-loader" class="show fullscreen"><svg class="circular" width="48px" height="48px"><circle class="path-bg" cx="24" cy="24" r="22" fill="none" stroke-width="4" stroke="#eeeeee"/><circle class="path" cx="24" cy="24" r="22" fill="none" stroke-width="4" stroke-miterlimit="10" stroke="#F96D00"/></svg></div>
 
+	<script>
+		window.onload = function () {
+    // Function to get the end of current month
+    function getEndOfMonth() {
+        const now = new Date();
+        // Get the last day of current month at 23:59:59.999
+        return new Date(now.getFullYear(), now.getMonth() + 1, 0, 23, 59, 59, 999);
+    }
 
+    // Function to format numbers to always show two digits
+    function formatNumber(number) {
+        return number < 10 ? "0" + number : number;
+    }
+
+    // Function to update the countdown timer
+    function updateTimer() {
+        const now = new Date();
+        const endOfMonth = getEndOfMonth();
+        const timeLeft = endOfMonth - now;
+
+        if (timeLeft <= 0) {
+            // Reset timer at the end of month
+            document.getElementById("days").innerHTML = "00";
+            document.getElementById("hours").innerHTML = "00";
+            document.getElementById("minutes").innerHTML = "00";
+            document.getElementById("seconds").innerHTML = "00";
+            return;
+        }
+
+        // Calculate remaining time components
+        const days = Math.floor(timeLeft / (1000 * 60 * 60 * 24));
+        const hours = Math.floor((timeLeft % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+        const minutes = Math.floor((timeLeft % (1000 * 60 * 60)) / (1000 * 60));
+        const seconds = Math.floor((timeLeft % (1000 * 60)) / 1000);
+
+        // Update the display with formatted numbers
+        document.getElementById("days").innerHTML = formatNumber(days);
+        document.getElementById("hours").innerHTML = formatNumber(hours);
+        document.getElementById("minutes").innerHTML = formatNumber(minutes);
+        document.getElementById("seconds").innerHTML = formatNumber(seconds);
+
+        // Add text labels
+        document.getElementById("days").innerHTML += "<span>Days</span>";
+        document.getElementById("hours").innerHTML += "<span>Hours</span>";
+        document.getElementById("minutes").innerHTML += "<span>Minutes</span>";
+        document.getElementById("seconds").innerHTML += "<span>Seconds</span>";
+    }
+
+    // Update timer every second
+    updateTimer(); // Initial call
+    setInterval(updateTimer, 1000);
+};
+	</script>
+	
+	
+	
 
   <script src="{% static 'user_side/js/jquery.min.js' %}"></script>
   <script src="{% static 'user_side/js/jquery-migrate-3.0.1.min.js' %}"></script>
@@ -644,7 +669,6 @@
   <script src="{% static 'user_side/js/jquery.magnific-popup.min.js' %}"></script>
   <script src="{% static 'user_side/js/aos.js' %}"></script>
   <script src="{% static 'user_side/js/jquery.animateNumber.min.js' %}"></script>
-  <script src="{% static 'user_side/js/bootstrap-datepicker.js' %}"></script>
   <script src="{% static 'user_side/js/scrollax.min.js' %}"></script>
   <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyBVWaKrjvy3MaE7SQ74_uJiULgl1JY0H2s&sensor=false"></script>
   <script src="{% static 'user_side/js/google-map.js' %}"></script>

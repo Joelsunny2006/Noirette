@@ -209,24 +209,26 @@ Sales-report
 
         <!-- Change your filter form to this -->
         <div class="filters">
-            <form class="filter-form" method="post" action="">
-                {% csrf_token %}
+            <form class="filter-form" method="get" action="">
                 <div class="filter-group">
                     <label for="start-date">Start Date:</label>
-                    <input type="date" id="start-date" name="start_date" class="form-control" value="{{ start_date }}">
+                    <input type="date" id="start-date" name="start_date" class="form-control" value="{{ request.GET.start_date }}">
                 </div>
                 <div class="filter-group">
                     <label for="end-date">End Date:</label>
-                    <input type="date" id="end-date" name="end_date" class="form-control" value="{{ end_date }}">
+                    <input type="date" id="end-date" name="end_date" class="form-control" value="{{ request.GET.end_date }}">
                 </div>
                 <button type="submit" class="btn btn-primary">Apply Filter</button>
-                {% if filter_applied %}
-                    <a href="{% url 'sales_report' %}" class="btn btn-secondary">Clear Filter</a>
+                
+                {% if request.GET.start_date or request.GET.end_date %}
+                    <a href="{% url 'salesanalytics' %}" class="btn btn-secondary">Clear Filter</a>
                 {% endif %}
-                <a href="?filter=weekly" class="btn btn-primary {% if filter_type == 'weekly' %}active{% endif %}">Weekly</a>
-                <a href="?filter=monthly" class="btn btn-primary {% if filter_type == 'monthly' %}active{% endif %}">Monthly</a>
+                
+                <a href="?filter=weekly" class="btn btn-primary {% if request.GET.filter == 'weekly' %}active{% endif %}">Weekly</a>
+                <a href="?filter=monthly" class="btn btn-primary {% if request.GET.filter == 'monthly' %}active{% endif %}">Monthly</a>
             </form>
         </div>
+        
 
         <!-- Stats Cards -->
         <div class="stats-grid">
@@ -244,48 +246,74 @@ Sales-report
             </div>
         </div>
 
-        <!-- Orders Table -->
-        <div class="orders-table">
-            <table id="sales-table">
-                <thead>
-                    <tr>
-                        <th>Date</th>
-                        <th>Order ID</th>
-                        <th>Customer</th>
-                        <th>Status</th>
-                        <th>Items</th>
-                        <th>Total</th>
-                        <th>Payment Method</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    {% for order in orders %}
-                    <tr>
-                        <td>{{ order.created_at|date:"Y-m-d H:i" }}</td>
-                        <td>#{{ order.id }}</td>
-                        <td>{{ order.user.username }}</td>
-                        <td>
-                            <span class="status-badge status-{{ order.status|lower }}">
-                                {{ order.status }}
-                            </span>
-                        </td>
-                        <td>
-                            {% for item in order.items.all %}
-                                {{ item.quantity }}x {{ item.variant.variant_name }}<br>
-                            {% endfor %}
-                        </td>
-                        <td>₹{{ order.total_price }}</td>
-                        <td>{{ order.get_payment_method_display }}</td>
-                    </tr>
-                    {% empty %}
-                    <tr>
-                        <td colspan="9" style="text-align: center;">No orders found</td>
-                    </tr>
+<!-- Orders Table -->
+<div class="orders-table">
+    <table id="sales-table">
+        <thead>
+            <tr>
+                <th>Date</th>
+                <th>Order ID</th>
+                <th>Customer</th>
+                <th>Status</th>
+                <th>Items</th>
+                <th>Total</th>
+                <th>Payment Method</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for order in page_obj %}
+            <tr>
+                <td>{{ order.created_at|date:"Y-m-d H:i" }}</td>
+                <td>#{{ order.id }}</td>
+                <td>{{ order.user.username }}</td>
+                <td>
+                    <span class="status-badge status-{{ order.status|lower }}">
+                        {{ order.status }}
+                    </span>
+                </td>
+                <td>
+                    {% for item in order.items.all %}
+                        {{ item.quantity }}x {{ item.variant.variant_name }}<br>
                     {% endfor %}
-                </tbody>
-            </table>
-        </div>
-    </div>
+                </td>
+                <td>₹{{ order.total_price }}</td>
+                <td>{{ order.get_payment_method_display }}</td>
+            </tr>
+            {% empty %}
+            <tr>
+                <td colspan="7" style="text-align: center;">No orders found</td>
+            </tr>
+            {% endfor %}
+        </tbody>                
+    </table>
+
+    <!-- Pagination Controls -->
+    <nav aria-label="Sales Report Pagination">
+        <ul class="pagination justify-content-center">
+            {% if page_obj.has_previous %}
+                <li class="page-item">
+                    <a class="page-link" href="?page=1{% if request.GET.filter %}&filter={{ request.GET.filter }}{% endif %}{% if request.GET.start_date and request.GET.end_date %}&start_date={{ request.GET.start_date }}&end_date={{ request.GET.end_date }}{% endif %}">&laquo; First</a>
+                </li>
+                <li class="page-item">
+                    <a class="page-link" href="?page={{ page_obj.previous_page_number }}{% if request.GET.filter %}&filter={{ request.GET.filter }}{% endif %}{% if request.GET.start_date and request.GET.end_date %}&start_date={{ request.GET.start_date }}&end_date={{ request.GET.end_date }}{% endif %}">Previous</a>
+                </li>
+            {% endif %}
+
+            <li class="page-item disabled">
+                <span class="page-link">Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}</span>
+            </li>
+
+            {% if page_obj.has_next %}
+                <li class="page-item">
+                    <a class="page-link" href="?page={{ page_obj.next_page_number }}{% if request.GET.filter %}&filter={{ request.GET.filter }}{% endif %}{% if request.GET.start_date and request.GET.end_date %}&start_date={{ request.GET.start_date }}&end_date={{ request.GET.end_date }}{% endif %}">Next</a>
+                </li>
+                <li class="page-item">
+                    <a class="page-link" href="?page={{ page_obj.paginator.num_pages }}{% if request.GET.filter %}&filter={{ request.GET.filter }}{% endif %}{% if request.GET.start_date and request.GET.end_date %}&start_date={{ request.GET.start_date }}&end_date={{ request.GET.end_date }}{% endif %}">Last &raquo;</a>
+                </li>
+            {% endif %}
+        </ul>
+    </nav>
+</div>
     <script>
         document.getElementById('download-pdf').addEventListener('click', function () {
             console.log('Download PDF button clicked');

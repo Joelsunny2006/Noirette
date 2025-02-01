@@ -12,9 +12,10 @@ from django.db.models import Q
 from django.utils import timezone
 from order.models import *
 from django.utils.timezone import now
+from admin_panel.decorator import admin_required 
 
 # Admin-side Views
-
+@admin_required 
 def coupon_list(request):
     # Get query parameters
     search_query = request.GET.get('search', '')

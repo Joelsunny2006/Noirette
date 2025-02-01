@@ -103,35 +103,62 @@
                 </tr>
             </thead>
             <tbody id="orders-table-body">
-              {% if orders %}
-                  {% for order in orders %}
-                      <tr>
-                          <td>#{{ order.id }}</td>
-                          <td>{{ order.user.username }}</td>
-                          <td>{{ order.created_at|date:"Y-m-d" }}</td>
-                          <td>${{ order.total_price }}</td>
-                          <td>
-                              <!-- Dropdown for status -->
-                              <select class="form-control status-dropdown" data-order-id="{{ order.id }}">
-                                  <option value="Pending" {% if order.status == 'Pending' %}selected{% endif %}>Pending</option>
-                                  <option value="Processing" {% if order.status == 'Processing' %}selected{% endif %}>Processing</option>
-                                  <option value="Shipped" {% if order.status == 'Shipped' %}selected{% endif %}>Shipped</option>
-                                  <option value="Completed" {% if order.status == 'Completed' %}selected{% endif %}>Completed</option>
-                                  <option value="Cancelled" {% if order.status == 'Cancelled' %}selected{% endif %}>Cancelled</option>
-                              </select>
-                          </td>
-                          <td>
-                              <button class="btn btn-sm btn-danger" onclick="deleteOrder({{ order.id }})">Delete</button>
-                          </td>
-                      </tr>
-                  {% endfor %}
-              {% else %}
-                  <tr>
-                      <td colspan="6" class="text-center">No orders found.</td>
-                  </tr>
-              {% endif %}
-          </tbody>
-          
+                {% if page_obj %}
+                    {% for order in page_obj %}
+                        <tr>
+                            <td>#{{ order.id }}</td>
+                            <td>{{ order.user.username }}</td>
+                            <td>{{ order.created_at|date:"Y-m-d" }}</td>
+                            <td>${{ order.total_price }}</td>
+                            <td>
+                                <!-- Dropdown for status -->
+                                <select class="form-control status-dropdown" data-order-id="{{ order.id }}">
+                                    <option value="Pending" {% if order.status == 'Pending' %}selected{% endif %}>Pending</option>
+                                    <option value="Processing" {% if order.status == 'Processing' %}selected{% endif %}>Processing</option>
+                                    <option value="Shipped" {% if order.status == 'Shipped' %}selected{% endif %}>Shipped</option>
+                                    <option value="Completed" {% if order.status == 'Completed' %}selected{% endif %}>Completed</option>
+                                    <option value="Cancelled" {% if order.status == 'Cancelled' %}selected{% endif %}>Cancelled</option>
+                                </select>
+                            </td>
+                            <td>
+                                <button class="btn btn-sm btn-danger" onclick="deleteOrder({{ order.id }})">Delete</button>
+                            </td>
+                        </tr>
+                    {% endfor %}
+                {% else %}
+                    <tr>
+                        <td colspan="6" class="text-center">No orders found.</td>
+                    </tr>
+                {% endif %}
+            </tbody>            
+        </table>
+        <!-- Pagination Controls -->
+<nav aria-label="Orders pagination">
+    <ul class="pagination justify-content-center">
+      {% if page_obj.has_previous %}
+        <li class="page-item">
+          <a class="page-link" href="?page=1">&laquo; First</a>
+        </li>
+        <li class="page-item">
+          <a class="page-link" href="?page={{ page_obj.previous_page_number }}">Previous</a>
+        </li>
+      {% endif %}
+  
+      <li class="page-item disabled">
+        <span class="page-link">Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}</span>
+      </li>
+  
+      {% if page_obj.has_next %}
+        <li class="page-item">
+          <a class="page-link" href="?page={{ page_obj.next_page_number }}">Next</a>
+        </li>
+        <li class="page-item">
+          <a class="page-link" href="?page={{ page_obj.paginator.num_pages }}">Last &raquo;</a>
+        </li>
+      {% endif %}
+    </ul>
+  </nav>
+  
 
 <!-- Include jQuery and Bootstrap's JavaScript -->
 <script src="https://code.jquery.com/jquery-3.5.1.min.js"></script>

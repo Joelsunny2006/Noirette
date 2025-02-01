@@ -1,0 +1,42 @@
+# Python bytecode
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+
+# Django specific
+db.sqlite3
+*.log
+*.pot
+*.pyc
+*.pyo
+*.pyd
+*.swp
+*.swo
+
+# Virtual environments
+venv/
+.env/
+
+# PyCharm
+.idea/
+
+# VS Code
+.vscode/
+
+# macOS system files
+.DS_Store
+
+# Windows system files
+Thumbs.db
+
+# Ignore coverage reports
+.coverage
+*.cover
+
+# Ignore migrations
+**/migrations/*.pyc
+**/migrations/*.pyo
+
+# Ignore .env file for secret keys, passwords, etc.
+.env

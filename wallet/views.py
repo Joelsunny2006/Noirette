@@ -6,23 +6,40 @@ import razorpay
 from django.conf import settings
 from django.http import JsonResponse
 from django.views.decorators.csrf import csrf_exempt
+from django.db.models import Sum
+
 @login_required
 def wallet_view(request):
     """
-    Display wallet balance and transaction history
+    Display wallet balance and transaction history, including Razorpay credits.
     """
     try:
         wallet, created = Wallet.objects.get_or_create(user=request.user)
         transactions = wallet.transactions.all().order_by('-timestamp')
-        
+
+        # Calculate total credited amount (including wallet funding)
+        total_credited = (
+            wallet.transactions.filter(transaction_type='credit')
+            .aggregate(total=Sum('amount'))['total'] or 0
+        )
+
+        # Calculate total debited amount
+        total_debited = (
+            wallet.transactions.filter(transaction_type='debit')
+            .aggregate(total=Sum('amount'))['total'] or 0
+        )
+
         context = {
             'wallet': wallet,
-            'transactions': transactions
+            'transactions': transactions,
+            'total_credited': total_credited,
+            'total_debited': total_debited,
         }
         return render(request, 'user_side/wallet.html', context)
+
     except Exception as e:
         messages.error(request, f"An error occurred: {str(e)}")
-        return redirect('wallet_view')  # Adjust to your home page URL name
+        return redirect('wallet_view')  # Adjust the redirect as needed
 
 def process_wallet_refund(order):
     """
@@ -94,38 +111,39 @@ def create_wallet_razorpay_order(request):
 @csrf_exempt
 @login_required
 def wallet_payment_success(request):
-    """
-    Handle successful wallet funding
-    """
     if request.method == 'POST':
         try:
-            # Verify the payment signature
             params_dict = {
                 'razorpay_payment_id': request.POST.get('razorpay_payment_id'),
                 'razorpay_order_id': request.POST.get('razorpay_order_id'),
                 'razorpay_signature': request.POST.get('razorpay_signature')
             }
-            
-            # Verify signature
-            razorpay_client.utility.verify_payment_signature(params_dict)
-            
-            # Get payment details
-            payment = razorpay_client.payment.fetch(params_dict['razorpay_payment_id'])
+
+            client = razorpay.Client(auth=(settings.RAZORPAY_KEY_ID, settings.RAZORPAY_KEY_SECRET))
+            client.utility.verify_payment_signature(params_dict)
+
+            payment = client.payment.fetch(params_dict['razorpay_payment_id'])
             amount = payment['amount'] / 100  # Convert back to rupees
-            
-            # Create wallet transaction
+
             wallet, created = Wallet.objects.get_or_create(user=request.user)
-            WalletTransaction.objects.create(
+
+            # Add a transaction for Razorpay funding
+            transaction = WalletTransaction.objects.create(
                 wallet=wallet,
                 amount=amount,
                 transaction_type='credit',
                 description='Wallet funding via Razorpay'
             )
-            
+
+            # Manually update the balance to ensure consistency
+            wallet.balance += amount
+            wallet.save()
+
             messages.success(request, f'₹{amount} added to your wallet successfully!')
             return JsonResponse({'status': 'success'})
-        
+
         except Exception as e:
+            logger.error(f"Error in wallet_payment_success: {e}")
             return JsonResponse({'error': str(e)}, status=400)
-    
+
     return JsonResponse({'error': 'Invalid request'}, status=400)

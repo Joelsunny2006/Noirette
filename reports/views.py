@@ -20,10 +20,15 @@ from datetime import datetime, timedelta
 from decimal import Decimal
 from reportlab.lib.pagesizes import letter
 from django.contrib import messages
+from admin_panel.decorator import admin_required 
+from django.core.paginator import Paginator
 
+@admin_required
 def sales_report(request):
     # Initialize default queryset
-    orders = Order.objects.all().order_by('-created_at')
+    orders = Order.objects.all().order_by('-created_at')  # Newest orders first
+
+    print(orders)
     
     # Initialize date filter variables
     start_date = None
@@ -71,16 +76,21 @@ def sales_report(request):
             orders = orders.filter(created_at__gte=start_date)
             filter_applied = True
 
+    # Pagination
+    paginator = Paginator(orders, 10)  # 10 orders per page
+    page_number = request.GET.get('page')
+    page_obj = paginator.get_page(page_number)
+
     # Calculate summary statistics
     summary_stats = orders.aggregate(
         total_orders=Count('id'),
         total_order_amount=Sum('total_price'),
         total_discount=Sum('coupon_discount', default=0)
     )
-
+    
     # Prepare context with default values for empty queryset
     context = {
-        'orders': orders,
+        'page_obj': page_obj,  # Changed from 'orders' to 'page_obj'
         'total_orders': summary_stats['total_orders'] or 0,
         'total_order_amount': summary_stats['total_order_amount'] or 0,
         'total_discount': summary_stats['total_discount'] or 0,
@@ -91,7 +101,6 @@ def sales_report(request):
     }
 
     return render(request, 'admin_side/sales_report.html', context)
-
 
 def get_date_range(report_type, start_date=None, end_date=None):
     """Helper function to calculate date ranges based on report type"""
@@ -110,7 +119,6 @@ def get_date_range(report_type, start_date=None, end_date=None):
         return start_date, today
     elif report_type == 'custom' and start_date and end_date:
         return start_date, end_date
-    
     return today, today
 
 @require_http_methods(["GET"])
@@ -340,58 +348,60 @@ def download_sales_report(request):
         return JsonResponse({'error': str(e)}, status=500)
     
 
-from django.shortcuts import render
-from django.db.models import Sum
 from datetime import datetime, timedelta
+from django.utils import timezone
+from django.shortcuts import render
+from django.core.paginator import Paginator
+from django.db.models import Sum
+from django.contrib.admin.views.decorators import staff_member_required
 
+@staff_member_required
 def salesanalytics(request):
-    filter_type = request.GET.get('filter', 'all')  # Default filter is 'all'
-    start_date = request.POST.get('start_date')
-    end_date = request.POST.get('end_date')
+    filter_type = request.GET.get('filter', 'all')
+    start_date = request.GET.get('start_date')
+    end_date = request.GET.get('end_date')
 
-    # Get the current date
-    today = datetime.today()
+    print(start_date,end_date)
 
-    # Handle filtering by dates
+    today = timezone.now()
+
     if filter_type == 'weekly':
-        # Filter by last week (7 days ago)
         start_date = today - timedelta(days=7)
         orders = Order.objects.filter(created_at__gte=start_date)
     elif filter_type == 'monthly':
-        # Filter by this month
         orders = Order.objects.filter(created_at__month=today.month, created_at__year=today.year)
     elif start_date and end_date:
-        # Filter by custom date range
+        start_date = timezone.make_aware(datetime.strptime(start_date, "%Y-%m-%d"))
+        end_date = timezone.make_aware(datetime.strptime(end_date, "%Y-%m-%d"))
         orders = Order.objects.filter(created_at__range=[start_date, end_date])
     else:
-        # All orders
         orders = Order.objects.all()
 
-    # Calculate total orders, total order amount, and total discount
+    # ✅ Explicitly order the queryset
+    orders = orders.order_by('-created_at')
+
+    # Calculate total values
     total_orders = orders.count()
-
-    # Total amount from order items
-    total_order_amount = orders.aggregate(
-        total_amount=Sum('items__total_price')
-    )['total_amount'] or 0
-
-    # Calculate total discount (if discount is stored in OrderItem or calculated from it)
-    total_discount = orders.aggregate(
-        total_discount=Sum('items__variant__discounted_price')  # Assuming discount is in variant linked with OrderItem
-    )['total_discount'] or 0
-
-    # Optional: Get total payment methods or status breakdown
+    total_order_amount = orders.aggregate(total_amount=Sum('items__total_price'))['total_amount'] or 0
+    total_discount = orders.aggregate(total_discount=Sum('items__variant__discounted_price'))['total_discount'] or 0
     payment_methods = orders.values('payment_method').annotate(count=Sum('total_price')).order_by('payment_method')
 
+    # Pagination
+    paginator = Paginator(orders, 10)  # Show 10 orders per page
+    page_number = request.GET.get('page')
+    page_obj = paginator.get_page(page_number)
+
     context = {
+        'page_obj': page_obj,
         'orders': orders,
         'total_orders': total_orders,
         'total_order_amount': total_order_amount,
         'total_discount': total_discount,
-        'payment_methods': payment_methods,  # Optional, for showing breakdown by payment method
+        'payment_methods': payment_methods,
     }
 
     return render(request, 'admin_side/salesanalytics.html', context)
+
 
 
 

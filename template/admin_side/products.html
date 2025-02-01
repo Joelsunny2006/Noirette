@@ -7,6 +7,8 @@
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet">
   <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" rel="stylesheet">
   <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.12/cropper.min.css" rel="stylesheet"/>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.12/cropper.min.js"></script>
   <style>
     .container { max-width: 1000px; }
     .dropdown-item.text-red { color: red; }
@@ -119,58 +121,85 @@
             </tr>
           </thead>
           <tbody id="products-table-body">
-            {% for product in products %}
-        <tr>
-            <td>{{ product.name }}</td>
-            <td>{{ product.category.name }}</td>
-            <td>{{ product.brand.name }}</td>
-            <td>
-                <div class="d-flex">
+            {% for product in page_obj %}
+              <tr>
+                <td>{{ product.name }}</td>
+                <td>{{ product.category.name }}</td>
+                <td>{{ product.brand.name }}</td>
+                <td>
+                  <div class="d-flex">
                     {% for image in product.images.all %}
-                    <img src="{{ image.image_url.url }}" alt="{{ product.name }}" class="img-thumbnail" style="width: 50px; height: 50px; margin-right: 5px;">
+                      <img src="{{ image.image_url.url }}" alt="{{ product.name }}" class="img-thumbnail" style="width: 50px; height: 50px; margin-right: 5px;">
                     {% empty %}
-                    <p>No images available for this product.</p>
+                      <p>No images available for this product.</p>
                     {% endfor %}
-                </div>
-            </td>
-            <td>
-                <ul class="list-unstyled mb-0">
+                  </div>
+                </td>
+                <td>
+                  <ul class="list-unstyled mb-0">
                     {% for variant in product.variants.all %}
-                    <li>
+                      <li>
                         <span>{{ variant.variant_name }}</span>
                         - ${{ variant.variant_price|floatformat:2 }}
                         (Stock: {{ variant.variant_stock }})
-                    </li>
+                      </li>
                     {% endfor %}
                     {% if product.variants.count == 0 %}
-                    <span class="text-muted">No variants</span>
+                      <span class="text-muted">No variants</span>
                     {% endif %}
-                </ul>
-            </td>
-            <td>
-                <div class="dropdown">
+                  </ul>
+                </td>
+                <td>
+                  <div class="dropdown">
                     <button class="btn btn-link text-dark p-0" type="button" data-bs-toggle="dropdown">
-                        <i class="fas fa-ellipsis-h"></i>
+                      <i class="fas fa-ellipsis-h"></i>
                     </button>
                     <ul class="dropdown-menu">
-                        <li>
-                            <a class="dropdown-item" href="{% url 'update_product' product.serial_number %}">Edit</a>
-                        </li>
-                        <li>
-                            <hr class="dropdown-divider">
-                        </li>
-                        <li>
-                            <a class="dropdown-item text-red" 
-                               href="{% url 'delete_product' product.serial_number %}" 
-                               onclick="return confirm('Are you sure you want to delete this product?')">Delete</a>
-                        </li>
+                      <li>
+                        <a class="dropdown-item" href="{% url 'update_product' product.serial_number %}">Edit</a>
+                      </li>
+                      <li>
+                        <hr class="dropdown-divider">
+                      </li>
+                      <li>
+                        <a class="dropdown-item text-red" 
+                           href="{% url 'delete_product' product.serial_number %}" 
+                           onclick="return confirm('Are you sure you want to delete this product?')">Delete</a>
+                      </li>
                     </ul>
-                </div>
-            </td>
-        </tr>
-        {% endfor %}
-          </tbody>
+                  </div>
+                </td>
+              </tr>
+            {% endfor %}
+          </tbody>          
         </table>
+        <!-- Pagination Controls -->
+<nav aria-label="Page navigation">
+  <ul class="pagination justify-content-center">
+    {% if page_obj.has_previous %}
+      <li class="page-item">
+        <a class="page-link" href="?page=1">&laquo; First</a>
+      </li>
+      <li class="page-item">
+        <a class="page-link" href="?page={{ page_obj.previous_page_number }}">Previous</a>
+      </li>
+    {% endif %}
+
+    <li class="page-item disabled">
+      <span class="page-link">Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}</span>
+    </li>
+
+    {% if page_obj.has_next %}
+      <li class="page-item">
+        <a class="page-link" href="?page={{ page_obj.next_page_number }}">Next</a>
+      </li>
+      <li class="page-item">
+        <a class="page-link" href="?page={{ page_obj.paginator.num_pages }}">Last &raquo;</a>
+      </li>
+    {% endif %}
+  </ul>
+</nav>
+
       </div>
     </div>
   </div>
@@ -245,12 +274,33 @@
           <div class="mb-3">
             <label for="product-images" class="form-label">Images (Max 5)</label>
             <div class="drag-drop-zone border p-3 text-center" id="image-upload-zone" role="button" tabindex="0" aria-describedby="imageUploadHelp">
-              Drag and drop images here or click to select
-              <input type="file" id="product-images" name="product_images" multiple class="d-none" accept="image/*">
+                Drag and drop images here or click to select
+                <input type="file" id="product-images" name="product_images" multiple class="d-none" accept="image/*">
             </div>
             <small id="imageUploadHelp" class="form-text text-muted">You can upload up to 5 images.</small>
             <div class="preview-container d-flex flex-wrap mt-3" id="image-preview-container"></div>
-          </div>
+        </div>
+        
+        <!-- Cropping Modal -->
+        <div class="modal fade" id="cropModal" tabindex="-1" aria-labelledby="cropModalLabel" aria-hidden="true">
+            <div class="modal-dialog modal-lg">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title" id="cropModalLabel">Crop Image</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    <div class="modal-body">
+                        <div class="img-container">
+                            <img id="imageToCrop" src="" alt="Image to crop" style="max-width: 100%;">
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                        <button type="button" class="btn btn-primary" id="cropButton">Crop</button>
+                    </div>
+                </div>
+            </div>
+        </div>
 
           <!-- Product Description -->
           <div class="mb-3">
@@ -414,6 +464,80 @@
     });
 
   });
+
+
+  document.addEventListener('DOMContentLoaded', function() {
+        const imageInput = document.getElementById('product-images');
+        const previewContainer = document.getElementById('image-preview-container');
+        const cropModal = new bootstrap.Modal(document.getElementById('cropModal'));
+        const imageToCrop = document.getElementById('imageToCrop');
+        const cropButton = document.getElementById('cropButton');
+        let cropper;
+        let clickedPreviewImage;
+        let selectedFileIndex;
+        
+        function createPreviewImage(src, index) {
+            const img = document.createElement('img');
+            img.src = src;
+            img.classList.add('preview-image', 'm-2');
+            img.style.maxWidth = '150px';
+            img.style.maxHeight = '150px';
+            img.dataset.index = index;
+            img.onclick = function() {
+                imageToCrop.src = src;
+                cropModal.show();
+                selectedFileIndex = index;
+                clickedPreviewImage = img;
+            };
+            previewContainer.appendChild(img);
+        }
+
+        imageInput.addEventListener('change', function(event) {
+            previewContainer.innerHTML = '';
+            Array.from(event.target.files).forEach((file, index) => {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    createPreviewImage(e.target.result, index);
+                };
+                reader.readAsDataURL(file);
+            });
+        });
+
+        document.getElementById('cropModal').addEventListener('shown.bs.modal', function () {
+            cropper = new Cropper(imageToCrop, {
+                aspectRatio: NaN,
+                viewMode: 1,
+                dragMode: 'move',
+                guides: true,
+                background: false,
+            });
+        });
+
+        document.getElementById('cropModal').addEventListener('hidden.bs.modal', function () {
+            if (cropper) {
+                cropper.destroy();
+            }
+        });
+
+        cropButton.addEventListener('click', function() {
+            const croppedCanvas = cropper.getCroppedCanvas({
+                imageSmoothingEnabled: true,
+                imageSmoothingQuality: 'high'
+            });
+
+            croppedCanvas.toBlob(function(blob) {
+                const file = new File([blob], 'cropped_image.jpg', { type: 'image/jpeg' });
+                const dataTransfer = new DataTransfer();
+                Array.from(imageInput.files).forEach((f, index) => {
+                    dataTransfer.items.add(index == selectedFileIndex ? file : f);
+                });
+                imageInput.files = dataTransfer.files;
+
+                clickedPreviewImage.src = croppedCanvas.toDataURL();
+                cropModal.hide();
+            }, 'image/jpeg');
+        });
+    });
 </script>
 
 

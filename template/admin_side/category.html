@@ -90,7 +90,7 @@ Dashboard
                         </tr>
                     </thead>
                     <tbody>
-                        {% for category in categories %}
+                        {% for category in page_obj %}
                         <tr>
                             <td>{{ category.id }}</td>
                             <td>{{ category.name }}</td>
@@ -102,12 +102,12 @@ Dashboard
                             </td>
                             <td>
                                 <button class="btn btn-sm btn-outline-primary me-2" 
-    onclick="editCategory('{{ category.id }}', 
-                        '{{ category.name|escapejs }}', 
-                        '{{ category.description|escapejs }}', 
-                        '{% if category.status %}active{% else %}inactive{% endif %}')">
-<i class="fas fa-edit me-1"></i> Edit
-</button>
+                                    onclick="editCategory('{{ category.id }}', 
+                                            '{{ category.name|escapejs }}', 
+                                            '{{ category.description|escapejs }}', 
+                                            '{% if category.status %}active{% else %}inactive{% endif %}')">
+                                    <i class="fas fa-edit me-1"></i> Edit
+                                </button>
                                 <button class="btn btn-sm btn-outline-danger" 
                                         onclick="deleteCategory('{{ category.id }}')">
                                     <i class="fas fa-trash-alt me-1"></i> Delete
@@ -115,8 +115,35 @@ Dashboard
                             </td>
                         </tr>
                         {% endfor %}
-                    </tbody>
+                    </tbody>                    
                 </table>
+                <!-- Pagination Controls -->
+<nav aria-label="Category pagination">
+    <ul class="pagination justify-content-center">
+      {% if page_obj.has_previous %}
+        <li class="page-item">
+          <a class="page-link" href="?page=1">&laquo; First</a>
+        </li>
+        <li class="page-item">
+          <a class="page-link" href="?page={{ page_obj.previous_page_number }}">Previous</a>
+        </li>
+      {% endif %}
+  
+      <li class="page-item disabled">
+        <span class="page-link">Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}</span>
+      </li>
+  
+      {% if page_obj.has_next %}
+        <li class="page-item">
+          <a class="page-link" href="?page={{ page_obj.next_page_number }}">Next</a>
+        </li>
+        <li class="page-item">
+          <a class="page-link" href="?page={{ page_obj.paginator.num_pages }}">Last &raquo;</a>
+        </li>
+      {% endif %}
+    </ul>
+  </nav>
+  
             </div>
         </div>
     </div>
@@ -220,6 +247,32 @@ categoryModal.show();
             alert('Category name is required!');
             nameInput.focus();
         }
+    });
+</script>
+<!-- Add SweetAlert2 JS -->
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+<script>
+    document.addEventListener('DOMContentLoaded', (event) => {
+        {% if messages %}
+            const messages = [
+                {% for message in messages %}
+                    {
+                        level: "{{ message.tags }}",
+                        text: "{{ message }}"
+                    },
+                {% endfor %}
+            ];
+            messages.forEach(message => {
+                Swal.fire({
+                    toast: true,
+                    position: 'top-right',
+                    icon: message.level === 'success' ? 'success' : 'error',
+                    title: message.text,
+                    showConfirmButton: false,
+                    timer: 3000
+                });
+            });
+        {% endif %}
     });
 </script>
 {% endblock %}

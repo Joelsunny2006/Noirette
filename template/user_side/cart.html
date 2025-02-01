@@ -162,10 +162,10 @@
     
                                             <td class="price">
                                                 {% if item.discounted_price != item.variant_price %}
-                                                    <del style="color: #888;">${{ item.variant_price }}</del>
-                                                    <span>${{ item.discounted_price }}</span>
+                                                    <del style="color: #888;">₹{{ item.variant_price }}</del>
+                                                    <span>₹{{ item.discounted_price }}</span>
                                                 {% else %}
-                                                    <span>${{ item.variant_price }}</span>
+                                                    <span>₹{{ item.variant_price }}</span>
                                                 {% endif %}
                                             </td>                                                                                  
                                             <td class="quantity">
@@ -175,7 +175,7 @@
                                                            data-item-id="{{ item.id }}" data-price="{{ item.variant_price }}">
                                                 </div>
                                             </td>
-                                            <td class="total">${{ item.total_price }}</td>
+                                            <td class="total">₹{{ item.total_price }}</td>
                                         </tr>
                                     {% endfor %}
                                 </tbody>
@@ -193,12 +193,12 @@
                         <h3>Cart Totals</h3>
                         <p class="d-flex">
                             <span>Subtotal</span>
-                            <span id="subtotal">${{ total_price }}</span>
+                            <span id="subtotal">₹{{ total_price }}</span>
                         </p>
                         <hr>
                         <p class="d-flex total-price">
                             <span>Total</span>
-                            <span id="total">${{ total_price }}</span>
+                            <span id="total">₹{{ total_price }}</span>
                         </p>
                     </div>                    
                     <p class="text-center">
@@ -210,75 +210,73 @@
     </section>
 
     <footer class="ftco-footer ftco-section">
-      <div class="container">
-      	<div class="row">
-      		<div class="mouse">
-						<a href="#" class="mouse-icon">
-							<div class="mouse-wheel"><span class="ion-ios-arrow-up"></span></div>
-						</a>
-					</div>
-      	</div>
-        <div class="row mb-5">
+        <div class="container">
+          <div class="row">
+            <div class="mouse">
+                  <a href="#" class="mouse-icon">
+                    <div class="mouse-wheel"><span class="ion-ios-arrow-up"></span></div>
+                  </a>
+                </div>
+          </div>
+          <div class="row mb-5">
           <div class="col-md">
             <div class="ftco-footer-widget mb-4">
-              <h2 class="ftco-heading-2">Minishop</h2>
-              <p>Far far away, behind the word mountains, far from the countries Vokalia and Consonantia.</p>
-              <ul class="ftco-footer-social list-unstyled float-md-left float-lft mt-5">
-                <li class="ftco-animate"><a href="#"><span class="icon-twitter"></span></a></li>
-                <li class="ftco-animate"><a href="#"><span class="icon-facebook"></span></a></li>
-                <li class="ftco-animate"><a href="#"><span class="icon-instagram"></span></a></li>
-              </ul>
+            <h2 class="ftco-heading-2">Noirette</h2>
+            <p>Indulge in the art of fine chocolate. At Noirette, we craft every piece with love and passion to deliver the ultimate chocolate experience.</p>
+            <ul class="ftco-footer-social list-unstyled float-md-left float-lft mt-5">
+              <li class="ftco-animate"><a href="#"><span class="icon-twitter"></span></a></li>
+              <li class="ftco-animate"><a href="#"><span class="icon-facebook"></span></a></li>
+              <li class="ftco-animate"><a href="#"><span class="icon-instagram"></span></a></li>
+            </ul>
             </div>
           </div>
           <div class="col-md">
             <div class="ftco-footer-widget mb-4 ml-md-5">
-              <h2 class="ftco-heading-2">Menu</h2>
-              <ul class="list-unstyled">
-                <li><a href="#" class="py-2 d-block">Shop</a></li>
-                <li><a href="#" class="py-2 d-block">About</a></li>
-                <li><a href="#" class="py-2 d-block">Journal</a></li>
-                <li><a href="#" class="py-2 d-block">Contact Us</a></li>
-              </ul>
+            <h2 class="ftco-heading-2">Menu</h2>
+            <ul class="list-unstyled">
+              <li><a href="{% url 'shop' %}" class="py-2 d-block">Shop Chocolates</a></li>
+              <li><a href="#" class="py-2 d-block">About Noirette</a></li>
+              <li><a href="#" class="py-2 d-block">Our Journal</a></li>
+              <li><a href="#" class="py-2 d-block">Contact Us</a></li>
+            </ul>
             </div>
           </div>
           <div class="col-md-4">
              <div class="ftco-footer-widget mb-4">
-              <h2 class="ftco-heading-2">Help</h2>
-              <div class="d-flex">
-	              <ul class="list-unstyled mr-l-5 pr-l-3 mr-4">
-	                <li><a href="#" class="py-2 d-block">Shipping Information</a></li>
-	                <li><a href="#" class="py-2 d-block">Returns &amp; Exchange</a></li>
-	                <li><a href="#" class="py-2 d-block">Terms &amp; Conditions</a></li>
-	                <li><a href="#" class="py-2 d-block">Privacy Policy</a></li>
-	              </ul>
-	              <ul class="list-unstyled">
-	                <li><a href="#" class="py-2 d-block">FAQs</a></li>
-	                <li><a href="#" class="py-2 d-block">Contact</a></li>
-	              </ul>
-	            </div>
+            <h2 class="ftco-heading-2">Help</h2>
+            <div class="d-flex">
+              <ul class="list-unstyled mr-l-5 pr-l-3 mr-4">
+                <li><a href="#" class="py-2 d-block">Shipping Information</a></li>
+                <li><a href="#" class="py-2 d-block">Returns &amp; Exchanges</a></li>
+                <li><a href="#" class="py-2 d-block">Terms &amp; Conditions</a></li>
+                <li><a href="#" class="py-2 d-block">Privacy Policy</a></li>
+              </ul>
+              <ul class="list-unstyled">
+                <li><a href="#" class="py-2 d-block">FAQs</a></li>
+                <li><a href="#" class="py-2 d-block">Contact Support</a></li>
+              </ul>
+              </div>
             </div>
           </div>
           <div class="col-md">
             <div class="ftco-footer-widget mb-4">
-            	<h2 class="ftco-heading-2">Have a Questions?</h2>
-            	<div class="block-23 mb-3">
-	              <ul>
-	                <li><span class="icon icon-map-marker"></span><span class="text">203 Fake St. Mountain View, San Francisco, California, USA</span></li>
-	                <li><a href="#"><span class="icon icon-phone"></span><span class="text">+2 392 3929 210</span></a></li>
-	                <li><a href="#"><span class="icon icon-envelope"></span><span class="text">info@yourdomain.com</span></a></li>
-	              </ul>
-	            </div>
+              <h2 class="ftco-heading-2">Have Questions?</h2>
+              <div class="block-23 mb-3">
+              <ul>
+                <li><span class="icon icon-map-marker"></span><span class="text">Noirette , Kochi, Ernakulam, Kerala, India</span></li>
+                <li><a href="#"><span class="icon icon-phone"></span><span class="text">+91 9633558031</span></a></li>
+                <li><a href="#"><span class="icon icon-envelope"></span><span class="text">support@noirette.com</span></a></li>
+              </ul>
+              </div>
             </div>
           </div>
-        </div>
-        <div class="row">
-          <div class="col-md-12 text-center">
-
+          </div>
+          <div class="row">
+          
           </div>
         </div>
-      </div>
-    </footer>
-    
+        </footer>
+      
   
 
   <!-- loader -->
@@ -370,12 +368,12 @@
             const row = document.querySelector(`tr[data-item-id="${itemId}"]`);
             if (row) {
                 const totalElement = row.querySelector('.total');
-                totalElement.textContent = `$${data.item_total_price}`;
+                totalElement.textContent = `₹${data.item_total_price}`;
             }
 
             // Update cart totals
-            document.getElementById('subtotal').textContent = `$${data.cart_total}`;
-            document.getElementById('total').textContent = `$${data.cart_total_after_discount}`;
+            document.getElementById('subtotal').textContent = `₹${data.cart_total}`;
+            document.getElementById('total').textContent = `₹${data.cart_total_after_discount}`;
         } else {
             alert(data.message || 'An error occurred while updating the cart.');
         }
@@ -409,6 +407,8 @@
     });
 });
 
+
+
     document.addEventListener("DOMContentLoaded", function() {
         const quantityInputs = document.querySelectorAll('.quantity');
         quantityInputs.forEach(input => {
@@ -419,7 +419,7 @@
 
                 const total = price * newQuantity;
                 const totalCell = document.querySelector(`[data-item-id="${itemId}"] .total`);
-                totalCell.textContent = `$${total.toFixed(2)}`;
+                totalCell.textContent = `₹${total.toFixed(2)}`;
 
                 updateCartTotals(); // Update the cart subtotal and total
             });
@@ -428,18 +428,16 @@
         function updateCartTotals() {
             let subtotal = 0;
             document.querySelectorAll('.total').forEach(cell => {
-                subtotal += parseFloat(cell.textContent.replace('$', ''));
+                subtotal += parseFloat(cell.textContent.replace('₹', ''));
             });
 
             const discount = 0; // Implement your discount logic here
             const total = subtotal - discount;
 
-            document.getElementById('subtotal').textContent = `$${subtotal.toFixed(2)}`;
-            document.getElementById('total').textContent = `$${total.toFixed(2)}`;
+            document.getElementById('subtotal').textContent = `₹${subtotal.toFixed(2)}`;
+            document.getElementById('total').textContent = `₹${total.toFixed(2)}`;
         }
     });
-
-
 
     </script>
   <script src="{% static 'user_side/js/jquery.min.js' %}"></script>

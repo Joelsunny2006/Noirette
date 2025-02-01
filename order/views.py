@@ -29,18 +29,23 @@ import razorpay
 from django.conf import settings
 from django.shortcuts import render
 from django.urls import reverse
-
-
+from admin_panel.decorator import admin_required 
+from django.core.paginator import Paginator
 
 @require_http_methods(["GET"])
+@admin_required
 def orders(request):
-    orders = Order.objects.select_related("user").all().order_by("-created_at")
+    orders_list = Order.objects.select_related("user").all().order_by("-created_at")
+
+    # Pagination: Show 10 orders per page
+    paginator = Paginator(orders_list, 10)
+    page_number = request.GET.get("page")
+    page_obj = paginator.get_page(page_number)
+
     return render(
         request,
         "admin_side/orders.html",
-        {
-            "orders": orders,
-        },
+        {"page_obj": page_obj},
     )
 
 @csrf_protect
@@ -94,27 +99,17 @@ def address_list(request):
     return render(request, "user_side/user_profile.html", {"addresses": addresses})
 
 
+# View function to handle form submission
 def save_address(request):
     if request.method == "POST":
-        if request.POST.get("address_id"):
-            # Editing an address
-            address = get_object_or_404(Address, id=request.POST.get("address_id"))
-            form = AddressForm(request.POST, instance=address)
-        else:
-            # Creating a new address
-            form = AddressForm(request.POST)
-
+        form = AddressForm(request.POST)
         if form.is_valid():
             address = form.save(commit=False)
-            address.user = request.user  
+            address.user = request.user  # Assign the logged-in user
             address.save()
-            return redirect("order:address_list")
+            return JsonResponse({"success": "Address saved successfully!"}, status=200)
         else:
-            print(
-                "Form errors:", form.errors
-            )  # Debugging - see why the form is invalid
-            return JsonResponse({"error": "Invalid data"}, status=400)
-
+            return JsonResponse({"error": form.errors}, status=400)
     return JsonResponse({"error": "Invalid request"}, status=400)
 
 
@@ -245,42 +240,26 @@ def place_order(request):
             if 'applied_coupon_id' in request.session:
                 del request.session['applied_coupon_id']
 
-
-            # Configure logging
-            logging.basicConfig(level=logging.DEBUG)
-            logger = logging.getLogger(__name__)
-
             if payment_method == "razorpay":
-
-                logger.debug("Payment method is Razorpay.")
-                
                 try:
                     # Create Razorpay client
                     client = razorpay.Client(
                         auth=(settings.RAZORPAY_KEY_ID, settings.RAZORPAY_KEY_SECRET)
                     )
-                    logger.debug("Razorpay client created successfully.")
 
-                    # Ensure total_price is a valid number
-                    logger.debug(f"Total price: {total_price}")
-                    
                     # Create Razorpay order
                     amount_in_paise = int(total_price * 100)  # Convert to paise
-                    logger.debug(f"Amount in paise: {amount_in_paise}")
-
                     razorpay_order = client.order.create({
                         "amount": amount_in_paise,
                         "currency": "INR",
                         "receipt": f"order_rcptid_{order.id}",
                         "payment_capture": "1",
                     })
-                    logger.debug(f"Razorpay order created: {razorpay_order}")
 
                     # Save order details
                     order.razorpay_order_id = razorpay_order["id"]
                     order.status = "Payment Pending"
                     order.save()
-                    logger.debug(f"Order updated with Razorpay order ID: {order.razorpay_order_id}")
 
                     # Prepare context for the Razorpay payment page
                     context = {
@@ -290,17 +269,17 @@ def place_order(request):
                         "order_id": order.id,
                         "callback_url": request.build_absolute_uri(reverse('order:verify_payment'))
                     }
-                    logger.debug(f"Context for payment page: {context}")
 
                     return render(request, "user_side/razorpay_payment.html", context)
 
                 except razorpay.errors.RazorpayError as e:
                     logger.error(f"Razorpay error: {e}")
-                    raise
+                    messages.error(request, "Payment processing failed. Please try again.")
+                    return redirect("checkout")
                 except Exception as e:
                     logger.error(f"Unexpected error: {e}")
-                    raise
-
+                    messages.error(request, "An unexpected error occurred. Please contact support.")
+                    return redirect("checkout")
 
             elif payment_method == "cod":
                 if total_price > 1000:
@@ -311,7 +290,7 @@ def place_order(request):
                 order.save()
                 cart_items.delete()  # Clear cart after successful order
                 messages.success(request, "Order placed successfully with Cash on Delivery.")
-                return redirect("order:order_success")  # Make sure this URL name matches your urls.py
+                return redirect("order:order_success")
 
             elif payment_method == "wallet":
                 try:
@@ -334,7 +313,7 @@ def place_order(request):
                         cart_items.delete()  # Clear cart after successful order
 
                         messages.success(request, "Order placed successfully using wallet!")
-                        return redirect("order:order_success")  # Make sure this URL name matches your urls.py
+                        return redirect("order:order_success")
                     else:
                         messages.error(request, "Insufficient wallet balance.")
                         return redirect("checkout")
@@ -347,74 +326,65 @@ def place_order(request):
                 return redirect("checkout")
 
         except Exception as e:
-            messages.error(request, f"An unexpected error occurred: {str(e)}")
+            logger.error(f"An unexpected error occurred: {e}")
+            messages.error(request, "An unexpected error occurred. Please try again.")
             return redirect("checkout")
 
     return redirect("checkout")
 
-        
 
+import logging
 
+logger = logging.getLogger(__name__)  # Add this at the top
+from django.http import HttpResponseRedirect
+
+import json
+
+@csrf_exempt
 def verify_payment(request):
+    print("ENTERed callback")
+    
     if request.method == "POST":
-        # Extract Razorpay payment details from the POST data
-        razorpay_order_id = request.POST.get("razorpay_order_id")
-        razorpay_payment_id = request.POST.get("razorpay_payment_id")
-        razorpay_signature = request.POST.get("razorpay_signature")
-
-        # Print the extracted Razorpay details for debugging
-        print(f"Razorpay details received: order_id={razorpay_order_id}, payment_id={razorpay_payment_id}, signature={razorpay_signature}")
-
         try:
-            # Verify Razorpay signature
+            data = json.loads(request.body)  # Get JSON request data
+            
+            razorpay_order_id = data.get("razorpay_order_id")
+            razorpay_payment_id = data.get("razorpay_payment_id")
+            razorpay_signature = data.get("razorpay_signature")
+
+            if not razorpay_order_id or not razorpay_payment_id or not razorpay_signature:
+                return JsonResponse({"error": "Missing required parameters"}, status=400)
+
+            # Verify payment signature
             client = razorpay.Client(auth=(settings.RAZORPAY_KEY_ID, settings.RAZORPAY_KEY_SECRET))
-            params = {
+            client.utility.verify_payment_signature({
                 "razorpay_order_id": razorpay_order_id,
                 "razorpay_payment_id": razorpay_payment_id,
                 "razorpay_signature": razorpay_signature,
-            }
-            client.utility.verify_payment_signature(params)
+            })
 
-            # Print confirmation of successful verification
-            print("Razorpay payment signature verified successfully.")
-
-            # Retrieve the order object based on the Razorpay order ID
+            # Update order status
             order = Order.objects.get(razorpay_order_id=razorpay_order_id)
-            print(f"Order found for Razorpay order ID: {razorpay_order_id}. Updating status.")
-
-            # Update the order status to 'Processing' if payment is successful
             order.status = "Processing"
             order.save()
-            print(f"Order status updated to 'Processing' for order ID: {order.id}")
 
-            # Clear cart items for the user
+            # Clear cart
             CartItem.objects.filter(cart__user=order.user).delete()
-            print(f"Cart items cleared for user: {order.user.id}")
 
-            # Redirect to order success page
-            messages.success(request, "Payment successful!")
-            return redirect("order:order_success")
+            return JsonResponse({"success": True, "message": "Payment successful!"})
 
         except razorpay.errors.SignatureVerificationError as e:
-            print(f"Razorpay signature verification failed: {str(e)}")
-            messages.error(request, "Payment verification failed. Please try again.")
-            # Clear cart items in case of failure to avoid stuck items
-            CartItem.objects.filter(cart__user=request.user).delete()
-            return redirect("order:order_failure")
+            return JsonResponse({"success": False, "error": "Payment verification failed."}, status=400)
 
         except Order.DoesNotExist:
-            print(f"Order with Razorpay order ID {razorpay_order_id} not found.")
-            return HttpResponseBadRequest("Invalid order ID.")
+            return JsonResponse({"success": False, "error": "Order not found."}, status=400)
 
         except Exception as e:
-            print(f"An unexpected error occurred: {str(e)}")
-            messages.error(request, "An unexpected error occurred. Please contact support.")
-            # Clear cart items in case of failure to avoid stuck items
-            CartItem.objects.filter(cart__user=request.user).delete()
-            return redirect("order:order_failure")
-    else:
-        print("Received non-POST request for payment verification.")
-        return HttpResponseBadRequest("Invalid request method.")
+            return JsonResponse({"success": False, "error": str(e)}, status=500)
+
+    return JsonResponse({"error": "Invalid request method"}, status=400)
+
+
 
 
 @login_required
@@ -692,8 +662,8 @@ def download_invoice(request, order_id):
                 data.append([
                     Paragraph(variant.variant_name, normal_style),
                     str(item.quantity),
-                    f"${variant.variant_price:.2f}",
-                    f"${item_total_price:.2f}"
+                    f"₹{variant.variant_price:.2f}",
+                    f"₹{item_total_price:.2f}"
                 ])
 
             table = Table(data, colWidths=[None, 1.25 * inch, 1.25 * inch, 1.5 * inch])
@@ -715,9 +685,9 @@ def download_invoice(request, order_id):
             # Order Total
             elements.append(Spacer(1, 0.5 * inch))
             total_data = [
-                ['Subtotal:', f"${subtotal:.2f}"],
-                ['Delivery:', f"${Delivery:.2f}"],
-                ['Total:', f"${(subtotal + Delivery):.2f}"]
+                ['Subtotal:', f"₹{subtotal:.2f}"],
+                ['Delivery:', f"₹{Delivery:.2f}"],
+                ['Total:', f"₹{(subtotal + Delivery):.2f}"]
             ]
 
             total_table = Table(total_data, colWidths=[4 * inch, 1.5 * inch], hAlign='RIGHT')

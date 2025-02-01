@@ -14,6 +14,10 @@ from django.core.files.base import ContentFile
 import cloudinary.uploader
 from django.contrib import messages
 from order.models import *
+from .decorator import admin_required
+
+
+
 def admin_sign_in(request):
     if request.user.is_authenticated and request.user.is_superuser:
         return redirect('admin_dashboard')
@@ -34,6 +38,7 @@ def admin_sign_in(request):
             messages.error(request, 'Invalid credentials.')
     return render(request, 'admin_side/admin_sign_in.html')
 
+@admin_required
 def products_view(request):
     products = Product.objects.filter(is_deleted=False).order_by('serial_number')
     categories = Category.objects.filter(is_deleted=False)
@@ -122,7 +127,7 @@ def update_product(request, product_id):
     categories = Category.objects.all()
     return render(request, 'admin_side/edit_product.html', {'product': product, 'categories': categories})
 
-from django.db.models import Sum
+
 
 
 from django.db.models import Sum
@@ -131,6 +136,7 @@ from order.models import *
 from product.models import *
 from category.models import *
 
+@admin_required
 def admin_dashboard(request):
     # Best-selling products (Top 3)
     best_selling_products = OrderItem.objects.filter(
@@ -191,12 +197,12 @@ def admin_logout(request):
     return redirect('admin_sign_in')
 
 
-
+@admin_required
 def contents(request):
     return render(request, 'admin_side/contents.html')
-
+@admin_required
 def settings(request):
     return render(request, 'admin_side/settings.html')
-
+@admin_required
 def coupon(request):
     return render(request, 'admin_side/coupon.html')

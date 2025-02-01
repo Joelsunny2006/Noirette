@@ -35,14 +35,19 @@
                         razorpay_signature: response.razorpay_signature
                     })
                 })
-                .then(response => response.json())
+                .then(response => response.json())  // Try to parse JSON
                 .then(data => {
                     if (data.success) {
-                        window.location.href = "/order/order-success/"; // Redirect to success page
+                        window.location.href = "/order/order-success/";
                     } else {
-                        alert("Payment verification failed. Please try again.");
+                        alert("Payment verification failed: " + data.error);
                     }
+                })
+                .catch(error => {
+                    console.error("Error parsing JSON:", error);
+                    alert("An unexpected error occurred. Please try again.");
                 });
+
             },
             "prefill": {
                 "name": "{{ user.first_name }}",

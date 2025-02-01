@@ -16,51 +16,6 @@ from django.db.models import F, Sum
 
 logger = logging.getLogger(__name__)
 
-
-def add_to_cart(request):
-    if request.method == "POST":
-        try:
-            variant_id = request.POST.get('variant_id')
-            quantity = int(request.POST.get('quantity', 1))
-
-            if not variant_id:
-                messages.error(request, "No product selected.")
-                return JsonResponse({'success': False, 'message': "No product selected."}, status=400)
-
-            variant = get_object_or_404(Variant, id=variant_id)
-
-            if request.user.is_authenticated:
-                cart, _ = Cart.objects.get_or_create(user=request.user)
-            else:
-                session_id = request.session.get('session_id')
-                if not session_id:
-                    request.session.create()
-                    session_id = request.session.session_key
-                cart, _ = Cart.objects.get_or_create(session_id=session_id)
-
-            cart_item, created = CartItem.objects.get_or_create(
-                cart=cart,
-                variant=variant,
-                defaults={"quantity": quantity}
-            )
-
-            if not created:
-                cart_item.quantity = 1  # Reset to 1 if quantity exceeds
-                cart_item.save()
-
-            return JsonResponse({
-                'success': True,
-                'message': "Item added to cart successfully!",
-                'cart_total_items': cart.total_items,
-            })
-
-        except Exception as e:
-            print("Error adding to cart:", e)
-            return JsonResponse({'success': False, 'message': "An error occurred. Please try again."}, status=500)
-
-    return JsonResponse({'success': False, 'message': "Invalid request method."}, status=405)
-
-
 @login_required
 def view_cart(request):
     # Ensure the cart exists for the authenticated user
@@ -114,6 +69,49 @@ def view_cart(request):
     }
 
     return render(request, 'user_side/cart.html', context)
+
+def add_to_cart(request):
+    if request.method == "POST":
+        try:
+            variant_id = request.POST.get('variant_id')
+            quantity = int(request.POST.get('quantity', 1))
+
+            if not variant_id:
+                messages.error(request, "No product selected.")
+                return JsonResponse({'success': False, 'message': "No product selected."}, status=400)
+
+            variant = get_object_or_404(Variant, id=variant_id)
+
+            if request.user.is_authenticated:
+                cart, _ = Cart.objects.get_or_create(user=request.user)
+            else:
+                session_id = request.session.get('session_id')
+                if not session_id:
+                    request.session.create()
+                    session_id = request.session.session_key
+                cart, _ = Cart.objects.get_or_create(session_id=session_id)
+
+            cart_item, created = CartItem.objects.get_or_create(
+                cart=cart,
+                variant=variant,
+                defaults={"quantity": quantity}
+            )
+
+            if not created:
+                cart_item.quantity = 1  # Reset to 1 if quantity exceeds
+                cart_item.save()
+
+            return JsonResponse({
+                'success': True,
+                'message': "Item added to cart successfully!",
+                'cart_total_items': cart.total_items,
+            })
+
+        except Exception as e:
+            print("Error adding to cart:", e)
+            return JsonResponse({'success': False, 'message': "An error occurred. Please try again."}, status=500)
+
+    return JsonResponse({'success': False, 'message': "Invalid request method."}, status=405)
 
 
 
@@ -220,7 +218,7 @@ def checkout_view(request, product_id=None):
         # If a product_id is passed, add it to the cart
         if product_id:
             product = Product.objects.get(id=product_id)
-            variant = product.variants.first()  # Assuming each product has at least one variant
+            variant = product.variants.first()
             cart_item, created = CartItem.objects.get_or_create(
                 cart=cart,
                 variant=variant,
@@ -231,55 +229,51 @@ def checkout_view(request, product_id=None):
                 cart_item.save()
 
         cart_items = CartItem.objects.filter(cart=cart)
-        for item in cart_items:
-            product = item.variant.product
-            if product.offer_percentage:
-                item.discounted_price = item.variant.variant_price * (1 - (product.offer_percentage / 100))
-            else:
-                item.discounted_price = item.variant.variant_price
 
         if not cart_items.exists():
             messages.error(request, 'Your cart is empty.')
             return redirect('view_cart')
 
-        # Calculate cart subtotal
-        subtotal = 0
+        # Calculate subtotal and discounted price
+        subtotal = Decimal('0.00')
         for item in cart_items:
-            product = item.variant.product  # Access the product through the variant
-            # Calculate offer price based on offer_percentage if applicable
+            product = item.variant.product
             if product.offer_percentage:
-                item_price = item.variant.variant_price * (1 - (product.offer_percentage / 100))
+                # Apply discount to item
+                item.discounted_price = item.variant.variant_price * (1 - (product.offer_percentage / 100))
             else:
-                item_price = item.variant.variant_price
-
-            subtotal += Decimal(item_price) * item.quantity
+                item.discounted_price = item.variant.variant_price
+            subtotal += item.discounted_price * item.quantity
 
         delivery = Decimal('50.00')  # Example delivery cost
 
         # Get the applied coupon, if any
         applied_coupon = cart.applied_coupon
+        discount = Decimal('0.00')
 
-        # Calculate the discount based on the applied coupon
-        
-        if applied_coupon:
+        # Apply coupon if valid
+        if applied_coupon and applied_coupon.min_purchase_amount and subtotal >= applied_coupon.min_purchase_amount:
             if applied_coupon.discount_type == 'percentage':
                 discount = subtotal * (applied_coupon.discount_value / 100)
             elif applied_coupon.discount_type == 'fixed':
                 discount = applied_coupon.discount_value
+        else:
+            applied_coupon = None  # Remove the coupon if conditions are not met
 
-        # Calculate the total after discount
-        total = subtotal + delivery
+        # Calculate total after discount
+        total = subtotal + delivery - discount
 
-        # Fetch active coupons
+        # Fetch only applicable coupons (where subtotal meets min_purchase_amount)
         available_coupons = Coupon.objects.filter(
-            status='active', 
+            status='active',
             valid_from__lte=now(),
             valid_to__gte=now(),
+            min_purchase_amount__lte=subtotal  # Ensures subtotal meets the minimum amount
         ).exclude(
             usage_limit__isnull=False,
-            current_usage__gte=models.F('usage_limit')  # Exclude if usage_limit exceeded
+            current_usage__gte=models.F('usage_limit')  # Exclude if usage limit exceeded
         )
-        
+
         # Cart count logic
         cart_count = cart_items.aggregate(total=models.Sum('quantity'))['total'] or 0
 
@@ -287,14 +281,17 @@ def checkout_view(request, product_id=None):
         addresses = Address.objects.filter(user=request.user)
 
         context = {
-    'cart_items': cart_items,
-    'available_coupons': available_coupons,
-    'subtotal': subtotal,
-    'delivery': delivery,
-    'total': total,
-    'cart_count': cart_count,
-    'addresses': addresses,
-}
+            'cart_items': cart_items,
+            'available_coupons': available_coupons,
+            'subtotal': subtotal,
+            'delivery': delivery,
+            'discount': discount,
+            'total': total,
+            'cart_count': cart_count,
+            'addresses': addresses,
+            'applied_coupon': applied_coupon
+        }
+
         return render(request, 'user_side/checkout.html', context)
 
     except Cart.DoesNotExist:
@@ -303,6 +300,7 @@ def checkout_view(request, product_id=None):
     except Product.DoesNotExist:
         messages.error(request, 'Product not found.')
         return redirect('view_cart')
+
 
 @login_required
 def add_address_view(request):
@@ -333,21 +331,41 @@ def wishlist(request):
 
     if request.user.is_authenticated:
         try:
-            # Retrieve the user's wishlist and related items
             wishlist = Wishlist.objects.filter(user=request.user).first()
             if wishlist:
                 wishlist_items = wishlist.items.select_related('variant__product').all()
             
-            # Retrieve the cart count
             cart = Cart.objects.filter(user=request.user).first()
             if cart:
                 cart_count = cart.items.aggregate(total=Sum('quantity'))['total'] or 0
+
+            processed_wishlist_items = []
+            for item in wishlist_items:
+                product = item.variant.product
+                
+                product_image = (
+                    product.images.first().image_url.url
+                    if product.images.exists()
+                    else '/static/images/default.jpg'
+                )
+
+                processed_wishlist_items.append({
+                    'id': item.id,
+                    'product_name': product.name,
+                    'product_serial_number': product.serial_number,
+                    'product_description': product.description,  
+                    'product_thumbnail': product_image,
+                    'variant': item.variant.variant_name if item.variant else None,
+                    'variant_price': item.variant.variant_price,
+                    'variant_id': item.variant.id,
+                })
+
         except (Wishlist.DoesNotExist, Cart.DoesNotExist):
-            pass
+            processed_wishlist_items = []
 
     return render(request, 'user_side/wishlist.html', {
         "cart_count": cart_count,
-        "wishlist_items": wishlist_items
+        "wishlist_items": processed_wishlist_items,
     })
 
 # Add to Wishlist
@@ -357,40 +375,57 @@ def add_to_wishlist(request, variant_id):
 
     variant = get_object_or_404(Variant, id=variant_id)
 
-    # Get or create the wishlist
+    # Get or create the wishlist for the user
     wishlist, created = Wishlist.objects.get_or_create(user=request.user)
 
-    # Check if the variant already exists in the wishlist
+    # Check if the specific variant already exists in the wishlist
     if WishlistItem.objects.filter(wishlist=wishlist, variant=variant).exists():
         return JsonResponse({"message": "Variant already in wishlist"}, status=400)
 
-    # Add the variant to the wishlist
+    # Add the variant as a new wishlist item
     WishlistItem.objects.create(wishlist=wishlist, variant=variant)
     return JsonResponse({"message": "Variant added to wishlist"}, status=201)
 
 
+
+# Remove from Wishlist
 # Remove from Wishlist
 @csrf_exempt
 def remove_from_wishlist(request, variant_id):
     if request.method == 'POST':
         try:
-            # Retrieve the user's wishlist
             wishlist = Wishlist.objects.get(user=request.user)
-            # Find the item to remove
             wishlist_item = get_object_or_404(WishlistItem, wishlist=wishlist, variant_id=variant_id)
             wishlist_item.delete()
 
-            # Optionally, return the updated wishlist count
             updated_count = wishlist.items.count()
 
             return JsonResponse({
                 'success': True,
-                'message': 'Item successfully removed from wishlist.',
+                'message': 'Variant successfully removed from wishlist.',
                 'updated_count': updated_count
             })
         except Wishlist.DoesNotExist:
             return JsonResponse({'success': False, 'error': 'Wishlist does not exist.'})
         except WishlistItem.DoesNotExist:
-            return JsonResponse({'success': False, 'error': 'Item does not exist in wishlist.'})
+            return JsonResponse({'success': False, 'error': 'Variant does not exist in wishlist.'})
     else:
         return JsonResponse({'success': False, 'error': 'Invalid request method.'})
+
+
+
+
+def check_wishlist_status(request, variant_id):
+    if not request.user.is_authenticated:
+        return JsonResponse({"error": "Authentication required"}, status=403)
+    
+    variant = get_object_or_404(Variant, id=variant_id)
+    try:
+        wishlist = Wishlist.objects.get(user=request.user)
+    except Wishlist.DoesNotExist:
+        return JsonResponse({"error": "Wishlist does not exist"}, status=404)
+
+    # Check if the variant exists in the user's wishlist
+    is_in_wishlist = WishlistItem.objects.filter(wishlist=wishlist, variant=variant).exists()
+    
+    return JsonResponse({"is_in_wishlist": is_in_wishlist})

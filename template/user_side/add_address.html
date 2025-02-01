@@ -26,11 +26,9 @@
     <link rel="stylesheet" href="{% static 'user_side/css/style.css' %}">
   </head>
   <body class="goto-here">
-	
-
-	<div class="container mt-4">
+    <div class="container mt-4">
         <h2 class="mb-4">Add New Address</h2>
-    
+
         <!-- Display messages if any -->
         {% if messages %}
             {% for message in messages %}
@@ -40,17 +38,17 @@
                 </div>
             {% endfor %}
         {% endif %}
-    
+
         <!-- Address Form -->
         <form method="POST" class="needs-validation" novalidate>
             {% csrf_token %}
-    
+
             <div class="row g-3">
                 <!-- First Name Field -->
                 <div class="col-md-6">
                     <label for="first_name" class="form-label">First Name</label>
                     <input type="text" name="first_name" class="form-control" placeholder="Enter your first name"
-                           value="{{ form.first_name.value|default:'' }}">
+                           value="{{ form.first_name.value|default:'' }}" required>
                     {% if form.first_name.errors %}
                         <div class="text-danger">{{ form.first_name.errors }}</div>
                     {% endif %}
@@ -59,23 +57,23 @@
                 <div class="col-md-6">
                     <label for="last_name" class="form-label">Last Name</label>
                     <input type="text" name="last_name" class="form-control" placeholder="Enter your last name"
-                           value="{{ form.last_name.value|default:'' }}">
+                           value="{{ form.last_name.value|default:'' }}" required>
                     {% if form.last_name.errors %}
                         <div class="text-danger">{{ form.last_name.errors }}</div>
                     {% endif %}
                 </div>
             </div>
-            
+
             <!-- Street Address Field -->
             <div class="mb-3">
                 <label for="street_address" class="form-label">Street Address</label>
                 <input type="text" name="street_address" class="form-control" placeholder="Enter your street address"
-                       value="{{ form.street_address.value|default:'' }}">
+                       value="{{ form.street_address.value|default:'' }}" required>
                 {% if form.street_address.errors %}
                     <div class="text-danger">{{ form.street_address.errors }}</div>
                 {% endif %}
             </div>
-    
+
             <!-- Apartment Field -->
             <div class="mb-3">
                 <label for="apartment" class="form-label">Apartment / Suite</label>
@@ -85,13 +83,13 @@
                     <div class="text-danger">{{ form.apartment.errors }}</div>
                 {% endif %}
             </div>
-    
+
             <!-- City & State -->
             <div class="row g-3">
                 <div class="col-md-6">
                     <label for="city" class="form-label">City</label>
                     <input type="text" name="city" class="form-control" placeholder="Enter your city"
-                           value="{{ form.city.value|default:'' }}">
+                           value="{{ form.city.value|default:'' }}" required>
                     {% if form.city.errors %}
                         <div class="text-danger">{{ form.city.errors }}</div>
                     {% endif %}
@@ -99,19 +97,19 @@
                 <div class="col-md-6">
                     <label for="state" class="form-label">State</label>
                     <input type="text" name="state" class="form-control" placeholder="Enter your state"
-                           value="{{ form.state.value|default:'' }}">
+                           value="{{ form.state.value|default:'' }}" required>
                     {% if form.state.errors %}
                         <div class="text-danger">{{ form.state.errors }}</div>
                     {% endif %}
                 </div>
             </div>
-    
-            <!-- Postcode -->
+
+            <!-- Postcode & Phone -->
             <div class="row g-3">
                 <div class="col-md-6">
                     <label for="postcode" class="form-label">Postcode</label>
                     <input type="text" name="postcode" class="form-control" placeholder="Enter your postcode"
-                           value="{{ form.postcode.value|default:'' }}">
+                           value="{{ form.postcode.value|default:'' }}" required>
                     {% if form.postcode.errors %}
                         <div class="text-danger">{{ form.postcode.errors }}</div>
                     {% endif %}
@@ -119,36 +117,36 @@
                 <div class="col-md-6">
                     <label for="phone" class="form-label">Phone</label>
                     <input type="text" name="phone" class="form-control" placeholder="+123456789"
-                           value="{{ form.phone.value|default:'' }}">
+                           value="{{ form.phone.value|default:'' }}" required>
                     {% if form.phone.errors %}
                         <div class="text-danger">{{ form.phone.errors }}</div>
                     {% endif %}
                 </div>
             </div>
-    
+
             <!-- Email Address -->
             <div class="mb-3">
                 <label for="email" class="form-label">Email Address</label>
                 <input type="email" name="email" class="form-control" placeholder="Enter your email address"
-                       value="{{ form.email.value|default:'' }}">
+                       value="{{ form.email.value|default:'' }}" required>
                 {% if form.email.errors %}
                     <div class="text-danger">{{ form.email.errors }}</div>
                 {% endif %}
             </div>
-    
+
             <!-- Default Address Checkbox -->
             <div class="form-check mb-3">
-                <input class="form-check-input" type="checkbox" name="is_default" 
+                <input class="form-check-input" type="checkbox" name="is_default"
                        {% if form.is_default.value %}checked{% endif %}>
                 <label class="form-check-label" for="is_default">Set as Default Address</label>
             </div>
-    
+
             <!-- Submit Button -->
             <div class="text-center mb-5">
                 <button type="submit" class="btn btn-primary">Add Address</button>
             </div>
         </form>
     </div>
-  </body>
+</body>
 </html>
 

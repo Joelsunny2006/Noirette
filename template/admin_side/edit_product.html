@@ -73,13 +73,30 @@ Dashboard
                 <select id="product-category" class="form-select" name="category" required>
                     <option value="">Select a category</option>
                     {% for category in categories %}
-                        <option value="{{ product.category.name }}" {% if category.id == product.category.id %}selected{% endif %}>{{ category.name }}</option>
+                        <option value="{{ product.category.id }}" {% if category.id == product.category.id %}selected{% endif %}>{{ category.name }}</option>
                     {% endfor %}
                 </select>
                 <div id="category-error" class="invalid-feedback">
                     Please select a category
                 </div>
             </div>
+
+            <!-- Brand Selection -->
+<div class="mb-3">
+  <label for="product-brand" class="form-label">Brand <span class="text-danger">*</span></label>
+  <select id="product-brand" class="form-select" name="brand" required>
+      <option value="">Select a brand</option>
+      {% for brand in brands %}
+          <option value="{{ brand.id }}" 
+                  {% if brand.id == product.brand.id %}selected{% endif %}>
+              {{ brand.name }}
+          </option>
+      {% endfor %}
+  </select>
+  <div id="brand-error" class="invalid-feedback">
+      Please select a brand
+  </div>
+</div>
 
             <!-- Offer Price Percentage -->
 <div class="mb-3">
@@ -428,7 +445,7 @@ document.addEventListener('DOMContentLoaded', () => {
           if (result.success) {
             showSuccess(result.message);
             setTimeout(() => {
-              window.location.href = '/product-list/';  // Adjust URL as needed
+              window.location.href = '/product/products/';  // Adjust URL as needed
             }, 1500);
           } else {
             showError(result.message);

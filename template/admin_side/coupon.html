@@ -84,13 +84,13 @@ Dashboard
         </div>
     </div>
 
-    {% if messages %}
+    <!-- {% if messages %}
         {% for message in messages %}
             <div class="alert {% if message.tags %}alert-{{ message.tags }}{% endif %}">
                 {{ message }}
             </div>
         {% endfor %}
-    {% endif %}
+    {% endif %} -->
 
     <div class="card">
         <div class="card-header">
@@ -219,10 +219,10 @@ Dashboard
                         <label for="minPurchase" class="form-label">Minimum Purchase Amount</label>
                         <input type="number" step="0.01" class="form-control" id="minPurchase" name="min_purchase_amount">
                     </div>
-                    <div class="mb-3">
+                    <!-- <div class="mb-3">
                         <label for="usageLimit" class="form-label">Usage Limit</label>
                         <input type="number" class="form-control" id="usageLimit" name="usage_limit">
-                    </div>
+                    </div> -->
                 </div>
                 <div class="modal-footer">
                     <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>

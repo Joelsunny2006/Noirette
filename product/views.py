@@ -8,6 +8,7 @@ from django.http import JsonResponse
 from product.models import Product
 from django.shortcuts import get_object_or_404, render
 from decimal import Decimal, InvalidOperation
+from admin_panel.decorator import admin_required 
 
 def product_view(request, serial_number):
     # Get the product and related data
@@ -66,25 +67,33 @@ def product_view(request, serial_number):
             "wishlist_variant_ids": wishlist_variant_ids,
         },
     )
-
-
+from django.core.paginator import Paginator
+@admin_required
 def product_list(request):
-    products = Product.objects.filter(is_deleted=False).order_by("serial_number")
+    products = Product.objects.filter(is_deleted=False).order_by("-created")
     categories = Category.objects.filter(is_deleted=False)
     brands = Brand.objects.filter(status="active")
+
+    # Pagination: Show 8 products per page
+    paginator = Paginator(products, 8)
+    page_number = request.GET.get('page')
+    page_obj = paginator.get_page(page_number)
 
     return render(
         request,
         "admin_side/products.html",
-        {"products": products, "categories": categories, "brands": brands},
+        {"page_obj": page_obj, "categories": categories, "brands": brands},
     )
-
 
 def add_product(request):
     if request.method == "POST":
         try:
             # Basic validation
-            name = request.POST.get("product_name")
+            name = request.POST.get("product_name").title()
+
+            if Product.objects.filter(name=name).exclude(id=product).exists():
+                return JsonResponse({"success": False, "message": "A product with this name already exists."})
+
             if not name:
                 return JsonResponse({"success": False, "message": "Product name is required"})
 
@@ -166,28 +175,41 @@ def add_product(request):
 
     return JsonResponse({"success": False, "message": "Invalid request method"})
 
+
 def update_product(request, product_id):
+    categories = Category.objects.filter(status=True)  # ✅ Fixed query
+    brands = Brand.objects.filter(status="active")
+
     try:
         product = Product.objects.get(serial_number=product_id)
     except Product.DoesNotExist:
         return JsonResponse({"success": False, "message": "Product not found"})
     
+    print(request.POST)
+
     if request.method == "POST":
         try:
             # Update basic info
-            product.name = request.POST.get("name")
-            product.description = request.POST.get("description")
-            
-            try:
-                category = Category.objects.get(id=request.POST.get("category"))
-                product.category = category
-            except Category.DoesNotExist:
-                return JsonResponse({"success": False, "message": "Invalid category selected"})
+            name = request.POST.get("product_name").title()
 
+            if Product.objects.filter(name=name).exclude(id=product_id).exists():
+                return JsonResponse({"success": False, "message": "A product with this name already exists."})
+
+            product.description = request.POST.get("description")
+
+            # ✅ Ensure Category Exists
+            category_id = request.POST.get("category")
+            if category_id:
+                try:
+                    product.category = Category.objects.get(id=category_id)
+                except Category.DoesNotExist:
+                    return JsonResponse({"success": False, "message": "Invalid category selected"})
+
+            # ✅ Validate Offer Percentage
             offer_percentage = request.POST.get("offer_price_percentage", '0')
             try:
                 offer_percentage = Decimal(offer_percentage)
-                if offer_percentage < 0 or offer_percentage > 100:
+                if not (0 <= offer_percentage <= 100):
                     return JsonResponse({"success": False, "message": "Offer percentage must be between 0 and 100"})
                 product.offer_percentage = offer_percentage
             except InvalidOperation:
@@ -195,13 +217,19 @@ def update_product(request, product_id):
 
             product.save()
 
-            # Handle variants
+            # ✅ Handle Variants
             variant_ids = request.POST.getlist("variant_id[]")
             variant_names = request.POST.getlist("variant_name[]")
             variant_prices = request.POST.getlist("variant_price[]")
             variant_stocks = request.POST.getlist("variant_stock[]")
 
-            # Update or create variants
+
+
+            print(variant_ids)
+            print(variant_names)
+            print(variant_prices)
+            print(variant_stocks)
+
             existing_variants = set(product.variants.values_list('id', flat=True))
             updated_variants = set()
 
@@ -237,14 +265,14 @@ def update_product(request, product_id):
                 except (Variant.DoesNotExist, ValueError, InvalidOperation) as e:
                     return JsonResponse({"success": False, "message": f"Error updating variant: {str(e)}"})
 
-            # Delete variants that weren't updated
+            # ✅ Delete unused variants
             variants_to_delete = existing_variants - updated_variants
             Variant.objects.filter(id__in=variants_to_delete).delete()
 
-            # Handle new images
+            # ✅ Handle Image Upload
             new_images = request.FILES.getlist("product_images")
             current_images = product.images.count()
-            
+
             if current_images + len(new_images) > 5:
                 return JsonResponse({"success": False, "message": "Maximum 5 images allowed"})
 
@@ -255,9 +283,13 @@ def update_product(request, product_id):
 
         except Exception as e:
             return JsonResponse({"success": False, "message": f"An error occurred: {str(e)}"})
-    product = Product.objects.get(serial_number=product_id)
-    return render(request,"admin_side/edit_product.html",{"product":product})
 
+    # ✅ Return Product, Categories, and Brands in GET Request
+    return render(request, "admin_side/edit_product.html", {
+        "product": product,
+        "brands": brands,
+        "categories": categories
+    })
 def delete_product(request, product_id):
     try:
         product = Product.objects.get(serial_number=product_id)
@@ -268,17 +300,45 @@ def delete_product(request, product_id):
         messages.error(request, "Product not found.")
     return redirect("product_list")
 
+from django.views.decorators.http import require_POST
+@require_POST
+def remove_product_image(request, image_id):
+    try:
+        # Get the image object
+        image = get_object_or_404(ProductImage, id=image_id)
+        
+        # Delete the image file from storage
+        if image.image_url:
+            image.image_url.delete()
+        
+        # Delete the image record from database
+        image.delete()
+        
+        return JsonResponse({
+            'success': True,
+            'message': 'Image removed successfully'
+        })
+    except Exception as e:
+        return JsonResponse({
+            'success': False,
+            'message': str(e)
+        }, status=500)
 
+
+@admin_required
 def brand_list(request):
-    brands = Brand.objects.all()
+    brands = Brand.objects.all().order_by('-id')  # Show latest brands first
     return render(request, "admin_side/brand.html", {"brands": brands})
-
 
 def add_brand(request):
     if request.method == "POST":
         brand_id = request.POST.get("brandId")
-        name = request.POST.get("brandName")
+        name = request.POST.get("brandName").title()
         status = request.POST.get("brandStatus")
+        
+        if Brand.objects.filter(name=name).exclude(id=brand_id).exists():
+            messages.error(request, "A brand with this name already exists.")
+            return redirect('brand')
 
         try:
             if brand_id:
@@ -290,6 +350,7 @@ def add_brand(request):
             else:
                 if Brand.objects.filter(name=name).exists():
                     messages.error(request, "A brand with this name already exists.")
+                    return redirect('brand')
                 else:
                     Brand.objects.create(name=name, status=status)
                     messages.success(request, "Brand added successfully.")
@@ -316,9 +377,11 @@ def edit_brand(request, brand_id):
     brand = get_object_or_404(Brand, id=brand_id)
 
     if request.method == "POST":
-        name = request.POST.get("brandName")
+        name = request.POST.get("brandName").title()
         status = request.POST.get("brandStatus")
-
+        if Brand.objects.filter(name=name).exclude(id=brand_id).exists():
+                messages.error(request, "A brand with this name already exists.")
+                return redirect('brand')
         try:
             existing_brand = (
                 Brand.objects.filter(name=name).exclude(id=brand_id).first()
@@ -326,7 +389,6 @@ def edit_brand(request, brand_id):
             if existing_brand:
                 messages.error(request, "A brand with this name already exists.")
                 return redirect("brand")
-
             brand.name = name
             brand.status = status
             brand.save()

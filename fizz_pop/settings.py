@@ -92,6 +92,7 @@ MIDDLEWARE = [
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
     'allauth.account.middleware.AccountMiddleware',
+    
    
 ]
 
@@ -130,46 +131,37 @@ AUTH_PASSWORD_VALIDATORS = [
 # SESSION_COOKIE_AGE = 3600  # 1 hour
 
 # Authentication Settings
-AUTH_USER_MODEL = 'users.UserProfile'
-AUTHENTICATION_BACKENDS = [
-    'django.contrib.auth.backends.ModelBackend',
-    'allauth.account.auth_backends.AuthenticationBackend',
-]
+AUTH_USER_MODEL = 'users.UserProfile'  # Ensure this points to your custom model
 
-# Google OAuth Settings
-SOCIALACCOUNT_PROVIDERS = {
-    'google': {
-        'APP': {
-            'client_id': config('GOOGLE_CLIENT_ID'),
-            'secret': config('GOOGLE_CLIENT_SECRET'),
-            'key': ''
-        },
-        'SCOPE': ['profile', 'email'],
-        'AUTH_PARAMS': {'access_type': 'online'},
-    }
-}
+
+
+AUTHENTICATION_BACKENDS = (
+    'django.contrib.auth.backends.ModelBackend',  # Default Django auth backend
+    'allauth.account.auth_backends.AuthenticationBackend',  # allauth backend
+)
+
 
 # Logging Configuration
-LOGGING = {
-    'version': 1,
-    'disable_existing_loggers': False,
-    'handlers': {
-        'console': {
-            'class': 'logging.StreamHandler',
-        },
-    },
-    'loggers': {
-        'django': {
-            'handlers': ['console'],
-            'level': 'INFO',
-        },
-        'django.server': {
-            'handlers': ['console'],
-            'level': 'DEBUG',  # Change to DEBUG for more details
-            'propagate': False,
-        },
-    },
-}
+# LOGGING = {
+#     'version': 1,
+#     'disable_existing_loggers': False,
+#     'handlers': {
+#         'console': {
+#             'class': 'logging.StreamHandler',
+#         },
+#     },
+#     'loggers': {
+#         'django': {
+#             'handlers': ['console'],
+#             'level': 'INFO',
+#         },
+#         'django.server': {
+#             'handlers': ['console'],
+#             'level': 'DEBUG',  # Change to DEBUG for more details
+#             'propagate': False,
+#         },
+#     },
+# }
 
 # Other Django Settings
 LANGUAGE_CODE = 'en-us'
@@ -199,15 +191,40 @@ TEMPLATES = [
 
 # Site and Redirect Settings
 SITE_ID = 1
-LOGIN_REDIRECT_URL = '/'
-LOGOUT_REDIRECT_URL = '/'
-ACCOUNT_AUTHENTICATION_METHOD = 'email'
-ACCOUNT_EMAIL_REQUIRED = True
-ACCOUNT_USERNAME_REQUIRED = False
-CRISPY_TEMPLATE_PACK = 'bootstrap4'
+SOCIALACCOUNT_PROVIDERS = {
+    'google': {
+        'APP': {
+            'client_id': config('GOOGLE_CLIENT_ID'),
+            'secret': config('GOOGLE_CLIENT_SECRET'),
+        },
+        'SCOPE': ['profile', 'email'],
+        'AUTH_PARAMS': {'access_type': 'online'},
+    }
+}
 
 
 RAZORPAY_KEY_ID = config('RAZORPAY_KEY_ID')
 RAZORPAY_KEY_SECRET = config('RAZORPAY_KEY_SECRET')
 
 APPEND_SLASH = False
+
+
+# settings.py
+LOGIN_URL = "/"
+LOGIN_REDIRECT_URL = "/"  
+LOGOUT_REDIRECT_URL = "/"
+
+AUTH_USER_MODEL = 'users.UserProfile'  # This should point to your custom model
+
+SOCIALACCOUNT_AUTO_SIGNUP = True
+ACCOUNT_USERNAME_REQUIRED = False
+ACCOUNT_EMAIL_REQUIRED = True
+ACCOUNT_EMAIL_VERIFICATION = "none" # Redirect to the home page after login
+SOCIALACCOUNT_ADAPTER = 'users.adapters.CustomSocialAccountAdapter'
+
+
+
+
+
+
+

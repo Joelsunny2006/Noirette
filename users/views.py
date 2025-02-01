@@ -157,17 +157,17 @@ def login_view(request):
         form = LoginForm()
     return render(request, "user_side/login.html", {'form': form})
 
-
+from django.db.models import Sum
 def home(request):
     # Get products that should be displayed on the homepage
     products = Product.objects.filter(home_display=True, is_deleted=False)
-    
+
     # Get all product images
     product_images = ProductImage.objects.filter(product__in=products).order_by('id')
-    
+
     # Prepare the image URL map
     product_image_map = {
-        img.product.serial_number: img.image_url.url if img.image_url else '/media/default_image.jpg' 
+        img.product.serial_number: img.image_url.url if img.image_url else '/media/default_image.jpg'
         for img in product_images
     }
 
@@ -176,44 +176,39 @@ def home(request):
     for product in products:
         # Add the first image URL to each product
         product.first_image_url = product_image_map.get(product.serial_number, '/media/default_image.jpg')
-        
-        # Fetch variants for the current product and add them to a list
-        variants = product.variants.all()  # Get variants for each product
-        
-        # Add the variants to the product object as an attribute
-        product.variants_list = variants
-        
-        # Append the product with its variants and image URL
+
+        # Append the product to the list (variants will be accessed dynamically in the template)
         products_with_images.append(product)
 
-         # Calculate cart count
-        cart_count = 0
-        if request.user.is_authenticated:
-            # Access the user's profile and retrieve the cart
-            try:
-                cart = Cart.objects.filter(user=request.user).first()
-                if cart:
-                    cart_count = cart.items.aggregate(total=models.Sum('quantity'))['total'] or 0
-            except Cart.DoesNotExist:
-                cart_count = 0
-        
+    # Calculate cart count
+    cart_count = 0
+    if request.user.is_authenticated:
+        try:
+            cart = Cart.objects.filter(user=request.user).first()
+            if cart:
+                cart_count = cart.items.aggregate(total=models.Sum('quantity'))['total'] or 0
+        except Cart.DoesNotExist:
+            cart_count = 0
 
-
+    # Fetch the first available product as the best-selling product
+    best_selling_product = Product.objects.filter(is_deleted=False).prefetch_related('variants').first()
+    if best_selling_product:
+        # Add the first image URL to the best-selling product
+        best_selling_product.first_image_url = product_image_map.get(
+            best_selling_product.serial_number, '/media/default_image.jpg'
+        )
 
     # Render the home page with the products and their data
     return render(request, 'user_side/home.html', {
         "products": products_with_images,
-        "cart_count": cart_count, 
+        "cart_count": cart_count,
+        "best_selling_product": best_selling_product,
     })
+
+
 
 from django.db.models import F, ExpressionWrapper, FloatField, Subquery, OuterRef, Q
 from django.core.paginator import Paginator
-
-from django.core.paginator import Paginator
-from django.db.models import F, ExpressionWrapper, FloatField, Subquery, OuterRef
-
-from django.core.paginator import Paginator
-from django.db.models import F, ExpressionWrapper, FloatField, Subquery, OuterRef
 
 def shop(request):
     # Subquery to calculate the minimum discounted price for each product
