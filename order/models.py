@@ -70,6 +70,20 @@ class OrderItem(models.Model):
     quantity = models.PositiveIntegerField()
     total_price = models.DecimalField(max_digits=10, decimal_places=2)
 
+    def save(self, *args, **kwargs):
+        # Ensure stock is available
+        if self.variant.variant_stock >= self.quantity:
+            self.variant.variant_stock -= self.quantity
+            self.variant.save()
+            super().save(*args, **kwargs)
+        else:
+            raise ValueError("Not enough stock available")
+    
+    def delete(self, *args, **kwargs):
+        self.variant.variant_stock += self.quantity  # Restore stock
+        self.variant.save()
+        super().delete(*args, **kwargs)
+
     def __str__(self):
         return f"{self.quantity} x {self.variant.variant_name} (Order #{self.order.id})"
 
@@ -89,7 +103,3 @@ class Address(models.Model):
 
     def __str__(self):
         return f"{self.first_name} {self.last_name}, {self.street_address}, {self.city}, {self.postcode}"
-
-
-
-

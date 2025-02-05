@@ -154,7 +154,6 @@ def edit_address(request, address_id):
 from django.contrib import messages
 
 # views.py
-
 @login_required
 def place_order(request):
     if request.method == "POST":
@@ -178,12 +177,33 @@ def place_order(request):
                 messages.error(request, "Selected address does not exist.")
                 return redirect("checkout")
 
-            # Get cart and calculate totals
+            # Get cart and validate items
             cart = Cart.objects.get(user=request.user)
-            cart_items = CartItem.objects.filter(cart=cart).select_related("variant")
+            cart_items = CartItem.objects.filter(cart=cart).select_related(
+                "variant", 
+                "variant__product", 
+                "variant__product__category", 
+                "variant__product__brand"
+            )
 
             if not cart_items.exists():
                 messages.error(request, "Your cart is empty.")
+                return redirect("cart")
+
+            # Check for invalid items
+            invalid_items = []
+            for item in cart_items:
+                if (
+                    item.variant.variant_stock <= 0 or 
+                    item.variant.product.is_deleted or 
+                    not item.variant.product.category.status or 
+                    item.variant.product.category.is_deleted or 
+                    item.variant.product.brand and item.variant.product.brand.status == "inactive"
+                ):
+                    invalid_items.append(item)
+
+            if invalid_items:
+                messages.error(request, "Some items in your cart are no longer available. Please remove them to proceed.")
                 return redirect("cart")
 
             # Calculate totals including discounts

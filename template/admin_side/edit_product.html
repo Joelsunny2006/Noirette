@@ -54,6 +54,8 @@ Dashboard
             background: #e9ecef;
             border-color: #007bff;
         }
+
+        
     </style>
 </head>
 <body>
@@ -73,7 +75,7 @@ Dashboard
                 <select id="product-category" class="form-select" name="category" required>
                     <option value="">Select a category</option>
                     {% for category in categories %}
-                        <option value="{{ product.category.id }}" {% if category.id == product.category.id %}selected{% endif %}>{{ category.name }}</option>
+                    <option value="{{ product.category.id }}" {% if category.serial_number == product.category.serial_number %}selected{% endif %}>{{ category.name }}</option>
                     {% endfor %}
                 </select>
                 <div id="category-error" class="invalid-feedback">
@@ -87,8 +89,7 @@ Dashboard
   <select id="product-brand" class="form-select" name="brand" required>
       <option value="">Select a brand</option>
       {% for brand in brands %}
-          <option value="{{ brand.id }}" 
-                  {% if brand.id == product.brand.id %}selected{% endif %}>
+      <option value="{{ brand.id }}" {% if brand.serial_number == product.brand.serial_number %}selected{% endif %}>
               {{ brand.name }}
           </option>
       {% endfor %}
@@ -138,34 +139,37 @@ Dashboard
                     {% for image in product.images.all %}
                         <div class="image-wrapper">
                             <img src="{{ image.image_url.url }}" alt="Product Image" class="image-preview">
-                            <button type="button" class="btn btn-sm btn-danger remove-image" data-image-id="{{ image.id }}">×</button>
+                            <button type="button" class="btn btn-sm btn-danger remove-image" data-image-id="{{ image.serial_number }}">×</button>
                         </div>
                     {% endfor %}
                 </div>
                 <small class="form-text text-muted">You can upload multiple images (max 5 images, each max 5MB).</small>
             </div>
         
-            <!-- Variants (Optional) -->
+<!-- Variants (Optional) -->
 <div class="mb-3">
-    <label class="form-label">Product Variants</label>
-    <div id="variants-container">
-        {% for variant in product.variants.all %}
-        <div class="row variant-row mb-2" data-variant-id="{{ variant.id }}">
-            <div class="col-md-4">
-                <input type="text" name="variant_name_{{ forloop.counter }}" class="form-control" placeholder="Variant Name" value="{{ variant.variant_name }}">
-            </div>
-            <div class="col-md-4">
-                <input type="number" name="variant_price_{{ forloop.counter }}" class="form-control" placeholder="Price" step="0.01" min="0" max="1000" value="{{ variant.variant_price }}">
-            </div>
-            <div class="col-md-4">
-                <input type="number" name="variant_stock_{{ forloop.counter }}" class="form-control" min="0" max="1000" placeholder="Stock" value="{{ variant.variant_stock }}">
-            </div>
-        </div>
-        {% endfor %}
-    </div>
-    <button type="button" class="btn btn-secondary btn-sm" id="add-variant-button">Add Variant</button>
+  <label class="form-label">Product Variants</label>
+  <div id="variants-container">
+      {% for variant in product.variants.all %}
+      <div class="row variant-row mb-2">
+          <div class="col-md-3">
+              <input type="hidden" name="variant_id_{{ forloop.counter }}" value="{{ variant.id }}">
+              <input type="text" name="variant_name_{{ forloop.counter }}" class="form-control" placeholder="Variant Name" value="{{ variant.variant_name }}" required>
+          </div>
+          <div class="col-md-3">
+              <input type="number" name="variant_price_{{ forloop.counter }}" class="form-control" placeholder="Price" step="0.01" min="0" value="{{ variant.variant_price }}" required>
+          </div>
+          <div class="col-md-3">
+              <input type="number" name="variant_stock_{{ forloop.counter }}" class="form-control" placeholder="Stock" min="0" value="{{ variant.variant_stock }}" required>
+          </div>
+          <div class="col-md-3 d-flex align-items-center">
+              <button type="button" class="btn btn-danger btn-sm remove-variant" data-variant-id="{{ variant.id }}">Remove</button>
+          </div>
+      </div>
+      {% endfor %}
+  </div>
+  <button type="button" class="btn btn-secondary btn-sm" id="add-variant-button">Add Variant</button>
 </div>
-
         
             <!-- Form Actions -->
             <button type="submit" class="btn btn-primary">Update Product</button>
@@ -278,21 +282,28 @@ Dashboard
         }
 
 
-        document.getElementById('add-variant-button').addEventListener('click', function() {
+        // Variant counter for new variants
+let variantCounter = document.querySelectorAll('.variant-row').length;
+
+document.getElementById('add-variant-button').addEventListener('click', function() {
     const variantsContainer = document.getElementById('variants-container');
-    const newVariantIndex = variantsContainer.children.length + 1; // Generate a unique index
+    variantCounter++;
+    
     const newVariantRow = document.createElement('div');
     newVariantRow.classList.add('row', 'variant-row', 'mb-2');
     
     newVariantRow.innerHTML = `
-        <div class="col-md-4">
-            <input type="text" name="variant_name_${newVariantIndex}" class="form-control" placeholder="Variant Name">
+        <div class="col-md-3">
+            <input type="text" name="variant_name_${variantCounter}" class="form-control" placeholder="Variant Name" required>
         </div>
-        <div class="col-md-4">
-            <input type="number" name="variant_price_${newVariantIndex}" class="form-control" placeholder="Price" step="0.01">
+        <div class="col-md-3">
+            <input type="number" name="variant_price_${variantCounter}" class="form-control" placeholder="Price" step="0.01" min="0" required>
         </div>
-        <div class="col-md-4">
-            <input type="number" name="variant_stock_${newVariantIndex}" class="form-control" placeholder="Stock">
+        <div class="col-md-3">
+            <input type="number" name="variant_stock_${variantCounter}" class="form-control" placeholder="Stock" min="0" required>
+        </div>
+        <div class="col-md-3 d-flex align-items-center">
+            <button type="button" class="btn btn-danger btn-sm remove-variant">Remove</button>
         </div>
     `;
     
@@ -459,4 +470,50 @@ document.addEventListener('DOMContentLoaded', () => {
 });
 
     </script>
+
+<script>
+// Handle variant removal
+document.addEventListener('click', function(e) {
+    if (e.target.classList.contains('remove-variant')) {
+        const variantRow = e.target.closest('.variant-row');
+        const variantId = e.target.getAttribute('data-variant-id'); // Changed to get attribute directly from button
+
+        if (variantId) {
+            // Existing variant - send delete request
+            if (confirm('Are you sure you want to delete this variant?')) {
+                fetch(`/product/delete-variant/${variantId}/`, {
+                    method: 'DELETE',
+                    headers: {
+                        'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value,
+                        'Content-Type': 'application/json'
+                    }
+                })
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error('Network response was not ok');
+                    }
+                    return response.json();
+                })
+                .then(data => {
+                    if (data.success) {
+                        variantRow.remove();
+                        // Optional: Show success message
+                        alert('Variant deleted successfully');
+                    } else {
+                        alert('Error: ' + data.message);
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    alert('Failed to delete variant: ' + error.message);
+                });
+            }
+        } else {
+            // New variant - just remove from DOM
+            variantRow.remove();
+        }
+    }
+});
+</script>
+
 {%endblock%}

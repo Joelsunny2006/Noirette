@@ -16,6 +16,7 @@ from django.db.models import F, Sum
 
 logger = logging.getLogger(__name__)
 
+
 @login_required
 def view_cart(request):
     # Ensure the cart exists for the authenticated user
@@ -77,10 +78,21 @@ def add_to_cart(request):
             quantity = int(request.POST.get('quantity', 1))
 
             if not variant_id:
-                messages.error(request, "No product selected.")
                 return JsonResponse({'success': False, 'message': "No product selected."}, status=400)
 
             variant = get_object_or_404(Variant, id=variant_id)
+
+            # Check if the variant, product, category, or brand is inactive or deleted
+            if (
+                variant.variant_stock <= 0 or 
+                variant.product.is_deleted or 
+                not variant.product.category.status or 
+                variant.product.category.is_deleted or 
+                variant.product.brand and variant.product.brand.status == "inactive"
+            ):
+                if request.user.is_authenticated:
+                    messages.error(request, "This product is no longer available.")
+                return JsonResponse({'success': False, 'message': "This product is no longer available."}, status=400)
 
             if request.user.is_authenticated:
                 cart, _ = Cart.objects.get_or_create(user=request.user)
@@ -91,6 +103,7 @@ def add_to_cart(request):
                     session_id = request.session.session_key
                 cart, _ = Cart.objects.get_or_create(session_id=session_id)
 
+            # Check if the item already exists in the cart
             cart_item, created = CartItem.objects.get_or_create(
                 cart=cart,
                 variant=variant,
@@ -98,13 +111,17 @@ def add_to_cart(request):
             )
 
             if not created:
-                cart_item.quantity = 1  # Reset to 1 if quantity exceeds
-                cart_item.save()
+                # If item already exists in the cart, don't change the quantity, just notify the user
+                return JsonResponse({
+                    'success': True,
+                    'message': "This item is already in the cart. Quantity will not be updated.",
+                    'cart_total_items': cart.total_items if isinstance(cart.total_items, int) else 0,
+                })
 
             return JsonResponse({
                 'success': True,
                 'message': "Item added to cart successfully!",
-                'cart_total_items': cart.total_items,
+                'cart_total_items': cart.total_items if isinstance(cart.total_items, int) else 0,
             })
 
         except Exception as e:
@@ -114,10 +131,10 @@ def add_to_cart(request):
     return JsonResponse({'success': False, 'message': "Invalid request method."}, status=405)
 
 
-
 @login_required
 def update_cart_item(request, item_id):
     if request.method == 'POST':
+        print('hey')
         quantity = int(request.POST.get('quantity', 0))
         cart_item = get_object_or_404(CartItem, id=item_id, cart__user=request.user)
 
@@ -137,10 +154,23 @@ def remove_from_cart(request, item_id):
         try:
             # Retrieve the cart item for the logged-in user
             cart_item = get_object_or_404(CartItem, id=item_id, cart__user=request.user)
+            cart = cart_item.cart  # Get the cart before deletion
             cart_item.delete()
+
+            # Recalculate the cart totals after deletion
+            cart_items = CartItem.objects.filter(cart=cart)
+            cart_total = sum(
+                (item.variant.get_discounted_price() or item.variant.variant_price) * item.quantity
+                for item in cart_items
+            )
+            # If you have any discount logic, adjust the following line accordingly:
+            cart_total_after_discount = cart_total
+
             return JsonResponse({
                 "success": True,
-                "message": "Item removed from cart successfully!"
+                "message": "Item removed from cart successfully!",
+                "cart_total": f"{cart_total:.2f}",
+                "cart_total_after_discount": f"{cart_total_after_discount:.2f}"
             })
         except Exception as e:
             return JsonResponse({
@@ -161,7 +191,7 @@ import json
 def update_cart_quantity(request, item_id):
     if request.method == "POST" and request.headers.get('X-Requested-With') == 'XMLHttpRequest':
         try:
-            # Parse incoming request data
+            # Parse the JSON data from the request
             data = json.loads(request.body)
             new_quantity = int(data.get('quantity', 0))
 
@@ -169,21 +199,21 @@ def update_cart_quantity(request, item_id):
             if new_quantity <= 0:
                 return JsonResponse({"success": False, "message": "Quantity must be at least 1."})
 
-            # Fetch the cart item and ensure it belongs to the user's cart
+            # Fetch the cart item ensuring it belongs to the current user
             cart_item = get_object_or_404(CartItem, id=item_id, cart__user=request.user)
             cart_item.quantity = new_quantity
             cart_item.save()
 
-            # Calculate item-specific pricing
+            # Calculate the price for the item
             item_price = cart_item.variant.get_discounted_price() or cart_item.variant.variant_price
             item_total_price = item_price * new_quantity
 
-            # Update cart totals
+            # Get the cart instance and calculate totals
             cart = cart_item.cart
-            cart_total = cart.total_price()
-            cart_total_after_discount = cart.total_price_after_discount()
+            cart_total = cart.total_price()  # Assuming your Cart model has a method total_price()
+            cart_total_after_discount = cart.total_price_after_discount()  # And a method for discount logic
 
-            # Return updated values
+            # Return the updated values as JSON
             return JsonResponse({
                 "success": True,
                 "message": "Cart updated successfully.",
@@ -199,9 +229,7 @@ def update_cart_quantity(request, item_id):
         except Exception as e:
             return JsonResponse({"success": False, "message": f"An error occurred: {str(e)}"})
 
-    # Invalid request method or headers
     return JsonResponse({"success": False, "message": "Invalid request."})
-
 
 @login_required
 def clear_cart(request):
@@ -228,7 +256,26 @@ def checkout_view(request, product_id=None):
                 cart_item.quantity += 1
                 cart_item.save()
 
-        cart_items = CartItem.objects.filter(cart=cart)
+        # Fetch cart items with related data
+        cart_items = CartItem.objects.filter(cart=cart).select_related(
+            "variant", "variant__product", "variant__product__category", "variant__product__brand"
+        )
+
+        # Check for invalid items in the cart
+        invalid_items = []
+        for item in cart_items:
+            if (
+                item.variant.variant_stock <= 0 or 
+                item.variant.product.is_deleted or 
+                not item.variant.product.category.status or 
+                item.variant.product.category.is_deleted or 
+                item.variant.product.brand and item.variant.product.brand.status == "inactive"
+            ):
+                invalid_items.append(item)
+
+        if invalid_items:
+            messages.error(request, "Some items in your cart are no longer available. Please remove them to proceed.")
+            return redirect("cart")
 
         if not cart_items.exists():
             messages.error(request, 'Your cart is empty.')

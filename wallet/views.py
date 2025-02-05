@@ -11,13 +11,12 @@ from django.db.models import Sum
 @login_required
 def wallet_view(request):
     """
-    Display wallet balance and transaction history, including Razorpay credits.
+    Display wallet summary including total credited, total debited, net balance, and transaction history.
     """
     try:
         wallet, created = Wallet.objects.get_or_create(user=request.user)
-        transactions = wallet.transactions.all().order_by('-timestamp')
 
-        # Calculate total credited amount (including wallet funding)
+        # Calculate total credited amount
         total_credited = (
             wallet.transactions.filter(transaction_type='credit')
             .aggregate(total=Sum('amount'))['total'] or 0
@@ -29,17 +28,24 @@ def wallet_view(request):
             .aggregate(total=Sum('amount'))['total'] or 0
         )
 
+        # Fetch transaction history
+        transactions = wallet.transactions.all().order_by('-timestamp')  # Latest first
+
+        # Calculate net balance (total credited - total debited)
+        net_balance = total_credited - total_debited
+
         context = {
-            'wallet': wallet,
-            'transactions': transactions,
             'total_credited': total_credited,
             'total_debited': total_debited,
+            'net_balance': net_balance,
+            'transactions': transactions,  # ✅ Include transactions in context
         }
         return render(request, 'user_side/wallet.html', context)
 
     except Exception as e:
         messages.error(request, f"An error occurred: {str(e)}")
         return redirect('wallet_view')  # Adjust the redirect as needed
+
 
 def process_wallet_refund(order):
     """

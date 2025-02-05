@@ -348,6 +348,9 @@ def logout(request):
     logout(request)
     return redirect('home')
 
+def support(request):
+    return render(request, 'user_side/support.html')
+
 @login_required
 def user_profile(request):
 

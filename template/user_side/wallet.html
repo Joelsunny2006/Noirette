@@ -59,7 +59,7 @@
 			  <li class="nav-item active"><a href="{% url 'home' %}" class="nav-link" style="color: white;">Home</a></li>
 			  <li class="nav-item"><a href="{% url 'shop' %}" class="nav-link" style="color: white;">Shop</a></li>
 			  <li class="nav-item"><a href="about.html" class="nav-link" style="color: white;">About</a></li>
-			  <li class="nav-item"><a href="blog.html" class="nav-link" style="color: white;">Blog</a></li>
+			  <li class="nav-item"><a href="{% url 'support' %}" class="nav-link" style="color: white;">Support</a></li>
 			  <li class="nav-item"><a href="contact.html" class="nav-link" style="color: white;">Contact</a></li>
 			  <li class="nav-item cta cta-colored">
 				<a href="{% url 'view_cart' %}" class="nav-link" style="color: white;">
@@ -138,32 +138,36 @@
   <section class="ftco-section ftco-wallet">
     <div class="container">
         <div class="row">
-            <div class="col-md-12">
-              <div class="wallet-balance text-center mb-5">
-                <h2>My Wallet</h2>
-                <div class="balance-card bg-primary text-white p-4 rounded">
-                    <h3>Current Balance</h3>
-                    <p class="display-4">₹{{ wallet.balance|floatformat:2 }}</p>
-                </div>
-            
-                <!-- ✅ Add this section below the balance card -->
-                <div class="wallet-summary mt-4 text-center">
-                    <div class="d-flex justify-content-between">
-                        <div class="text-success">
-                            <h5>Total Funds Added: ₹{{ total_credited|floatformat:2 }}</h5>
-                        </div>
-                        <div class="text-danger">
-                            <h5>Total Spent: ₹{{ total_debited|floatformat:2 }}</h5>
-                        </div>
+    <div class="col-md-12">
+        <div class="wallet-balance text-center mb-5">
+            <h2>Wallet Summary</h2>
+
+            <div class="wallet-summary-card bg-primary text-white p-4 rounded text-center">
+                <h5>Net Balance</h5>
+                <p class="display-4 font-weight-bold">₹{{ net_balance|floatformat:2 }}</p> <!-- Bigger size -->
+            </div>
+
+            <div class="wallet-summary mt-4 text-center">
+                <div class="d-flex justify-content-between">
+                    <div class="text-danger">
+                        <h5>Total Spent</h5>
+                        <p class="display-4.8 font-weight-bold">₹{{ total_debited|floatformat:2 }}</p> <!-- Smaller than Net Balance -->
+                    </div>
+                    <div class="text-success">
+                        <h5>Total Funds Added</h5>
+                        <p class="display-4.8 font-weight-bold">₹{{ total_credited|floatformat:2 }}</p> <!-- Smaller than Net Balance -->
                     </div>
                 </div>
-                    <!-- Add Funds Button -->
-                    <button class="btn btn-success mt-3" data-toggle="modal" data-target="#addFundsModal">
-                        Add Funds
-                    </button>
-                </div>
             </div>
+
+            <!-- Add Funds Button -->
+            <button class="btn btn-success mt-3" data-toggle="modal" data-target="#addFundsModal">
+                Add Funds
+            </button>
         </div>
+    </div>
+</div>
+
 
         <!-- Add Funds Modal -->
         <div class="modal fade" id="addFundsModal" tabindex="-1" role="dialog">
@@ -193,37 +197,38 @@
             </div>
         </div>
 
-        <!-- Transaction History -->
-        <div class="row">
-            <div class="col-md-12">
-                <h3>Transaction History</h3>
-                <div class="table-responsive">
-                    <table class="table table-striped">
-                        <thead>
-                            <tr>
-                                <th>Date</th>
-                                <th>Description</th>
-                                <th>Type</th>
-                                <th>Amount</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {% for transaction in transactions %}
-                                <tr class="{% if transaction.transaction_type == 'credit' %}text-success{% else %}text-danger{% endif %}">
-                                    <td>{{ transaction.timestamp|date:"Y-m-d H:i" }}</td>
-                                    <td>{{ transaction.description }}</td>
-                                    <td>{{ transaction.get_transaction_type_display }}</td>
-                                    <td>₹{{ transaction.amount|floatformat:2 }}</td>
-                                </tr>
-                            {% empty %}
-                                <tr>
-                                    <td colspan="4" class="text-center">No transactions found</td>
-                                </tr>
-                            {% endfor %}
-                        </tbody>
-                    </table>
-                </div>
-            </div>
+       <!-- Transaction History -->
+<div class="row mt-4">
+  <div class="col-md-12">
+      <h3>Transaction History</h3>
+      <div class="table-responsive">
+          <table class="table table-striped">
+              <thead>
+                  <tr>
+                      <th>Date</th>
+                      <th>Description</th>
+                      <th>Type</th>
+                      <th>Amount</th>
+                  </tr>
+              </thead>
+              <tbody>
+                  {% for transaction in transactions %}
+                      <tr class="{% if transaction.transaction_type == 'credit' %}text-success{% else %}text-danger{% endif %}">
+                          <td>{{ transaction.timestamp|date:"Y-m-d H:i" }}</td>
+                          <td>{{ transaction.description }}</td>
+                          <td>{{ transaction.get_transaction_type_display }}</td>
+                          <td>₹{{ transaction.amount|floatformat:2 }}</td>
+                      </tr>
+                  {% empty %}
+                      <tr>
+                          <td colspan="4" class="text-center">No transactions found</td>
+                      </tr>
+                  {% endfor %}
+              </tbody>
+          </table>
+      </div>
+  </div>
+</div>
         </div>
     </div>
 </section>

@@ -91,7 +91,7 @@ def add_product(request):
             # Basic validation
             name = request.POST.get("product_name").title()
 
-            if Product.objects.filter(name=name).exclude(id=product).exists():
+            if Product.objects.filter(name=name).exists():
                 return JsonResponse({"success": False, "message": "A product with this name already exists."})
 
             if not name:
@@ -175,29 +175,26 @@ def add_product(request):
 
     return JsonResponse({"success": False, "message": "Invalid request method"})
 
-
 def update_product(request, product_id):
-    categories = Category.objects.filter(status=True)  # ✅ Fixed query
+    categories = Category.objects.filter(status=True)
     brands = Brand.objects.filter(status="active")
 
     try:
         product = Product.objects.get(serial_number=product_id)
     except Product.DoesNotExist:
         return JsonResponse({"success": False, "message": "Product not found"})
-    
-    print(request.POST)
 
     if request.method == "POST":
         try:
-            # Update basic info
-            name = request.POST.get("product_name").title()
-
-            if Product.objects.filter(name=name).exclude(id=product_id).exists():
+            # Update basic product info
+            name = request.POST.get("name", "").title()
+            if Product.objects.filter(name=name).exclude(serial_number=product.serial_number).exists():
                 return JsonResponse({"success": False, "message": "A product with this name already exists."})
-
+            
+            product.name = name
             product.description = request.POST.get("description")
-
-            # ✅ Ensure Category Exists
+            
+            # Update category
             category_id = request.POST.get("category")
             if category_id:
                 try:
@@ -205,7 +202,7 @@ def update_product(request, product_id):
                 except Category.DoesNotExist:
                     return JsonResponse({"success": False, "message": "Invalid category selected"})
 
-            # ✅ Validate Offer Percentage
+            # Update offer percentage
             offer_percentage = request.POST.get("offer_price_percentage", '0')
             try:
                 offer_percentage = Decimal(offer_percentage)
@@ -217,79 +214,102 @@ def update_product(request, product_id):
 
             product.save()
 
-            # ✅ Handle Variants
-            variant_ids = request.POST.getlist("variant_id[]")
-            variant_names = request.POST.getlist("variant_name[]")
-            variant_prices = request.POST.getlist("variant_price[]")
-            variant_stocks = request.POST.getlist("variant_stock[]")
+            # Get all existing variant IDs for this product
+            existing_variant_ids = set(product.variants.values_list('id', flat=True))
+            processed_variant_ids = set()
 
+            # Handle variants
+            variant_indices = set()
+            
+            # Collect all variant indices from the POST data
+            for key in request.POST:
+                if key.startswith('variant_name_'):
+                    index = key.split('_')[-1]
+                    variant_indices.add(index)
 
+            # Process variants
+            for index in variant_indices:
+                name = request.POST.get(f'variant_name_{index}')
+                price = request.POST.get(f'variant_price_{index}')
+                stock = request.POST.get(f'variant_stock_{index}')
+                variant_id = request.POST.get(f'variant_id_{index}')
 
-            print(variant_ids)
-            print(variant_names)
-            print(variant_prices)
-            print(variant_stocks)
+                if name and price and stock:
+                    try:
+                        if variant_id and variant_id.isdigit():
+                            # Update existing variant
+                            variant = Variant.objects.get(
+                                id=int(variant_id),
+                                product=product
+                            )
+                            variant.variant_name = name.strip()
+                            variant.variant_price = Decimal(price)
+                            variant.variant_stock = int(stock)
+                            variant.save()
+                            processed_variant_ids.add(int(variant_id))
+                        else:
+                            # Create new variant
+                            new_variant = Variant.objects.create(
+                                product=product,
+                                variant_name=name.strip(),
+                                variant_price=Decimal(price),
+                                variant_stock=int(stock)
+                            )
+                    except Variant.DoesNotExist:
+                        continue
+                    except (ValueError, InvalidOperation) as e:
+                        return JsonResponse({"success": False, "message": f"Invalid variant data: {str(e)}"})
 
-            existing_variants = set(product.variants.values_list('id', flat=True))
-            updated_variants = set()
-
-            for i in range(len(variant_names)):
-                try:
-                    name = variant_names[i]
-                    price = Decimal(variant_prices[i])
-                    stock = int(variant_stocks[i])
-                    variant_id = variant_ids[i] if i < len(variant_ids) else None
-
-                    if price <= 0:
-                        raise ValueError("Price must be greater than 0")
-                    if stock < 0:
-                        raise ValueError("Stock cannot be negative")
-
-                    if variant_id and variant_id.isdigit():
-                        variant_id = int(variant_id)
-                        variant = Variant.objects.get(id=variant_id, product=product)
-                        variant.variant_name = name
-                        variant.variant_price = price
-                        variant.variant_stock = stock
-                        variant.save()
-                        updated_variants.add(variant_id)
-                    else:
-                        variant = Variant.objects.create(
-                            product=product,
-                            variant_name=name,
-                            variant_price=price,
-                            variant_stock=stock
-                        )
-                        updated_variants.add(variant.id)
-
-                except (Variant.DoesNotExist, ValueError, InvalidOperation) as e:
-                    return JsonResponse({"success": False, "message": f"Error updating variant: {str(e)}"})
-
-            # ✅ Delete unused variants
-            variants_to_delete = existing_variants - updated_variants
+            # Delete variants that weren't included in the update
+            variants_to_delete = existing_variant_ids - processed_variant_ids
             Variant.objects.filter(id__in=variants_to_delete).delete()
 
-            # ✅ Handle Image Upload
+            # Handle image uploads
             new_images = request.FILES.getlist("product_images")
-            current_images = product.images.count()
+            if new_images:
+                current_images = product.images.count()
+                if current_images + len(new_images) > 5:
+                    return JsonResponse({"success": False, "message": "Maximum 5 images allowed"})
 
-            if current_images + len(new_images) > 5:
-                return JsonResponse({"success": False, "message": "Maximum 5 images allowed"})
-
-            for image in new_images:
-                ProductImage.objects.create(product=product, image_url=image)
+                for image in new_images:
+                    ProductImage.objects.create(product=product, image_url=image)
 
             return JsonResponse({"success": True, "message": "Product updated successfully"})
 
         except Exception as e:
             return JsonResponse({"success": False, "message": f"An error occurred: {str(e)}"})
 
-    # ✅ Return Product, Categories, and Brands in GET Request
     return render(request, "admin_side/edit_product.html", {
         "product": product,
         "brands": brands,
         "categories": categories
     })
+
+from django.views.decorators.csrf import csrf_exempt
+from django.views.decorators.http import require_http_methods
+@csrf_exempt
+@require_http_methods(["DELETE"])
+def delete_variant(request, variant_id):
+    try:
+        # Changed serial_number to id
+        variant = Variant.objects.get(id=variant_id)
+        variant.delete()
+        return JsonResponse({
+            "success": True,
+            "message": "Variant deleted successfully"
+        })
+    except Variant.DoesNotExist:
+        return JsonResponse({
+            "success": False,
+            "message": "Variant not found"
+        }, status=404)
+    except Exception as e:
+        return JsonResponse({
+            "success": False,
+            "message": f"Error deleting variant: {str(e)}"
+        }, status=500)
+    
+
 def delete_product(request, product_id):
     try:
         product = Product.objects.get(serial_number=product_id)

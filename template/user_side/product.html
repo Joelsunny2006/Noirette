@@ -42,6 +42,15 @@
 
   </head>
   <style>
+.btn-disabled {
+    opacity: 0.65;
+    cursor: not-allowed;
+}
+
+.text-danger {
+    color: #dc3545;
+}
+
     .message-box {
         position: fixed;
         top: 20px;
@@ -300,13 +309,21 @@
 
 <!-- Stock Display -->
 {% if variants %}
-<p id="stock-display" class="text-muted">
-    In Stock: {{ variants.0.stock }}
-</p>
+    <p id="stock-display" class="text-muted">
+        {% if variants.0.variant_stock == 0 %}
+            <span class="text-danger">Out of Stock</span>
+        {% else %}
+            In Stock: {{ variants.0.variant_stock }}
+        {% endif %}
+    </p>
 {% else %}
-<p id="stock-display" class="text-muted">
-    Available Stock: {{ product.stock }}
-</p>
+    <p id="stock-display" class="text-muted">
+        {% if product.stock == 0 %}
+            <span class="text-danger">Out of Stock</span>
+        {% else %}
+            Available Stock: {{ product.stock }}
+        {% endif %}
+    </p>
 {% endif %}
 
 <!-- Add to Cart Form -->
@@ -341,7 +358,13 @@ data-url="{% url 'add_to_cart' %}">
     </div>
 {% endif %}
 <div id="cart-message-box" class="message-box"></div> <!-- Message box for success or error messages -->
-<button id="add-to-cart-button" type="submit" class="btn-custom mt-3" {% if variants.0.stock == 0 %}disabled{% endif %}>Add to Cart</button>
+<button 
+    id="add-to-cart-button" 
+    type="submit" 
+    class="btn-custom mt-3 {% if variants.0.variant_stock == 0 %}btn-disabled{% endif %}" 
+    {% if variants.0.variant_stock == 0 %}disabled{% endif %}>
+    Add to Cart
+</button>
 </form>
 
 
@@ -350,9 +373,9 @@ data-url="{% url 'add_to_cart' %}">
                 <div id="message-box"></div>
 
                 <!-- Buy Now Button -->
-                <p>
+                <!-- <p>
                     <a href="{% url 'checkout' %}" class="btn btn-primary py-3 px-5">Buy now</a>
-                </p>
+                </p> -->
             </div>
 
 			</div>
@@ -614,6 +637,40 @@ data-url="{% url 'add_to_cart' %}">
   <!-- The script -->
   <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 <script>
+
+
+// Add this script to your page
+document.addEventListener('DOMContentLoaded', function() {
+    const variantSelect = document.getElementById('variant');
+    const stockDisplay = document.getElementById('stock-display');
+    const addToCartButton = document.getElementById('add-to-cart-button');
+
+    function updateStockDisplay() {
+        if (variantSelect) {
+            const selectedOption = variantSelect.options[variantSelect.selectedIndex];
+            const stock = parseInt(selectedOption.getAttribute('data-stock'));
+            
+            if (stock === 0) {
+                stockDisplay.innerHTML = '<span class="text-danger">Out of Stock</span>';
+                addToCartButton.disabled = true;
+                addToCartButton.classList.add('btn-disabled');
+            } else {
+                stockDisplay.innerHTML = `In Stock: ${stock}`;
+                addToCartButton.disabled = false;
+                addToCartButton.classList.remove('btn-disabled');
+            }
+        }
+    }
+
+    // Update on page load
+    updateStockDisplay();
+
+    // Update when variant changes
+    if (variantSelect) {
+        variantSelect.addEventListener('change', updateStockDisplay);
+    }
+});
+
     $(document).ready(function () {
         // Intercept form submission for "Add to Cart"
         $('#add-to-cart-form').on('submit', function (event) {
@@ -790,6 +847,7 @@ data-url="{% url 'add_to_cart' %}">
 });
 
 
+
 document.addEventListener('DOMContentLoaded', () => {
         const container = document.querySelector('.product-image-container');
         const mainImage = document.getElementById('main-image');
@@ -845,5 +903,51 @@ document.addEventListener('DOMContentLoaded', () => {
         zoomedImage.src = newSrc;
     }
 </script>
+
+<script>
+    function addToCart(variantId, quantity = 1) {
+        fetch("/cart/add-to-cart/", {
+            method: "POST",
+            headers: {
+                "X-CSRFToken": "{{ csrf_token }}",
+                "Content-Type": "application/x-www-form-urlencoded"
+            },
+            body: new URLSearchParams({
+                "variant_id": variantId,
+                "quantity": quantity
+            })
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                Swal.fire({
+                    title: "Success!",
+                    text: data.message,
+                    icon: "success",
+                    confirmButtonText: "OK"
+                }).then(() => {
+                    location.reload();  // Reload page to update cart count
+                });
+            } else {
+                Swal.fire({
+                    title: "Error!",
+                    text: data.message,
+                    icon: "error",
+                    confirmButtonText: "OK"
+                });
+            }
+        })
+        .catch(error => {
+            Swal.fire({
+                title: "Error!",
+                text: "Something went wrong. Please try again.",
+                icon: "error",
+                confirmButtonText: "OK"
+            });
+        });
+    }
+</script>
+
+
 </body>
 </html>	
