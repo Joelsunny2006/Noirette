@@ -31,7 +31,7 @@ EMAIL_HOST_PASSWORD = config('EMAIL_HOST_PASSWORD')
 # Security Settings
 SECRET_KEY = config('SECRET_KEY')
 DEBUG = config('DEBUG', default=True, cast=bool)
-ALLOWED_HOSTS = [] if DEBUG else ['*']
+ALLOWED_HOSTS = ['*']
 
 
 CSRF_TRUSTED_ORIGINS = [
