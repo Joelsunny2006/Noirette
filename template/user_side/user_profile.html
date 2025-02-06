@@ -53,7 +53,7 @@
                 </div>
                 <div class="mb-3">
                   <label for="email" class="form-label">Email</label>
-                  <input type="email" class="form-control" id="email" name="email" value="{{ request.user.email }}" required>
+                  <input type="email" class="form-control" id="email-profile" name="email" value="{{ request.user.email }}" required>
                 </div>
                 <div class="modal-footer">
                   <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
@@ -453,7 +453,7 @@ document.addEventListener('DOMContentLoaded', function() {
             'street_address', 'apartment', 'city', 
             'state', 'postcode', 'phone', 'email'
         ];
-
+        console.log(button.dataset)
         fields.forEach(field => {
             const input = document.getElementById(field);
             if (input && button.dataset[field.toLowerCase()]) {

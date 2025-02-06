@@ -8,6 +8,7 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # Media and Static Files
 MEDIA_URL = '/media/'
 MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
+
 STATIC_URL = '/static/'
 STATICFILES_DIRS = [os.path.join(BASE_DIR, 'static')]
 STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
@@ -92,7 +93,9 @@ MIDDLEWARE = [
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
     'allauth.account.middleware.AccountMiddleware',
-    
+    'admin_panel.middleware.SocialAuthExceptionMiddleware',
+    'admin_panel.middleware.Custom404Middleware',
+    'admin_panel.middleware.ActiveUserMiddleware',
    
 ]
 

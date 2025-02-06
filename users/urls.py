@@ -20,4 +20,3 @@ urlpatterns = [
     path('reset-password/<int:user_id>/', views.reset_password, name='reset_password'),   
     path('support', views.support, name='support'),
 ]
-

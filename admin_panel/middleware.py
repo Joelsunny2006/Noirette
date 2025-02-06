@@ -18,7 +18,7 @@ class ActiveUserMiddleware:
         excluded_paths = [reverse('login'), '/']
         
         if request.path not in excluded_paths:
-            if request.user.is_authenticated and not request.user.is_active:
+            if request.user.is_authenticated and request.user.is_blocked:
                 logout(request)  
                 return redirect(settings.LOGIN_REDIRECT_URL)
         
@@ -49,6 +49,6 @@ class Custom404Middleware:
         response = self.get_response(request)
 
         if response.status_code == 404:
-            return render(request, '404.html', status=404)
+            return render(request, 'user_side/error.htm', status=404)
         
         return response

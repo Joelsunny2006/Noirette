@@ -186,50 +186,40 @@ def remove_from_cart(request, item_id):
 from django.http import JsonResponse
 from django.shortcuts import get_object_or_404
 import json
+from django.urls import reverse
 
-@login_required
+
 def update_cart_quantity(request, item_id):
-    if request.method == "POST" and request.headers.get('X-Requested-With') == 'XMLHttpRequest':
-        try:
-            # Parse the JSON data from the request
-            data = json.loads(request.body)
-            new_quantity = int(data.get('quantity', 0))
-
-            # Validate quantity
-            if new_quantity <= 0:
-                return JsonResponse({"success": False, "message": "Quantity must be at least 1."})
-
-            # Fetch the cart item ensuring it belongs to the current user
-            cart_item = get_object_or_404(CartItem, id=item_id, cart__user=request.user)
-            cart_item.quantity = new_quantity
-            cart_item.save()
-
-            # Calculate the price for the item
-            item_price = cart_item.variant.get_discounted_price() or cart_item.variant.variant_price
-            item_total_price = item_price * new_quantity
-
-            # Get the cart instance and calculate totals
-            cart = cart_item.cart
-            cart_total = cart.total_price()  # Assuming your Cart model has a method total_price()
-            cart_total_after_discount = cart.total_price_after_discount()  # And a method for discount logic
-
-            # Return the updated values as JSON
+    try:
+        data = json.loads(request.body)
+        quantity = int(data.get('quantity', 0))
+        cart_item = CartItem.objects.get(id=item_id, cart__user=request.user)
+        
+        # Check stock availability
+        print(cart_item.variant.variant_stock)
+        if quantity > cart_item.variant.variant_stock:
             return JsonResponse({
-                "success": True,
-                "message": "Cart updated successfully.",
-                "item_price": f"{item_price:.2f}",
-                "item_total_price": f"{item_total_price:.2f}",
-                "cart_total": f"{cart_total:.2f}",
-                "cart_total_after_discount": f"{cart_total_after_discount:.2f}",
+                'success': False,
+                'message': f'Only {cart_item.variant.variant_stock} items available in stock'
             })
-        except CartItem.DoesNotExist:
-            return JsonResponse({"success": False, "message": "Cart item not found."})
-        except ValueError:
-            return JsonResponse({"success": False, "message": "Invalid quantity provided."})
-        except Exception as e:
-            return JsonResponse({"success": False, "message": f"An error occurred: {str(e)}"})
-
-    return JsonResponse({"success": False, "message": "Invalid request."})
+        
+        cart_item.quantity = quantity
+        cart_item.save()
+        
+        # Calculate new totals
+        cart_total = cart_item.cart.total_price_after_discount()
+        cart_total_after_discount = cart_item.cart.total_price_after_discount()
+        
+        return JsonResponse({
+            'success': True,
+            'item_total_price': str(cart_item.total_price()),
+            'cart_total': str(cart_total),
+            'cart_total_after_discount': str(cart_total_after_discount)
+        })
+    except CartItem.DoesNotExist:
+        return JsonResponse({'success': False, 'message': 'Item not found'})
+    except Exception as e:
+        return JsonResponse({'success': False, 'message': str(e)})
 
 @login_required
 def clear_cart(request):
@@ -275,11 +265,11 @@ def checkout_view(request, product_id=None):
 
         if invalid_items:
             messages.error(request, "Some items in your cart are no longer available. Please remove them to proceed.")
-            return redirect("cart")
+            return redirect(reverse('view_cart'))  # Ensure 'view_cart' is the correct URL name
 
         if not cart_items.exists():
             messages.error(request, 'Your cart is empty.')
-            return redirect('view_cart')
+            return redirect(reverse('view_cart'))  # Ensure 'view_cart' is the correct URL name
 
         # Calculate subtotal and discounted price
         subtotal = Decimal('0.00')
@@ -343,11 +333,10 @@ def checkout_view(request, product_id=None):
 
     except Cart.DoesNotExist:
         messages.error(request, 'Your cart is empty.')
-        return redirect('view_cart')
+        return redirect(reverse('view_cart'))  # Ensure 'view_cart' is the correct URL name
     except Product.DoesNotExist:
         messages.error(request, 'Product not found.')
-        return redirect('view_cart')
-
+        return redirect(reverse('view_cart'))  # Ensure 'view_cart' is the correct URL name
 
 @login_required
 def add_address_view(request):

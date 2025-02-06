@@ -488,17 +488,17 @@ def order_failure(request):
 
 @login_required
 def cancel_order(request, order_id):
-
     order = get_object_or_404(Order, id=order_id, user=request.user)
 
-    # Only allow cancellation for pending or processing orders
-    if order.status in ["Pending", "Processing","Shipped"]:
-        # Process wallet refund
+    if order.status in ["Pending", "Processing", "Shipped"]:
         try:
-            # Create or get user's wallet
-            wallet, created = Wallet.objects.get_or_create(user=request.user)
+            # Restore stock for each item in the order
+            for item in order.items.all():
+                item.variant.variant_stock += item.quantity
+                item.variant.save()
 
-            # Create wallet transaction
+            # Process wallet refund (if applicable)
+            wallet, created = Wallet.objects.get_or_create(user=request.user)
             WalletTransaction.objects.create(
                 wallet=wallet,
                 amount=order.total_price,
@@ -510,31 +510,27 @@ def cancel_order(request, order_id):
             order.status = "Cancelled"
             order.save()
 
-            messages.success(
-                request,
-                f"Order #{order_id} has been cancelled. Refund of ₹{order.total_price} has been added to your wallet.",
-            )
-
+            messages.success(request, f"Order #{order_id} has been cancelled. Refund of ₹{order.total_price} has been added to your wallet.")
         except Exception as e:
             messages.error(request, f"Error processing cancellation: {str(e)}")
     else:
         messages.error(request, "This order cannot be cancelled.")
 
-    return redirect("user_profile")  # Adjust this to your profile URL name
-
+    return redirect("user_profile")
 
 @login_required
 def return_order(request, order_id):
-
     order = get_object_or_404(Order, id=order_id, user=request.user)
 
-    # Only allow returns for completed orders
     if order.status == "Completed":
         try:
-            # Create or get user's wallet
-            wallet, created = Wallet.objects.get_or_create(user=request.user)
+            # Restore stock for each item in the order
+            for item in order.items.all():
+                item.variant.variant_stock += item.quantity
+                item.variant.save()
 
-            # Create wallet transaction
+            # Process wallet refund
+            wallet, created = Wallet.objects.get_or_create(user=request.user)
             WalletTransaction.objects.create(
                 wallet=wallet,
                 amount=order.total_price,
@@ -546,18 +542,13 @@ def return_order(request, order_id):
             order.status = "Returned"
             order.save()
 
-            messages.success(
-                request,
-                f"Order #{order_id} has been returned. Refund of ₹{order.total_price} has been added to your wallet.",
-            )
-
+            messages.success(request, f"Order #{order_id} has been returned. Refund of ₹{order.total_price} has been added to your wallet.")
         except Exception as e:
             messages.error(request, f"Error processing return: {str(e)}")
     else:
         messages.error(request, "This order cannot be returned.")
 
-    return redirect("user_profile")  # Adjust this to your profile URL name
-
+    return redirect("user_profile")
 
 
 @login_required

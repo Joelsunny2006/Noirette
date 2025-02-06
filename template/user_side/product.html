@@ -308,65 +308,59 @@
 <p class="text-muted">{{ product.description }}</p>
 
 <!-- Stock Display -->
-{% if variants %}
-    <p id="stock-display" class="text-muted">
+<p id="stock-display" class="text-muted">
+    {% if variants %}
         {% if variants.0.variant_stock == 0 %}
             <span class="text-danger">Out of Stock</span>
         {% else %}
-            In Stock: {{ variants.0.variant_stock }}
+            In Stock: <span id="stock-count">{{ variants.0.variant_stock }}</span>
         {% endif %}
-    </p>
-{% else %}
-    <p id="stock-display" class="text-muted">
+    {% else %}
         {% if product.stock == 0 %}
             <span class="text-danger">Out of Stock</span>
         {% else %}
             Available Stock: {{ product.stock }}
         {% endif %}
-    </p>
-{% endif %}
+    {% endif %}
+</p>
 
 <!-- Add to Cart Form -->
-<form 
-id="add-to-cart-form" 
-action="{% url 'add_to_cart' %}" 
-method="post" 
-data-url="{% url 'add_to_cart' %}">
-{% csrf_token %}
-<input type="hidden" name="variant_id" value="{{ variants.0.id }}"> <!-- Set a default variant if available -->
+<form id="add-to-cart-form" action="{% url 'add_to_cart' %}" method="post" data-url="{% url 'add_to_cart' %}">
+    {% csrf_token %}
+    <input type="hidden" name="variant_id" value="{{ variants.0.id }}"> <!-- Default variant -->
 
-{% if variants %}
-    <div class="form-group mt-4">
-        <label for="variant" class="font-weight-bold">Choose a Variant:</label>
-        <select name="variant_id" id="variant" class="form-control">
-            {% for variant in variants %}
-                <option 
-                    value="{{ variant.id }}" 
-                    data-stock="{{ variant.stock }}" 
-                    data-price="{{ variant.variant_price|floatformat:2 }}"
-                    data-discounted-price="{{ variant.discounted_price|floatformat:2 }}"
-                    {% if variant.id == variants.0.id %}selected{% endif %}>
-                    {{ variant.variant_name }} 
-                    {% if product.offer_percentage %}
-                        - ₹{{ variant.discounted_price|floatformat:2 }}
-                    {% else %}
-                        - ₹{{ variant.variant_price|floatformat:2 }}
-                    {% endif %}
-                </option>
-            {% endfor %}
-        </select>        
-    </div>
-{% endif %}
-<div id="cart-message-box" class="message-box"></div> <!-- Message box for success or error messages -->
-<button 
-    id="add-to-cart-button" 
-    type="submit" 
-    class="btn-custom mt-3 {% if variants.0.variant_stock == 0 %}btn-disabled{% endif %}" 
-    {% if variants.0.variant_stock == 0 %}disabled{% endif %}>
-    Add to Cart
-</button>
+    {% if variants %}
+        <div class="form-group mt-4">
+            <label for="variant" class="font-weight-bold">Choose a Variant:</label>
+            <select name="variant_id" id="variant" class="form-control">
+                {% for variant in variants %}
+                    <option 
+                        value="{{ variant.id }}" 
+                        data-stock="{{ variant.variant_stock }}" 
+                        data-price="{{ variant.variant_price|floatformat:2 }}"
+                        data-discounted-price="{{ variant.discounted_price|floatformat:2 }}"
+                        {% if variant.id == variants.0.id %}selected{% endif %}>
+                        {{ variant.variant_name }} 
+                        {% if product.offer_percentage %}
+                            - ₹{{ variant.discounted_price|floatformat:2 }}
+                        {% else %}
+                            - ₹{{ variant.variant_price|floatformat:2 }}
+                        {% endif %}
+                    </option>
+                {% endfor %}
+            </select>        
+        </div>
+    {% endif %}
+
+    <div id="cart-message-box" class="message-box"></div> <!-- Message box for success or error messages -->
+    <button 
+        id="add-to-cart-button" 
+        type="submit" 
+        class="btn-custom mt-3 {% if variants.0.variant_stock == 0 %}btn-disabled{% endif %}" 
+        {% if variants.0.variant_stock == 0 %}disabled{% endif %}>
+        Add to Cart
+    </button>
 </form>
-
 
 
                 <!-- Optional: To show success or error messages dynamically -->
@@ -633,45 +627,42 @@ data-url="{% url 'add_to_cart' %}">
   <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyBVWaKrjvy3MaE7SQ74_uJiULgl1JY0H2s&sensor=false"></script>
   <script src="{% static 'user_side/js/google-map.js' %}"></script>
   <script src="{% static 'user_side/js/main.js' %}"></script>
+  <!-- Include SweetAlert2 CSS -->
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.css">
 
   <!-- The script -->
   <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 <script>
 
 
-// Add this script to your page
-document.addEventListener('DOMContentLoaded', function() {
-    const variantSelect = document.getElementById('variant');
-    const stockDisplay = document.getElementById('stock-display');
-    const addToCartButton = document.getElementById('add-to-cart-button');
+document.addEventListener("DOMContentLoaded", function () {
+    const variantSelect = document.getElementById("variant");
+    const stockDisplay = document.getElementById("stock-display");
+    const addToCartButton = document.getElementById("add-to-cart-button");
 
-    function updateStockDisplay() {
-        if (variantSelect) {
-            const selectedOption = variantSelect.options[variantSelect.selectedIndex];
-            const stock = parseInt(selectedOption.getAttribute('data-stock'));
-            
-            if (stock === 0) {
+    if (variantSelect) {
+        variantSelect.addEventListener("change", function () {
+            const selectedOption = this.options[this.selectedIndex];
+            const stock = selectedOption.getAttribute("data-stock");
+            const stockCount = document.getElementById("stock-count");
+
+            if (stockCount) {
+                stockCount.textContent = stock;
+            }
+
+            if (stock == 0) {
                 stockDisplay.innerHTML = '<span class="text-danger">Out of Stock</span>';
                 addToCartButton.disabled = true;
-                addToCartButton.classList.add('btn-disabled');
+                addToCartButton.classList.add("btn-disabled");
             } else {
-                stockDisplay.innerHTML = `In Stock: ${stock}`;
+                stockDisplay.innerHTML = `In Stock: <span id="stock-count">${stock}</span>`;
                 addToCartButton.disabled = false;
-                addToCartButton.classList.remove('btn-disabled');
+                addToCartButton.classList.remove("btn-disabled");
             }
-        }
-    }
-
-    // Update on page load
-    updateStockDisplay();
-
-    // Update when variant changes
-    if (variantSelect) {
-        variantSelect.addEventListener('change', updateStockDisplay);
+        });
     }
 });
-
-    $(document).ready(function () {
+$(document).ready(function () {
         // Intercept form submission for "Add to Cart"
         $('#add-to-cart-form').on('submit', function (event) {
             event.preventDefault(); // Prevent default form submission
@@ -692,24 +683,45 @@ document.addEventListener('DOMContentLoaded', function() {
                 type: "POST",
                 data: formData,
                 success: function (response) {
-                    if (response.message) {
-                        // Show success message using SweetAlert
+                    if (response.success) {
+                        // Item added to cart successfully
                         Swal.fire({
                             toast: true,
                             position: 'top-right',
                             icon: 'success',
-                            title: 'Item added to cart successfully!',
+                            title: response.message,  // Dynamic success message
                             showConfirmButton: false,
                             timer: 3000
                         });
 
                         // Update cart total items dynamically
                         $('#cart-total-items').text(response.cart_total_items);
+                    } else {
+                        // Error Handling
+                        Swal.fire({
+                            toast: true,
+                            position: 'top-right',
+                            icon: 'error',
+                            title: response.message,  // Dynamic error message
+                            showConfirmButton: false,
+                            timer: 3000
+                        });
                     }
                 },
+                error: function () {
+                    // Generic Error Message
+                    Swal.fire({
+                        toast: true,
+                        position: 'top-right',
+                        icon: 'error',
+                        title: "Something went wrong! Please try again.",
+                        showConfirmButton: false,
+                        timer: 3000
+                    });
+                }
             });
         });
-
+    });
         // Quantity increment/decrement handlers
         $(".quantity-left-minus").click(function (e) {
             e.preventDefault();
@@ -904,50 +916,14 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 </script>
 
-<script>
-    function addToCart(variantId, quantity = 1) {
-        fetch("/cart/add-to-cart/", {
-            method: "POST",
-            headers: {
-                "X-CSRFToken": "{{ csrf_token }}",
-                "Content-Type": "application/x-www-form-urlencoded"
-            },
-            body: new URLSearchParams({
-                "variant_id": variantId,
-                "quantity": quantity
-            })
-        })
-        .then(response => response.json())
-        .then(data => {
-            if (data.success) {
-                Swal.fire({
-                    title: "Success!",
-                    text: data.message,
-                    icon: "success",
-                    confirmButtonText: "OK"
-                }).then(() => {
-                    location.reload();  // Reload page to update cart count
-                });
-            } else {
-                Swal.fire({
-                    title: "Error!",
-                    text: data.message,
-                    icon: "error",
-                    confirmButtonText: "OK"
-                });
-            }
-        })
-        .catch(error => {
-            Swal.fire({
-                title: "Error!",
-                text: "Something went wrong. Please try again.",
-                icon: "error",
-                confirmButtonText: "OK"
-            });
-        });
-    }
-</script>
-
+<<script>
+    $(document).ready(function() {
+        {% for message in messages %}
+            toastr.{{ message.tags }}("{{ message }}");
+        {% endfor %}
+    });
+  </script>
+  
 
 </body>
 </html>	

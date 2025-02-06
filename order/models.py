@@ -71,16 +71,17 @@ class OrderItem(models.Model):
     total_price = models.DecimalField(max_digits=10, decimal_places=2)
 
     def save(self, *args, **kwargs):
-        # Ensure stock is available
-        if self.variant.variant_stock >= self.quantity:
-            self.variant.variant_stock -= self.quantity
-            self.variant.save()
-            super().save(*args, **kwargs)
-        else:
-            raise ValueError("Not enough stock available")
-    
+        if not self.pk:  # Only check stock for new orders
+            if self.variant.variant_stock >= self.quantity:
+                self.variant.variant_stock -= self.quantity
+                self.variant.save()
+            else:
+                raise ValueError("Not enough stock available")
+        super().save(*args, **kwargs)
+
     def delete(self, *args, **kwargs):
-        self.variant.variant_stock += self.quantity  # Restore stock
+        # Restore stock when order is cancelled
+        self.variant.variant_stock += self.quantity
         self.variant.save()
         super().delete(*args, **kwargs)
 

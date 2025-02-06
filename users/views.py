@@ -211,6 +211,7 @@ from django.db.models import F, ExpressionWrapper, FloatField, Subquery, OuterRe
 from django.core.paginator import Paginator
 
 def shop(request):
+    print("hey")
     # Subquery to calculate the minimum discounted price for each product
     min_discount_price = Subquery(
         Variant.objects.filter(product=OuterRef('pk')).annotate(
@@ -225,7 +226,6 @@ def shop(request):
     products = Product.objects.filter(is_deleted=False).prefetch_related('variants').annotate(
         min_discount_price=min_discount_price
     ).distinct()
-
     categories = Category.objects.all()
     brands = Brand.objects.filter(status='active')
 
