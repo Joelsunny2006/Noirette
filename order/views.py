@@ -99,19 +99,17 @@ def address_list(request):
     return render(request, "user_side/user_profile.html", {"addresses": addresses})
 
 
-# View function to handle form submission
 def save_address(request):
     if request.method == "POST":
         form = AddressForm(request.POST)
         if form.is_valid():
             address = form.save(commit=False)
-            address.user = request.user  # Assign the logged-in user
+            address.user = request.user  
             address.save()
-            return JsonResponse({"success": "Address saved successfully!"}, status=200)
+            messages.success(request, "Address saved successfully!")  # Success message
         else:
-            return JsonResponse({"error": form.errors}, status=400)
-    return JsonResponse({"error": "Invalid request"}, status=400)
-
+            messages.error(request, "Failed to save address. Please try again.")  # Error message
+    return redirect("user_profile")  # Redirect back to profile
 
 @login_required
 def delete_address(request, address_id):
@@ -217,13 +215,18 @@ def place_order(request):
             # Check if a coupon ID exists in the session
             coupon_id = request.session.get('applied_coupon_id')
             if coupon_id:
-                coupon = Coupon.objects.get(id=coupon_id)
-                if coupon.discount_type == 'percentage':
-                    discount = subtotal * (coupon.discount_value / 100)
-                else:
-                    discount = coupon.discount_value
+                try:
+                    coupon = Coupon.objects.get(id=coupon_id)
+                    if coupon.discount_type == 'percentage':
+                        discount = subtotal * (coupon.discount_value / 100)
+                    else:
+                        discount = coupon.discount_value
+                except Coupon.DoesNotExist:
+                    coupon = None
+                    discount = Decimal('0.00')
 
-            total_price = subtotal + delivery - discount
+            # Ensure total price is not negative
+            total_price = max(subtotal + delivery - discount, Decimal('0.00'))
 
             # Create order address
             order_address = OrderAddress.objects.create(
@@ -238,13 +241,15 @@ def place_order(request):
                 pin_number=address.postcode,
             )
 
-            # Create order
+            # Create order with coupon and discount applied
             order = Order.objects.create(
                 user=request.user,
                 status="Pending",
                 total_price=total_price,
                 order_address=order_address,
-                payment_method=payment_method
+                payment_method=payment_method,
+                coupon=coupon if coupon_id else None,  # Store applied coupon
+                coupon_discount=discount  # Store discount amount
             )
 
             # Create order items
@@ -256,9 +261,10 @@ def place_order(request):
                     total_price=Decimal(item.variant.variant_price) * item.quantity,
                 )
 
-            # Clear the applied coupon from the session
+            # Clear applied coupon from session
             if 'applied_coupon_id' in request.session:
                 del request.session['applied_coupon_id']
+
 
             if payment_method == "razorpay":
                 try:
@@ -362,7 +368,6 @@ import json
 
 @csrf_exempt
 def verify_payment(request):
-    print("ENTERed callback")
     
     if request.method == "POST":
         try:
@@ -449,9 +454,6 @@ def razorpay_payment(request):
                 "receipt": f"order_rcptid_{order.id}",
             }
             razorpay_order = razorpay_client.order.create(data=data)
-
-            # Debugging Razorpay order
-            print("Razorpay Order Created:", razorpay_order)
 
             # Render payment page
             context = {
@@ -604,16 +606,14 @@ def continue_payment(request, order_id):
         return redirect("user_profile")
     
 
+import os
 from io import BytesIO
 from decimal import Decimal
 from django.shortcuts import get_object_or_404
-from django.http import FileResponse, HttpResponse
+from django.http import HttpResponse
 from django.contrib.auth.decorators import login_required
-from reportlab.lib.pagesizes import letter
-from reportlab.platypus import SimpleDocTemplate, Table, TableStyle, Paragraph, Spacer
-from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
-from reportlab.lib.units import inch
-from reportlab.lib import colors
+from weasyprint import HTML, CSS
+
 
 @login_required
 def download_invoice(request, order_id):
@@ -621,108 +621,97 @@ def download_invoice(request, order_id):
         # Fetch order and related data
         order = get_object_or_404(Order, id=order_id)
         order_items = order.items.all()
-        buffer = BytesIO()
 
-        try:
-            # Create PDF
-            doc = SimpleDocTemplate(
-                buffer,
-                pagesize=letter,
-                rightMargin=40,
-                leftMargin=40,
-                topMargin=40,
-                bottomMargin=40
-            )
-            elements = []
+        # Define invoice styles
+        invoice_css = """
+        @page { size: A4; margin: 20mm; }
+        body { font-family: 'Noto Sans', sans-serif; font-size: 12px; color: #333; }
+        h1 { text-align: center; font-size: 20px; margin-bottom: 10px; }
+        h2 { font-size: 16px; margin-bottom: 5px; }
+        p { margin: 5px 0; }
+        table { width: 100%; border-collapse: collapse; margin-top: 10px; }
+        th, td { border: 1px solid #ddd; padding: 8px; text-align: center; }
+        th { background-color: #f4f4f4; font-weight: bold; }
+        .total { text-align: right; font-weight: bold; }
+        """
 
-            # Styles
-            styles = getSampleStyleSheet()
-            title_style = styles['Heading1']
-            subtitle_style = ParagraphStyle(name="Subtitle", fontSize=14, leading=18, spaceAfter=12)
-            normal_style = styles['Normal']
+        # Generate invoice content as HTML
+        html_content = f"""
+        <html>
+        <head>
+            <meta charset="utf-8">
+            <title>Invoice #{order.id}</title>
+        </head>
+        <body>
+            <h1>Noirette</h1>
+            <h2>Order Invoice</h2>
 
-            # Invoice Header
-            elements.append(Paragraph("Noirette", title_style))
-            elements.append(Paragraph("Order Invoice", subtitle_style))
-            elements.append(Spacer(1, 0.5 * inch))
+            <p><b>Order Number:</b> {order.id}</p>
+            <p><b>Order Date:</b> {order.created_at.strftime('%B %d, %Y')}</p>
+            <p><b>Customer Name:</b> {order.order_address.name}</p>
+            <p><b>Email:</b> {order.user.email}</p>
+            <p><b>Phone:</b> {order.order_address.phone_number}</p>
+            <p><b>Address:</b> {order.order_address.house_name}, {order.order_address.street_name}, 
+               {order.order_address.district}, {order.order_address.state}, {order.order_address.pin_number}, 
+               {order.order_address.country}</p>
 
-            # Order Details
-            elements.append(Paragraph(f"<b>Order Number:</b> {order.id}", normal_style))
-            elements.append(Paragraph(f"<b>Order Date:</b> {order.created_at.strftime('%B %d, %Y')}", normal_style))
-            elements.append(Paragraph(f"<b>Customer Name:</b> {order.order_address.name}", normal_style))
-            elements.append(Paragraph(f"<b>Email:</b> {order.user.email}", normal_style))
-            elements.append(Paragraph(f"<b>Phone:</b> {order.order_address.phone_number}", normal_style))
-            elements.append(Paragraph(
-                f"<b>Address:</b> {order.order_address.house_name}, {order.order_address.street_name}, "
-                f"{order.order_address.district}, {order.order_address.state}, {order.order_address.pin_number}, "
-                f"{order.order_address.country}",
-                normal_style
-            ))
-            elements.append(Spacer(1, 0.5 * inch))
+            <table>
+                <tr>
+                    <th>Variant</th>
+                    <th>Quantity</th>
+                    <th>Unit Price</th>
+                    <th>Total Price</th>
+                </tr>
+        """
 
-            # Order Items Table
-            data = [['Variant', 'Quantity', 'Unit Price', 'Total Price']]
-            subtotal = Decimal('0.00')
-            Delivery = Decimal('50.00')
+        subtotal = Decimal('0.00')
+        delivery_charge = Decimal('50.00')
 
-            for item in order_items:
-                variant = item.variant  # Access the Variant instance
-                item_total_price = Decimal(item.total_price)
-                subtotal += item_total_price
+        for item in order_items:
+            variant = item.variant  # Access the Variant instance
+            item_total_price = Decimal(item.total_price)
+            subtotal += item_total_price
 
-                data.append([
-                    Paragraph(variant.variant_name, normal_style),
-                    str(item.quantity),
-                    f"₹{variant.variant_price:.2f}",
-                    f"₹{item_total_price:.2f}"
-                ])
+            html_content += f"""
+                <tr>
+                    <td>{variant.variant_name}</td>
+                    <td>{item.quantity}</td>
+                    <td>₹{variant.variant_price:.2f}</td>
+                    <td>₹{item_total_price:.2f}</td>
+                </tr>
+            """
 
-            table = Table(data, colWidths=[None, 1.25 * inch, 1.25 * inch, 1.5 * inch])
-            style = TableStyle([
-                ('BACKGROUND', (0, 0), (-1, 0), colors.lightgrey),
-                ('TEXTCOLOR', (0, 0), (-1, 0), colors.black),
-                ('ALIGN', (0, 0), (-1, -1), 'CENTER'),
-                ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
-                ('FONTSIZE', (0, 0), (-1, 0), 12),
-                ('BOTTOMPADDING', (0, 0), (-1, 0), 12),
-                ('BACKGROUND', (0, 1), (-1, -1), colors.whitesmoke),
-                ('GRID', (0, 0), (-1, -1), 0.5, colors.grey),
-                ('FONTSIZE', (0, 1), (-1, -1), 11),
-                ('VALIGN', (0, 1), (-1, -1), 'TOP'),
-            ])
-            table.setStyle(style)
-            elements.append(table)
+        # Apply Coupon Discount
+        coupon_discount = order.coupon_discount if order.coupon else Decimal('0.00')
+        total_amount = subtotal + delivery_charge - coupon_discount
 
-            # Order Total
-            elements.append(Spacer(1, 0.5 * inch))
-            total_data = [
-                ['Subtotal:', f"₹{subtotal:.2f}"],
-                ['Delivery:', f"₹{Delivery:.2f}"],
-                ['Total:', f"₹{(subtotal + Delivery):.2f}"]
-            ]
+        if order.coupon:
+            html_content += f"""
+                <p><b>Coupon Code:</b> {order.coupon.code}</p>
+                <p><b>Discount Applied:</b> ₹{coupon_discount:.2f}</p>
+            """
 
-            total_table = Table(total_data, colWidths=[4 * inch, 1.5 * inch], hAlign='RIGHT')
-            total_table_style = TableStyle([
-                ('ALIGN', (0, 0), (-1, -1), 'RIGHT'),
-                ('FONTNAME', (0, 0), (-1, -1), 'Helvetica-Bold'),
-                ('FONTSIZE', (0, 0), (-1, -1), 12),
-                ('LINEABOVE', (0, -1), (-1, -1), 1, colors.black)
-            ])
-            total_table.setStyle(total_table_style)
-            elements.append(total_table)
+        html_content += f"""
+            </table>
+            <p class="total">Subtotal: ₹{subtotal:.2f}</p>
+            <p class="total">Delivery: ₹{delivery_charge:.2f}</p>
+            <p class="total"><b>Discount:</b> -₹{coupon_discount:.2f}</p>
+            <p class="total"><b>Total: ₹{total_amount:.2f}</b></p>
 
-            # Footer
-            elements.append(Spacer(1, 1 * inch))
-            elements.append(Paragraph("Thank you for shopping with Noirette!", normal_style))
+            <p>Thank you for shopping with Noirette!</p>
+        </body>
+        </html>
+        """
 
-            # Build PDF
-            doc.build(elements)
-        except Exception as e:
-            return HttpResponse(f'Error generating PDF content: {str(e)}', status=500)
+        # Convert HTML to PDF
+        pdf_file = BytesIO()
+        HTML(string=html_content).write_pdf(pdf_file, stylesheets=[CSS(string=invoice_css)])
 
-        # Return PDF Response
-        buffer.seek(0)
-        return FileResponse(buffer, as_attachment=True, filename=f'invoice_{order_id}.pdf')
+        # Return the PDF as a response
+        pdf_file.seek(0)
+        response = HttpResponse(pdf_file.read(), content_type="application/pdf")
+        response['Content-Disposition'] = f'attachment; filename="invoice_{order_id}.pdf"'
+        return response
 
     except Exception as e:
         return HttpResponse(f'Error generating PDF: {str(e)}', status=500)

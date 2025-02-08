@@ -3,6 +3,7 @@ from users.models import UserProfile
 from product.models import Product
 from django.db import models
 from product.models import *
+from coupon.models import *
 class OrderAddress(models.Model):
     user = models.ForeignKey(UserProfile, on_delete=models.CASCADE)  # Link to the logged-in user
     name = models.CharField(max_length=200)  # Full name
@@ -59,6 +60,10 @@ class Order(models.Model):
         null=True,
         blank=True,
     )
+
+    coupon = models.ForeignKey(Coupon, on_delete=models.SET_NULL, null=True, blank=True)
+    coupon_discount = models.DecimalField(max_digits=10, decimal_places=2, default=0.0)
+
 
     def __str__(self):
         return f"Order #{self.id} by {self.user.username}"

@@ -2,7 +2,7 @@
 <!DOCTYPE html>
 <html lang="en">
   <head>
-    <title>Noirette</title>
+    <title>Noirette|Home</title>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
     <link rel="stylesheet" href="{% static 'user_side/css/bootstrap-reboot.css' %}">
@@ -28,6 +28,20 @@
     <link rel="stylesheet" href="{% static 'user_side/css/flaticon.css' %}">
     <link rel="stylesheet" href="{% static 'user_side/css/icomoon.css' %}">
     <link rel="stylesheet" href="{% static 'user_side/css/style.css' %}">
+
+	<link rel="icon" type="image/svg+xml" href="{% static 'user_side/images/favicon.svg' %}">
+	<link rel="shortcut icon" href="{% static 'user_side/images/favicon.svg' %}">
+	<link rel="apple-touch-icon" sizes="180x180" href="{% static 'user_side/images/favicon.svg' %}">
+	<link rel="manifest" href="{% static 'user_side/images/favicon.svg' %}">
+
+	<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+	<!-- Toastify CSS -->
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/toastify-js/src/toastify.min.css">
+<!-- Toastify JS -->
+<script src="https://cdn.jsdelivr.net/npm/toastify-js"></script>
+
+
+	
   </head>
   <style>
 	#timer .time {
@@ -58,27 +72,27 @@
 			<ul class="navbar-nav ml-auto">
 			  <li class="nav-item active"><a href="{% url 'home' %}" class="nav-link" style="color: white;">Home</a></li>
 			  <li class="nav-item"><a href="{% url 'shop' %}" class="nav-link" style="color: white;">Shop</a></li>
-			  <li class="nav-item"><a href="about.html" class="nav-link" style="color: white;">About</a></li>
-			  <li class="nav-item"><a href="blog.html" class="nav-link" style="color: white;">Blog</a></li>
-			  <li class="nav-item"><a href="contact.html" class="nav-link" style="color: white;">Contact</a></li>
+			  <li class="nav-item"><a href="{% url 'support' %}" class="nav-link" style="color: white;">Support</a></li>
 			  <li class="nav-item cta cta-colored">
 				<a href="{% url 'view_cart' %}" class="nav-link" style="color: white;">
 					<span class="icon-shopping_cart"></span>[{{ cart_count|default:0 }}]
 				</a>
 			  </li>
+			  {% if user.is_authenticated %}
 			  <li class="nav-item cta cta-colored">
 				<a href="{% url 'wishlist' %}" class="nav-link" style="color: white;">
-					<span class="icon-heart"></span>[0]
+					<span class="icon-heart"></span> [{{ wishlist_count }}]
 				</a>
 			</li>
-			          <!-- Wallet Section -->
-					  {% if user.is_authenticated %}
-					  <li class="nav-item cta">
+			{% endif %}
+			         <!-- Wallet Section -->
+					{% if user.is_authenticated %}
+					<li class="nav-item cta">
 						<a href="{% url 'wallet' %}" class="nav-link" style="color: white;">
-						  <span class="icon-wallet"></span> Wallet: ${{ user.wallet_balance|default:0.00 }}
+							<span class="icon-wallet"></span> Wallet: ${{ wallet_balance|default:"0.00" }}
 						</a>
-					  </li>
-					  {% endif %}
+					</li>
+					{% endif %}
 			  <!-- Display Login or Username/Logout -->
 			  {% if user.is_authenticated %}
 			<li class="nav-item dropdown">
@@ -121,7 +135,6 @@
 		  </div>
 		</div>
 	  </nav>
-	  
 	  
 	  <section id="home-section" class="hero">
 		<div class="slider-item js-fullheight">
@@ -597,7 +610,8 @@
 		  </div>
 		</div>
 	  </footer>
-  
+	  <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
     
 	<div id="ftco-loader" class="show fullscreen"><svg class="circular" width="48px" height="48px"><circle class="path-bg" cx="24" cy="24" r="22" fill="none" stroke-width="4" stroke="#eeeeee"/><circle class="path" cx="24" cy="24" r="22" fill="none" stroke-width="4" stroke-miterlimit="10" stroke="#F96D00"/></svg></div>
 
@@ -653,10 +667,28 @@
     updateTimer(); // Initial call
     setInterval(updateTimer, 1000);
 };
-	</script>
-	
-	
-	
+
+</script>
+
+{% if messages %}
+    <script>
+        document.addEventListener("DOMContentLoaded", function() {
+            {% for message in messages %}
+                Swal.fire({
+                    toast: true,
+                    position: "top-end",  // Top-right corner
+                    icon: "{% if message.tags == 'success' %}success{% elif message.tags == 'error' %}error{% elif message.tags == 'warning' %}warning{% elif message.tags == 'info' %}info{% else %}question{% endif %}",
+                    title: "{{ message }}",
+                    showConfirmButton: false,
+                    timer: 3000,  // Auto-dismiss in 3 seconds
+                    timerProgressBar: true
+                });
+            {% endfor %}
+        });
+    </script>
+{% endif %}
+
+
 
   <script src="{% static 'user_side/js/jquery.min.js' %}"></script>
   <script src="{% static 'user_side/js/jquery-migrate-3.0.1.min.js' %}"></script>

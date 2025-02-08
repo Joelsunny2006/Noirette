@@ -2,7 +2,7 @@
 <!DOCTYPE html>
 <html lang="en">
   <head>
-    <title></title>
+    <title>Noirette|Product Page</title>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
     
@@ -27,6 +27,10 @@
     <link rel="stylesheet" href="{% static 'user_side/css/icomoon.css' %}">
     <link rel="stylesheet" href="{% static 'user_side/css/style.css' %}">
 
+    <link rel="icon" type="image/svg+xml" href="{% static 'user_side/images/favicon.svg' %}">
+    <link rel="shortcut icon" href="{% static 'user_side/images/favicon.svg' %}">
+    <link rel="apple-touch-icon" sizes="180x180" href="{% static 'user_side/images/favicon.svg' %}">
+    <link rel="manifest" href="{% static 'user_side/images/favicon.svg' %}">
 	<!-- Lightbox CSS -->
 <!-- <link href="https://cdn.jsdelivr.net/npm/lightbox2@2.11.3/dist/css/lightbox.min.css" rel="stylesheet">
 <!-- Lightbox JS -->
@@ -141,6 +145,7 @@
 </style>
 
   <body class="goto-here">
+		
 	<nav class="navbar navbar-expand-lg navbar-dark ftco_navbar bg-dark ftco-navbar-light fixed-top" id="ftco-navbar">
 		<div class="container">
 		  <a class="navbar-brand" href="{% url 'home' %}" style="color: white;">Noirette</a>
@@ -152,27 +157,27 @@
 			<ul class="navbar-nav ml-auto">
 			  <li class="nav-item active"><a href="{% url 'home' %}" class="nav-link" style="color: white;">Home</a></li>
 			  <li class="nav-item"><a href="{% url 'shop' %}" class="nav-link" style="color: white;">Shop</a></li>
-			  <li class="nav-item"><a href="about.html" class="nav-link" style="color: white;">About</a></li>
-			  <li class="nav-item"><a href="blog.html" class="nav-link" style="color: white;">Blog</a></li>
-			  <li class="nav-item"><a href="contact.html" class="nav-link" style="color: white;">Contact</a></li>
+			  <li class="nav-item"><a href="{% url 'support' %}" class="nav-link" style="color: white;">Support</a></li>
 			  <li class="nav-item cta cta-colored">
 				<a href="{% url 'view_cart' %}" class="nav-link" style="color: white;">
 					<span class="icon-shopping_cart"></span>[{{ cart_count|default:0 }}]
 				</a>
 			  </li>
+			  {% if user.is_authenticated %}
 			  <li class="nav-item cta cta-colored">
 				<a href="{% url 'wishlist' %}" class="nav-link" style="color: white;">
-					<span class="icon-heart"></span>[0]
+					<span class="icon-heart"></span> [{{ wishlist_count }}]
 				</a>
 			</li>
-			          <!-- Wallet Section -->
-					  {% if user.is_authenticated %}
-					  <li class="nav-item cta">
+			{% endif %}
+			         <!-- Wallet Section -->
+					{% if user.is_authenticated %}
+					<li class="nav-item cta">
 						<a href="{% url 'wallet' %}" class="nav-link" style="color: white;">
-						  <span class="icon-wallet"></span> Wallet: ${{ user.wallet_balance|default:0.00 }}
+							<span class="icon-wallet"></span> Wallet: ${{ wallet_balance|default:"0.00" }}
 						</a>
-					  </li>
-					  {% endif %}
+					</li>
+					{% endif %}
 			  <!-- Display Login or Username/Logout -->
 			  {% if user.is_authenticated %}
 			<li class="nav-item dropdown">
@@ -361,6 +366,7 @@
         Add to Cart
     </button>
 </form>
+
 
 
                 <!-- Optional: To show success or error messages dynamically -->
@@ -627,42 +633,45 @@
   <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyBVWaKrjvy3MaE7SQ74_uJiULgl1JY0H2s&sensor=false"></script>
   <script src="{% static 'user_side/js/google-map.js' %}"></script>
   <script src="{% static 'user_side/js/main.js' %}"></script>
-  <!-- Include SweetAlert2 CSS -->
-<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.css">
 
   <!-- The script -->
   <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 <script>
 
 
-document.addEventListener("DOMContentLoaded", function () {
-    const variantSelect = document.getElementById("variant");
-    const stockDisplay = document.getElementById("stock-display");
-    const addToCartButton = document.getElementById("add-to-cart-button");
+// Add this script to your page
+document.addEventListener('DOMContentLoaded', function() {
+    const variantSelect = document.getElementById('variant');
+    const stockDisplay = document.getElementById('stock-display');
+    const addToCartButton = document.getElementById('add-to-cart-button');
 
-    if (variantSelect) {
-        variantSelect.addEventListener("change", function () {
-            const selectedOption = this.options[this.selectedIndex];
-            const stock = selectedOption.getAttribute("data-stock");
-            const stockCount = document.getElementById("stock-count");
-
-            if (stockCount) {
-                stockCount.textContent = stock;
-            }
-
-            if (stock == 0) {
+    function updateStockDisplay() {
+        if (variantSelect) {
+            const selectedOption = variantSelect.options[variantSelect.selectedIndex];
+            const stock = parseInt(selectedOption.getAttribute('data-stock'));
+            
+            if (stock === 0) {
                 stockDisplay.innerHTML = '<span class="text-danger">Out of Stock</span>';
                 addToCartButton.disabled = true;
-                addToCartButton.classList.add("btn-disabled");
+                addToCartButton.classList.add('btn-disabled');
             } else {
-                stockDisplay.innerHTML = `In Stock: <span id="stock-count">${stock}</span>`;
+                stockDisplay.innerHTML = `In Stock: ${stock}`;
                 addToCartButton.disabled = false;
-                addToCartButton.classList.remove("btn-disabled");
+                addToCartButton.classList.remove('btn-disabled');
             }
-        });
+        }
+    }
+
+    // Update on page load
+    updateStockDisplay();
+
+    // Update when variant changes
+    if (variantSelect) {
+        variantSelect.addEventListener('change', updateStockDisplay);
     }
 });
-$(document).ready(function () {
+
+    $(document).ready(function () {
         // Intercept form submission for "Add to Cart"
         $('#add-to-cart-form').on('submit', function (event) {
             event.preventDefault(); // Prevent default form submission
@@ -683,45 +692,24 @@ $(document).ready(function () {
                 type: "POST",
                 data: formData,
                 success: function (response) {
-                    if (response.success) {
-                        // Item added to cart successfully
+                    if (response.message) {
+                        // Show success message using SweetAlert
                         Swal.fire({
                             toast: true,
                             position: 'top-right',
                             icon: 'success',
-                            title: response.message,  // Dynamic success message
+                            title: 'Item added to cart successfully!',
                             showConfirmButton: false,
                             timer: 3000
                         });
 
                         // Update cart total items dynamically
                         $('#cart-total-items').text(response.cart_total_items);
-                    } else {
-                        // Error Handling
-                        Swal.fire({
-                            toast: true,
-                            position: 'top-right',
-                            icon: 'error',
-                            title: response.message,  // Dynamic error message
-                            showConfirmButton: false,
-                            timer: 3000
-                        });
                     }
                 },
-                error: function () {
-                    // Generic Error Message
-                    Swal.fire({
-                        toast: true,
-                        position: 'top-right',
-                        icon: 'error',
-                        title: "Something went wrong! Please try again.",
-                        showConfirmButton: false,
-                        timer: 3000
-                    });
-                }
             });
         });
-    });
+
         // Quantity increment/decrement handlers
         $(".quantity-left-minus").click(function (e) {
             e.preventDefault();
@@ -926,4 +914,4 @@ document.addEventListener('DOMContentLoaded', () => {
   
 
 </body>
-</html>	
+</html>

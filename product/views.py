@@ -3,6 +3,7 @@ from django.contrib import messages
 from category.models import Category
 from product.models import *
 from cart.models import *
+from wallet.models import *
 from django.core.exceptions import ObjectDoesNotExist
 from django.http import JsonResponse
 from product.models import Product
@@ -11,7 +12,8 @@ from decimal import Decimal, InvalidOperation
 from admin_panel.decorator import admin_required 
 
 def product_view(request, serial_number):
-    # Get the product and related data
+    if not request.user.is_authenticated:
+        request.session.flush()
     product = get_object_or_404(Product, serial_number=serial_number, is_deleted=False)
     variants = product.variants.all()
     images = product.images.all()
@@ -19,7 +21,6 @@ def product_view(request, serial_number):
         images.first().image_url.url if images and images.first().image_url else None
     )
 
-    # Add a discounted price to each variant
     for variant in variants:
         variant.discounted_price = None
         if product.offer_percentage:
@@ -29,7 +30,6 @@ def product_view(request, serial_number):
                 2
             )
 
-    # Check if the product has variants
     total_stock = (
         sum(variant.variant_stock for variant in variants)
         if variants
@@ -37,6 +37,10 @@ def product_view(request, serial_number):
     )
 
     cart_count = 0
+    wishlist_count = 0  # ✅ Initialize to avoid UnboundLocalError
+    wallet_balance = 0
+    wishlist_variant_ids = []
+
     if request.user.is_authenticated:
         try:
             cart = Cart.objects.filter(user=request.user).first()
@@ -47,13 +51,21 @@ def product_view(request, serial_number):
         except Cart.DoesNotExist:
             cart_count = 0
 
-    wishlist_variant_ids = []
-    if request.user.is_authenticated:
-        wishlist = Wishlist.objects.filter(user=request.user).first()
-        if wishlist:
-            wishlist_variant_ids = [item.variant.id for item in wishlist.items.all()]
+        try:
+            wishlist = Wishlist.objects.filter(user=request.user).first()
+            if wishlist:
+                wishlist_count = wishlist.items.count()
+                wishlist_variant_ids = [item.variant.id for item in wishlist.items.all()]
+        except Wishlist.DoesNotExist:
+            wishlist_count = 0
 
-    # Pass the context to the template
+        try:
+            wallet = Wallet.objects.filter(user=request.user).first()
+            if wallet:
+                wallet_balance = wallet.balance
+        except Wallet.DoesNotExist:
+            wallet_balance = 0
+
     return render(
         request,
         "user_side/product.html",
@@ -65,8 +77,11 @@ def product_view(request, serial_number):
             "total_stock": total_stock,
             "cart_count": cart_count,
             "wishlist_variant_ids": wishlist_variant_ids,
+            "wishlist_count": wishlist_count,
+            "wallet_balance": wallet_balance,
         },
     )
+
 from django.core.paginator import Paginator
 @admin_required
 def product_list(request):

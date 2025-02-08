@@ -2,7 +2,7 @@
 <!DOCTYPE html>
 <html lang="en">
   <head>
-    <title>Cart</title>
+    <title>Noirette|Cart</title>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
     
@@ -26,83 +26,90 @@
     <link rel="stylesheet" href="{% static 'user_side/css/flaticon.css' %}">
     <link rel="stylesheet" href="{% static 'user_side/css/icomoon.css' %}">
     <link rel="stylesheet" href="{% static 'user_side/css/style.css' %}">
+
+    <link rel="icon" type="image/svg+xml" href="{% static 'user_side/images/favicon.svg' %}">
+<link rel="shortcut icon" href="{% static 'user_side/images/favicon.svg' %}">
+<link rel="apple-touch-icon" sizes="180x180" href="{% static 'user_side/images/favicon.svg' %}">
+<link rel="manifest" href="{% static 'user_side/images/favicon.svg' %}">
+
   </head>
   <body class="goto-here">
 	
-	<nav class="navbar navbar-expand-lg navbar-dark ftco_navbar bg-dark ftco-navbar-light fixed-top" id="ftco-navbar">
-		<div class="container">
-		  <a class="navbar-brand" href="{% url 'home' %}" style="color: white;">Noirette</a>
-		  <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#ftco-nav" aria-controls="ftco-nav" aria-expanded="false" aria-label="Toggle navigation">
-			<span class="oi oi-menu"></span> Menu
-		  </button>
-	  
-		  <div class="collapse navbar-collapse" id="ftco-nav">
-			<ul class="navbar-nav ml-auto">
-			  <li class="nav-item active"><a href="{% url 'home' %}" class="nav-link" style="color: white;">Home</a></li>
-			  <li class="nav-item"><a href="{% url 'shop' %}" class="nav-link" style="color: white;">Shop</a></li>
-			  <li class="nav-item"><a href="about.html" class="nav-link" style="color: white;">About</a></li>
-			  <li class="nav-item"><a href="blog.html" class="nav-link" style="color: white;">Blog</a></li>
-			  <li class="nav-item"><a href="contact.html" class="nav-link" style="color: white;">Contact</a></li>
-			  <li class="nav-item cta cta-colored">
-				<a href="{% url 'view_cart' %}" class="nav-link" style="color: white;">
-					<span class="icon-shopping_cart"></span>[{{ cart_count|default:0 }}]
-				</a>
-			  </li>
-			  <li class="nav-item cta cta-colored">
-				<a href="{% url 'wishlist' %}" class="nav-link" style="color: white;">
-					<span class="icon-heart"></span>[0]
-				</a>
-			</li>
-			          <!-- Wallet Section -->
-					  {% if user.is_authenticated %}
-					  <li class="nav-item cta">
-						<a href="{% url 'wallet' %}" class="nav-link" style="color: white;">
-						  <span class="icon-wallet"></span> Wallet: ${{ user.wallet_balance|default:0.00 }}
-						</a>
-					  </li>
-					  {% endif %}
-			  <!-- Display Login or Username/Logout -->
-			  {% if user.is_authenticated %}
-			<li class="nav-item dropdown">
-			<a class="nav-link dropdown-toggle" href="#" id="userDropdown" role="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false" style="color: white;">
-				Welcome, {{ user.username }}
-			</a>
-			<div class="dropdown-menu" aria-labelledby="userDropdown">
-				<!-- User Profile Button -->
-				<a href="{% url 'user_profile' %}" class="dropdown-item" 
-				   style="display: flex; justify-content: center; align-items: center; text-decoration: none; 
-						  color: white; padding: 5px 10px; font-size: 14px;">
-					<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" 
-						 class="bi bi-person-circle me-2" viewBox="0 0 16 16">
-						<path d="M13 8a5 5 0 1 1-10 0 5 5 0 0 1 10 0z"/>
-						<path d="M11 8c0 1.105-.45 2.09-1.175 2.828A3.972 3.972 0 0 1 8 12c-.79 0-1.524-.268-2.175-.735C5.45 10.09 5 9.105 5 8c0-1.105.45-2.09 1.175-2.828A3.972 3.972 0 0 1 8 4c.79 0 1.524.268 2.175.735C10.55 5.91 11 6.895 11 8zm-3-1a1 1 0 1 0 0 2 1 1 0 0 0 0-2z"/>
-					</svg>
-					My Profile
-				</a>
-			
-				<!-- Logout Button -->
-				<form method="post" action="{% url 'logout' %}" style="display: inline;">
-					{% csrf_token %}
-					<button type="submit" class="dropdown-item" 
-							style="display: flex; justify-content: center; align-items: center; background: none; 
-								   border: none; padding: 5px 10px; font-size: 14px; cursor: pointer; color: white;">
-						<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" 
-							 class="bi bi-box-arrow-right me-2" viewBox="0 0 16 16">
-							<path fill-rule="evenodd" d="M10 15a1 1 0 0 1-1 1H5a2 2 0 0 1-2-2V2a2 2 0 0 1 2-2h4a1 1 0 0 1 1 1v1H5.5A1.5 1.5 0 0 0 4 3.5v9A1.5 1.5 0 0 0 5.5 14H10v1zm1-11a.5.5 0 0 0 0 1h4.5a.5.5 0 0 0 0-1H11zm3.646 3.646a.5.5 0 0 1 0 .708l-2.5 2.5a.5.5 0 0 1-.708-.708L13.293 8H8.5a.5.5 0 0 1 0-1h4.793l-1.647-1.646a.5.5 0 1 1 .708-.708l2.5 2.5z"/>
-						</svg>
-						Logout
-					</button>
-				</form>
-			</div>
-			
-			</li>
-			{% else %}
-			<li class="nav-item"><a href="{% url 'login' %}" class="nav-link" style="color: white;">Login</a></li>
-			{% endif %}
-			</ul>
-		  </div>
-		</div>
-	  </nav>
+				
+    <nav class="navbar navbar-expand-lg navbar-dark ftco_navbar bg-dark ftco-navbar-light fixed-top" id="ftco-navbar">
+      <div class="container">
+        <a class="navbar-brand" href="{% url 'home' %}" style="color: white;">Noirette</a>
+        <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#ftco-nav" aria-controls="ftco-nav" aria-expanded="false" aria-label="Toggle navigation">
+        <span class="oi oi-menu"></span> Menu
+        </button>
+      
+        <div class="collapse navbar-collapse" id="ftco-nav">
+        <ul class="navbar-nav ml-auto">
+          <li class="nav-item active"><a href="{% url 'home' %}" class="nav-link" style="color: white;">Home</a></li>
+          <li class="nav-item"><a href="{% url 'shop' %}" class="nav-link" style="color: white;">Shop</a></li>
+          <li class="nav-item"><a href="{% url 'support' %}" class="nav-link" style="color: white;">Support</a></li>
+          <li class="nav-item cta cta-colored">
+          <a href="{% url 'view_cart' %}" class="nav-link" style="color: white;">
+            <span class="icon-shopping_cart"></span>[{{ cart_count|default:0 }}]
+          </a>
+          </li>
+          {% if user.is_authenticated %}
+          <li class="nav-item cta cta-colored">
+          <a href="{% url 'wishlist' %}" class="nav-link" style="color: white;">
+            <span class="icon-heart"></span> [{{ wishlist_count }}]
+          </a>
+        </li>
+        {% endif %}
+                 <!-- Wallet Section -->
+            {% if user.is_authenticated %}
+            <li class="nav-item cta">
+              <a href="{% url 'wallet' %}" class="nav-link" style="color: white;">
+                <span class="icon-wallet"></span> Wallet: ${{ wallet_balance|default:"0.00" }}
+              </a>
+            </li>
+            {% endif %}
+          <!-- Display Login or Username/Logout -->
+          {% if user.is_authenticated %}
+        <li class="nav-item dropdown">
+        <a class="nav-link dropdown-toggle" href="#" id="userDropdown" role="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false" style="color: white;">
+          Welcome, {{ user.username }}
+        </a>
+        <div class="dropdown-menu" aria-labelledby="userDropdown">
+          <!-- User Profile Button -->
+          <a href="{% url 'user_profile' %}" class="dropdown-item" 
+             style="display: flex; justify-content: center; align-items: center; text-decoration: none; 
+                color: white; padding: 5px 10px; font-size: 14px;">
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" 
+               class="bi bi-person-circle me-2" viewBox="0 0 16 16">
+              <path d="M13 8a5 5 0 1 1-10 0 5 5 0 0 1 10 0z"/>
+              <path d="M11 8c0 1.105-.45 2.09-1.175 2.828A3.972 3.972 0 0 1 8 12c-.79 0-1.524-.268-2.175-.735C5.45 10.09 5 9.105 5 8c0-1.105.45-2.09 1.175-2.828A3.972 3.972 0 0 1 8 4c.79 0 1.524.268 2.175.735C10.55 5.91 11 6.895 11 8zm-3-1a1 1 0 1 0 0 2 1 1 0 0 0 0-2z"/>
+            </svg>
+            My Profile
+          </a>
+        
+          <!-- Logout Button -->
+          <form method="post" action="{% url 'logout' %}" style="display: inline;">
+            {% csrf_token %}
+            <button type="submit" class="dropdown-item" 
+                style="display: flex; justify-content: center; align-items: center; background: none; 
+                     border: none; padding: 5px 10px; font-size: 14px; cursor: pointer; color: white;">
+              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" 
+                 class="bi bi-box-arrow-right me-2" viewBox="0 0 16 16">
+                <path fill-rule="evenodd" d="M10 15a1 1 0 0 1-1 1H5a2 2 0 0 1-2-2V2a2 2 0 0 1 2-2h4a1 1 0 0 1 1 1v1H5.5A1.5 1.5 0 0 0 4 3.5v9A1.5 1.5 0 0 0 5.5 14H10v1zm1-11a.5.5 0 0 0 0 1h4.5a.5.5 0 0 0 0-1H11zm3.646 3.646a.5.5 0 0 1 0 .708l-2.5 2.5a.5.5 0 0 1-.708-.708L13.293 8H8.5a.5.5 0 0 1 0-1h4.793l-1.647-1.646a.5.5 0 1 1 .708-.708l2.5 2.5z"/>
+              </svg>
+              Logout
+            </button>
+          </form>
+        </div>
+        
+        </li>
+        {% else %}
+        <li class="nav-item"><a href="{% url 'login' %}" class="nav-link" style="color: white;">Login</a></li>
+        {% endif %}
+        </ul>
+        </div>
+      </div>
+      </nav>
     <!-- END nav -->
 
 	<div class="hero-wrap hero-bread" style="position: relative; margin-top: 0; padding: 0;">
@@ -289,6 +296,7 @@
   <!-- loader -->
  <div id="ftco-loader" class="show fullscreen"><svg class="circular" width="48px" height="48px"><circle class="path-bg" cx="24" cy="24" r="22" fill="none" stroke-width="4" stroke="#eeeeee"/><circle class="path" cx="24" cy="24" r="22" fill="none" stroke-width="4" stroke-miterlimit="10" stroke="#F96D00"/></svg></div> 
  <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+ 
 
  <script>
 document.addEventListener("DOMContentLoaded", function () {
@@ -375,8 +383,97 @@ document.addEventListener("DOMContentLoaded", function () {
     });
 });
 
-
 </script>
+
+<script>
+  document.addEventListener("DOMContentLoaded", function () {
+      document.querySelectorAll(".btn-remove-item").forEach(button => {
+          button.addEventListener("click", function () {
+              const itemId = this.getAttribute("data-item-id");
+
+              // Ask for confirmation before removing item
+              Swal.fire({
+                  title: "Are you sure?",
+                  text: "You won't be able to undo this!",
+                  icon: "warning",
+                  showCancelButton: true,
+                  confirmButtonColor: "#d33",
+                  cancelButtonColor: "#3085d6",
+                  confirmButtonText: "Yes, remove it!"
+              }).then((result) => {
+                  if (result.isConfirmed) {
+                      // CSRF token setup
+                      const csrftoken = getCSRFToken();
+
+                      fetch(`/cart/remove-from-cart/${itemId}/`, {
+                          method: "POST",
+                          headers: {
+                              "X-CSRFToken": csrftoken,
+                              "X-Requested-With": "XMLHttpRequest",
+                              "Content-Type": "application/json"
+                          }
+                      })
+                      .then(response => response.json())
+                      .then(data => {
+                          if (data.success) {
+                              // Remove the item row from the table
+                              document.querySelector(`tr[data-item-id="${itemId}"]`).remove();
+
+                              // Update cart total
+                              document.getElementById("subtotal").innerText = `₹${data.cart_total}`;
+                              document.getElementById("total").innerText = `₹${data.cart_total_after_discount}`;
+
+                              Swal.fire(
+                                  "Removed!",
+                                  "Your item has been removed from the cart.",
+                                  "success"
+                              );
+                          } else {
+                              Swal.fire("Error!", data.message, "error");
+                          }
+                      })
+                      .catch(error => {
+                          console.error("Error:", error);
+                          Swal.fire("Error!", "Something went wrong!", "error");
+                      });
+                  }
+              });
+          });
+      });
+
+      // Function to get CSRF token from cookies
+      function getCSRFToken() {
+          let cookieValue = null;
+          if (document.cookie) {
+              const cookies = document.cookie.split(";");
+              for (let i = 0; i < cookies.length; i++) {
+                  const cookie = cookies[i].trim();
+                  if (cookie.startsWith("csrftoken=")) {
+                      cookieValue = cookie.substring("csrftoken=".length, cookie.length);
+                      break;
+                  }
+              }
+          }
+          return cookieValue;
+      }
+  });
+</script>
+
+{% if messages %}
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+<script>
+    document.addEventListener("DOMContentLoaded", function() {
+        {% for message in messages %}
+            Swal.fire({
+                icon: 'error',
+                title: 'Oops...',
+                text: "{{ message|escapejs }}",  // Ensure safe JavaScript string
+            });
+        {% endfor %}
+    });
+</script>
+{% endif %}
+
 
 
   <script src="{% static 'user_side/js/jquery.min.js' %}"></script>

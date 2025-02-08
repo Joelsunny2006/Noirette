@@ -1,28 +1,86 @@
+{% load static %}
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Razorpay Payment</title>
+    <title>Noirette | Razorpay Payment</title>
     <script src="https://checkout.razorpay.com/v1/checkout.js"></script>
+    <link rel="icon" type="image/svg+xml" href="{% static 'user_side/images/favicon.svg' %}">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100vh;
+            background-color: #f8f9fa;
+            text-align: center;
+        }
+        .container {
+            background: #fff;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+            max-width: 500px;
+            width: 90%;
+        }
+        h2 {
+            color: #333;
+        }
+        .pay-button {
+            background-color: #000;
+            color: #fff;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 5px;
+            font-size: 16px;
+            cursor: pointer;
+            transition: background 0.3s;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .pay-button:hover {
+            background-color: #333;
+        }
+        img {
+            width: 100%;
+            height: 65vh;
+            object-fit: cover;
+        }
+        .description {
+            font-size: 14px;
+            color: #555;
+            margin-top: 10px;
+        }
+    </style>
 </head>
 <body>
-    <h2>Complete Your Payment</h2>
-    <button id="rzp-button">Pay Now</button>
+    <img src="{% static 'user_side/images/image2.jpg' %}" alt="Hero Image">
+    <div class="container">
+        <h2>Complete Your Payment</h2>
+        <p class="description">Secure and seamless payment powered by Razorpay.</p>
+        <button id="rzp-button" class="pay-button">
+            <i class="fas fa-credit-card"></i> Pay Now
+        </button>
+    </div>
 
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <script>
         var options = {
-            "key": "{{ razorpay_key_id }}",  // Razorpay Key ID
-            "amount": "{{ amount }}",       // Amount in paise
+            "key": "{{ razorpay_key_id }}",
+            "amount": "{{ amount }}",
             "currency": "INR",
-            "order_id": "{{ razorpay_order_id }}", // Razorpay Order ID
+            "order_id": "{{ razorpay_order_id }}",
             "name": "Noirette",
             "description": "Payment for your order",
-            "theme": {
-                "color": "#000000"
-            },
+            "theme": { "color": "#000000" },
             "handler": function (response) {
-                // Send the payment details to your callback URL
                 fetch("{{ callback_url }}", {
                     method: "POST",
                     headers: {
@@ -35,19 +93,39 @@
                         razorpay_signature: response.razorpay_signature
                     })
                 })
-                .then(response => response.json())  // Try to parse JSON
+                .then(response => response.json())
                 .then(data => {
                     if (data.success) {
-                        window.location.href = "/order/order-success/";
+                        Swal.fire({
+                            icon: "success",
+                            title: "Payment Successful!",
+                            text: "Your order has been placed successfully.",
+                            confirmButtonText: "OK"
+                        }).then(() => {
+                            window.location.href = "/order/order-success/";
+                        });
                     } else {
-                        alert("Payment verification failed: " + data.error);
+                        Swal.fire({
+                            icon: "error",
+                            title: "Payment Failed!",
+                            text: data.error || "Payment verification failed. Please try again.",
+                            confirmButtonText: "Retry"
+                        }).then(() => {
+                            window.location.href = "/checkout/";
+                        });
                     }
                 })
                 .catch(error => {
                     console.error("Error parsing JSON:", error);
-                    alert("An unexpected error occurred. Please try again.");
+                    Swal.fire({
+                        icon: "error",
+                        title: "Unexpected Error",
+                        text: "An unexpected error occurred. Please try again.",
+                        confirmButtonText: "OK"
+                    }).then(() => {
+                        window.location.href = "/checkout/";
+                    });
                 });
-
             },
             "prefill": {
                 "name": "{{ user.first_name }}",
@@ -55,16 +133,22 @@
             },
             "modal": {
                 "ondismiss": function () {
-                    alert("Payment cancelled.");
+                    Swal.fire({
+                        icon: "warning",
+                        title: "Payment Cancelled",
+                        text: "You have cancelled the payment process.",
+                        confirmButtonText: "OK"
+                    });
                 }
             }
         };
-
+    
         var rzp1 = new Razorpay(options);
         document.getElementById('rzp-button').onclick = function (e) {
             rzp1.open();
             e.preventDefault();
         };
     </script>
+    
 </body>
 </html>

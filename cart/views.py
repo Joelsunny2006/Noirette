@@ -13,18 +13,23 @@ from order.models import *
 from order.forms import AddressForm
 from django.utils.timezone import now
 from django.db.models import F, Sum
+from wallet.models import *
+from django.views.decorators.cache import never_cache
+
+
 
 logger = logging.getLogger(__name__)
 
 
 @login_required
+@never_cache
 def view_cart(request):
     # Ensure the cart exists for the authenticated user
     cart, created = Cart.objects.get_or_create(user=request.user)
 
     # Get all items in the cart
     cart_items = CartItem.objects.filter(cart=cart)
-
+    
     items = []
     total_price = 0
 
@@ -49,6 +54,7 @@ def view_cart(request):
         item_total = display_price * item.quantity
         total_price += item_total
 
+        # Append each item to the items list **inside the loop**
         items.append({
             'id': item.id,
             'product_name': product.name,
@@ -63,13 +69,38 @@ def view_cart(request):
             'total_price': item_total,
         })
 
+    # Initialize counts
+    cart_count = 0
+    wishlist_count = 0
+    wallet_balance = 0
+
+    if request.user.is_authenticated:
+        # Get Cart Count
+        cart = Cart.objects.filter(user=request.user).first()
+        if cart:
+            cart_count = cart.items.aggregate(total=models.Sum('quantity'))['total'] or 0
+
+        # Get Wishlist Count
+        wishlist = Wishlist.objects.filter(user=request.user).first()
+        if wishlist:
+            wishlist_count = wishlist.items.count()
+
+        # Get Wallet Balance
+        wallet = Wallet.objects.filter(user=request.user).first()
+        if wallet:
+            wallet_balance = wallet.balance
+
     # Context for rendering the template
     context = {
         'items': items,
-        'total_price': total_price,  # The total price of all items
+        'total_price': total_price,
+        'wishlist_count': wishlist_count,
+        'wallet_balance': wallet_balance,
+        'cart_count': cart_count,  # The total quantity of all items
     }
 
     return render(request, 'user_side/cart.html', context)
+
 
 def add_to_cart(request):
     if request.method == "POST":
@@ -114,7 +145,7 @@ def add_to_cart(request):
                 # If item already exists in the cart, don't change the quantity, just notify the user
                 return JsonResponse({
                     'success': True,
-                    'message': "This item is already in the cart. Quantity will not be updated.",
+                    'message': "This item is already in the cart.",
                     'cart_total_items': cart.total_items if isinstance(cart.total_items, int) else 0,
                 })
 
@@ -228,6 +259,7 @@ def clear_cart(request):
     return JsonResponse({'message': 'Cart cleared'})
 
 @login_required
+@never_cache
 def checkout_view(request, product_id=None):
     try:
         # Fetch user's cart and cart items
@@ -264,8 +296,11 @@ def checkout_view(request, product_id=None):
                 invalid_items.append(item)
 
         if invalid_items:
-            messages.error(request, "Some items in your cart are no longer available. Please remove them to proceed.")
-            return redirect(reverse('view_cart'))  # Ensure 'view_cart' is the correct URL name
+            unavailable_variants = [item.variant.variant_name for item in invalid_items]
+            message = f"The following items are no longer available: {', '.join(unavailable_variants)}. Please remove them to proceed."
+            messages.error(request, message)  # Stores message in Django messages
+            return redirect(reverse('view_cart'))
+
 
         if not cart_items.exists():
             messages.error(request, 'Your cart is empty.')
@@ -311,8 +346,36 @@ def checkout_view(request, product_id=None):
             current_usage__gte=models.F('usage_limit')  # Exclude if usage limit exceeded
         )
 
-        # Cart count logic
-        cart_count = cart_items.aggregate(total=models.Sum('quantity'))['total'] or 0
+        cart_count = 0
+        if request.user.is_authenticated:
+            try:
+                cart = Cart.objects.filter(user=request.user).first()
+                if cart:
+                    cart_count = (
+                        cart.items.aggregate(total=models.Sum("quantity"))["total"] or 0
+                    )
+            except Cart.DoesNotExist:
+                cart_count = 0
+
+        wishlist_count = 0
+        wallet_balance = 0
+
+        if request.user.is_authenticated:
+            # Get Wishlist Count
+            try:
+                wishlist = Wishlist.objects.filter(user=request.user).first()
+                if wishlist:
+                    wishlist_count = wishlist.items.count()
+            except Wishlist.DoesNotExist:
+                wishlist_count = 0
+
+            # Get Wallet Balance
+            try:
+                wallet = Wallet.objects.filter(user=request.user).first()
+                if wallet:
+                    wallet_balance = wallet.balance
+            except Wallet.DoesNotExist:
+                wallet_balance = 0
 
         # Fetch user's saved addresses
         addresses = Address.objects.filter(user=request.user)
@@ -326,7 +389,9 @@ def checkout_view(request, product_id=None):
             'total': total,
             'cart_count': cart_count,
             'addresses': addresses,
-            'applied_coupon': applied_coupon
+            'applied_coupon': applied_coupon,
+            'wishlist_count': wishlist_count,
+            'wallet_balance': wallet_balance,
         }
 
         return render(request, 'user_side/checkout.html', context)
@@ -364,6 +429,9 @@ from django.db.models import Sum
 def wishlist(request):
     wishlist_items = []
     cart_count = 0
+    wishlist_count = 0  # ✅ Initialize to avoid UnboundLocalError
+    wallet_balance = 0
+    processed_wishlist_items = []  
 
     if request.user.is_authenticated:
         try:
@@ -375,16 +443,13 @@ def wishlist(request):
             if cart:
                 cart_count = cart.items.aggregate(total=Sum('quantity'))['total'] or 0
 
-            processed_wishlist_items = []
             for item in wishlist_items:
                 product = item.variant.product
-                
                 product_image = (
                     product.images.first().image_url.url
                     if product.images.exists()
                     else '/static/images/default.jpg'
                 )
-
                 processed_wishlist_items.append({
                     'id': item.id,
                     'product_name': product.name,
@@ -397,12 +462,29 @@ def wishlist(request):
                 })
 
         except (Wishlist.DoesNotExist, Cart.DoesNotExist):
-            processed_wishlist_items = []
+            pass  
+
+        try:
+            wishlist = Wishlist.objects.filter(user=request.user).first()
+            if wishlist:
+                wishlist_count = wishlist.items.count()
+        except Wishlist.DoesNotExist:
+            wishlist_count = 0
+
+        try:
+            wallet = Wallet.objects.filter(user=request.user).first()
+            if wallet:
+                wallet_balance = wallet.balance
+        except Wallet.DoesNotExist:
+            wallet_balance = 0
 
     return render(request, 'user_side/wishlist.html', {
         "cart_count": cart_count,
         "wishlist_items": processed_wishlist_items,
+        "wishlist_count": wishlist_count,
+        "wallet_balance": wallet_balance,
     })
+
 
 # Add to Wishlist
 def add_to_wishlist(request, variant_id):

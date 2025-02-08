@@ -2,6 +2,7 @@ from django.contrib.auth.decorators import login_required
 from django.shortcuts import render, redirect
 from django.contrib import messages
 from .models import *
+from cart.models import *
 import razorpay
 from django.conf import settings
 from django.http import JsonResponse
@@ -11,7 +12,8 @@ from django.db.models import Sum
 @login_required
 def wallet_view(request):
     """
-    Display wallet summary including total credited, total debited, net balance, and transaction history.
+    Display wallet summary including total credited, total debited, net balance, transaction history,
+    cart count, wishlist count, and wallet balance.
     """
     try:
         wallet, created = Wallet.objects.get_or_create(user=request.user)
@@ -31,15 +33,47 @@ def wallet_view(request):
         # Fetch transaction history
         transactions = wallet.transactions.all().order_by('-timestamp')  # Latest first
 
-        # Calculate net balance (total credited - total debited)
+        # Calculate net balance
         net_balance = total_credited - total_debited
+
+        # Initialize counts
+        cart_count = 0
+        wishlist_count = 0
+        wallet_balance = 0
+
+        # Get Cart Count
+        try:
+            cart = Cart.objects.filter(user=request.user).first()
+            if cart:
+                cart_count = cart.items.aggregate(total=Sum('quantity'))['total'] or 0
+        except Cart.DoesNotExist:
+            cart_count = 0
+
+        # Get Wishlist Count
+        try:
+            wishlist = Wishlist.objects.filter(user=request.user).first()
+            if wishlist:
+                wishlist_count = wishlist.items.count()
+        except Wishlist.DoesNotExist:
+            wishlist_count = 0
+
+        # Get Wallet Balance
+        try:
+            if wallet:
+                wallet_balance = wallet.balance
+        except Wallet.DoesNotExist:
+            wallet_balance = 0
 
         context = {
             'total_credited': total_credited,
             'total_debited': total_debited,
             'net_balance': net_balance,
-            'transactions': transactions,  # ✅ Include transactions in context
+            'transactions': transactions,
+            'cart_count': cart_count,
+            'wishlist_count': wishlist_count,
+            'wallet_balance': wallet_balance,
         }
+
         return render(request, 'user_side/wallet.html', context)
 
     except Exception as e:

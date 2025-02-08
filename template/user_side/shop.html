@@ -2,7 +2,7 @@
 <!DOCTYPE html>
 <html lang="en">
   <head>
-    <title> Noirette Shop</title>
+    <title> Noirette|Shop</title>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
     
@@ -26,6 +26,11 @@
     <link rel="stylesheet" href="{% static 'user_side/css/flaticon.css' %}">
     <link rel="stylesheet" href="{% static 'user_side/css/icomoon.css' %}">
     <link rel="stylesheet" href="{% static 'user_side/css/style.css' %}">
+    <link rel="icon" type="image/svg+xml" href="{% static 'user_side/images/favicon.svg' %}">
+<link rel="shortcut icon" href="{% static 'user_side/images/favicon.svg' %}">
+<link rel="apple-touch-icon" sizes="180x180" href="{% static 'user_side/images/favicon.svg' %}">
+<link rel="manifest" href="{% static 'user_side/images/favicon.svg' %}">
+
   </head>
   <style>
     .pricing .price {
@@ -51,27 +56,27 @@
         <ul class="navbar-nav ml-auto">
           <li class="nav-item active"><a href="{% url 'home' %}" class="nav-link" style="color: white;">Home</a></li>
           <li class="nav-item"><a href="{% url 'shop' %}" class="nav-link" style="color: white;">Shop</a></li>
-          <li class="nav-item"><a href="about.html" class="nav-link" style="color: white;">About</a></li>
-          <li class="nav-item"><a href="blog.html" class="nav-link" style="color: white;">Blog</a></li>
-          <li class="nav-item"><a href="contact.html" class="nav-link" style="color: white;">Contact</a></li>
+          <li class="nav-item"><a href="{% url 'support' %}" class="nav-link" style="color: white;">Support</a></li>
           <li class="nav-item cta cta-colored">
           <a href="{% url 'view_cart' %}" class="nav-link" style="color: white;">
             <span class="icon-shopping_cart"></span>[{{ cart_count|default:0 }}]
           </a>
           </li>
+          {% if user.is_authenticated %}
           <li class="nav-item cta cta-colored">
           <a href="{% url 'wishlist' %}" class="nav-link" style="color: white;">
-            <span class="icon-heart"></span>[0]
+            <span class="icon-heart"></span> [{{ wishlist_count }}]
           </a>
         </li>
-                  <!-- Wallet Section -->
-              {% if user.is_authenticated %}
-              <li class="nav-item cta">
+        {% endif %}
+                 <!-- Wallet Section -->
+            {% if user.is_authenticated %}
+            <li class="nav-item cta">
               <a href="{% url 'wallet' %}" class="nav-link" style="color: white;">
-                <span class="icon-wallet"></span> Wallet: ${{ user.wallet_balance|default:0.00 }}
+                <span class="icon-wallet"></span> Wallet: ${{ wallet_balance|default:"0.00" }}
               </a>
-              </li>
-              {% endif %}
+            </li>
+            {% endif %}
           <!-- Display Login or Username/Logout -->
           {% if user.is_authenticated %}
         <li class="nav-item dropdown">
@@ -114,7 +119,6 @@
         </div>
       </div>
       </nav>
-    
 
 
     
@@ -211,12 +215,12 @@
                                   </div>                                  
                                                                     
                                     <p class="bottom-area d-flex px-3">
-                                        <a href="#" class="add-to-cart text-center py-2 mr-1">
+                                        <!-- <a href="#" class="add-to-cart text-center py-2 mr-1">
                                             <span>Add to cart <i class="ion-ios-add ml-1"></i></span>
                                         </a>
                                         <a href="#" class="buy-now text-center py-2">
                                             Buy now<span><i class="ion-ios-cart ml-1"></i></span>
-                                        </a>
+                                        </a> -->
                                     </p>
                                 </div>
                             </div>

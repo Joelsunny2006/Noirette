@@ -17,4 +17,5 @@ urlpatterns = [
     path('wishlist/status/<int:variant_id>/', views.check_wishlist_status, name='check_wishlist_status'),
     # path('checkout/<str:serial_number>/', views.checkout_view, name='checkout'),
 
+
 ]

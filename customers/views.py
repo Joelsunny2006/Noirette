@@ -2,10 +2,11 @@ from django.shortcuts import render
 from users.models import UserProfile
 from django.shortcuts import redirect, get_object_or_404
 from django.shortcuts import render, redirect
+from admin_panel.decorator import admin_required
 # Create your views here.
 
 
-
+@admin_required
 def customer(request):
     alluser=UserProfile.objects.all().order_by('id')
     return render(request, 'admin_side/customer.html',{"users":alluser}) 

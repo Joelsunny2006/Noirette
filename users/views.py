@@ -22,11 +22,13 @@ from django.contrib.auth.decorators import login_required
 from django.shortcuts import get_object_or_404
 from order.models import *
 from cart.models import *
+from wallet.models import *
 from django.http import HttpResponseRedirect
 from django.contrib.auth import update_session_auth_hash
-from django.views.decorators.cache import cache_control
+from django.views.decorators.cache import cache_control, never_cache
 from django.http import JsonResponse
 from django.db.models import Subquery, OuterRef, Q
+from django.db.models import Sum
 
 def send_otp_email(user, otp_code):
     subject = "Your OTP Code"
@@ -157,8 +159,11 @@ def login_view(request):
         form = LoginForm()
     return render(request, "user_side/login.html", {'form': form})
 
-from django.db.models import Sum
+
+@never_cache
 def home(request):
+    if not request.user.is_authenticated:
+        request.session.flush() 
     # Get products that should be displayed on the homepage
     products = Product.objects.filter(home_display=True, is_deleted=False)
 
@@ -190,6 +195,26 @@ def home(request):
         except Cart.DoesNotExist:
             cart_count = 0
 
+    wishlist_count = 0
+    wallet_balance = 0
+
+    if request.user.is_authenticated:
+        # Get Wishlist Count
+        try:
+            wishlist = Wishlist.objects.filter(user=request.user).first()
+            if wishlist:
+                wishlist_count = wishlist.items.count()
+        except Wishlist.DoesNotExist:
+            wishlist_count = 0
+
+        # Get Wallet Balance
+        try:
+            wallet = Wallet.objects.filter(user=request.user).first()
+            if wallet:
+                wallet_balance = wallet.balance
+        except Wallet.DoesNotExist:
+            wallet_balance = 0
+
     # Fetch the first available product as the best-selling product
     best_selling_product = Product.objects.filter(is_deleted=False).prefetch_related('variants').first()
     if best_selling_product:
@@ -203,6 +228,8 @@ def home(request):
         "products": products_with_images,
         "cart_count": cart_count,
         "best_selling_product": best_selling_product,
+        'wishlist_count': wishlist_count,
+        'wallet_balance': wallet_balance
     })
 
 
@@ -211,7 +238,6 @@ from django.db.models import F, ExpressionWrapper, FloatField, Subquery, OuterRe
 from django.core.paginator import Paginator
 
 def shop(request):
-    print("hey")
     # Subquery to calculate the minimum discounted price for each product
     min_discount_price = Subquery(
         Variant.objects.filter(product=OuterRef('pk')).annotate(
@@ -316,6 +342,26 @@ def shop(request):
                 cart_count = cart.items.aggregate(total=models.Sum('quantity'))['total'] or 0
         except Cart.DoesNotExist:
             cart_count = 0
+        
+    wishlist_count = 0
+    wallet_balance = 0
+
+    if request.user.is_authenticated:
+        # Get Wishlist Count
+        try:
+            wishlist = Wishlist.objects.filter(user=request.user).first()
+            if wishlist:
+                wishlist_count = wishlist.items.count()
+        except Wishlist.DoesNotExist:
+            wishlist_count = 0
+
+        # Get Wallet Balance
+        try:
+            wallet = Wallet.objects.filter(user=request.user).first()
+            if wallet:
+                wallet_balance = wallet.balance
+        except Wallet.DoesNotExist:
+            wallet_balance = 0
 
     # Create context with all parameters
     context = {
@@ -330,6 +376,8 @@ def shop(request):
         'selected_categories': selected_categories,
         'selected_brands': selected_brands,
         'search_query': search_query,
+        'wishlist_count': wishlist_count,
+        'wallet_balance': wallet_balance
     }
 
     return render(request, 'user_side/shop.html', context)
@@ -344,12 +392,54 @@ def contact(request):
     return render(request, 'user_side/contact.html')
 
 @cache_control(no_cache=True, no_store=True, must_revalidate=True)
-def logout(request):
+def logout_view(request):
+    # Clear session data
+    request.session.flush()
+
+    # Forcefully clear all cookies (optional)
+    response = redirect('home')
+    response.delete_cookie('sessionid')  # If using Django sessions
+    response.delete_cookie('csrftoken')  # If you want to remove CSRF token as well
+
+    # Log out the user
     logout(request)
-    return redirect('home')
+    return response
 
 def support(request):
-    return render(request, 'user_side/support.html')
+    cart_count = 0
+    wishlist_count = 0  # ✅ Initialize to avoid UnboundLocalError
+    wallet_balance = 0  
+
+    if request.user.is_authenticated:
+        try:
+            cart = Cart.objects.filter(user=request.user).first()
+            if cart:
+                cart_count = cart.items.aggregate(total=models.Sum('quantity'))['total'] or 0
+        except Cart.DoesNotExist:
+            cart_count = 0
+
+        try:
+            wishlist = Wishlist.objects.filter(user=request.user).first()
+            if wishlist:
+                wishlist_count = wishlist.items.count()
+        except Wishlist.DoesNotExist:
+            wishlist_count = 0
+
+        try:
+            wallet = Wallet.objects.filter(user=request.user).first()
+            if wallet:
+                wallet_balance = wallet.balance
+        except Wallet.DoesNotExist:
+            wallet_balance = 0
+
+    context = {
+        'cart_count': cart_count,
+        'wishlist_count': wishlist_count,
+        'wallet_balance': wallet_balance,
+    }
+
+    return render(request, 'user_side/support.html', context)
+
 
 @login_required
 def user_profile(request):
@@ -443,7 +533,7 @@ def forgot_password(request):
         try:
             user = UserProfile.objects.get(email=email)
             # Generate a unique password reset link
-            reset_link = f"http://127.0.0.1:8000/reset-password/{user.id}/"
+            reset_link = f"https://noirette.shop/reset-password/{user.id}/"
             # Send the email
             send_mail(
                 subject="Password Reset Request",

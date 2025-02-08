@@ -133,7 +133,10 @@ def apply_coupon(request):
     try:
         cart = Cart.objects.get(user=request.user)
         coupon_code = request.POST.get('coupon_code')
+        print(coupon_code)
         coupon = Coupon.objects.filter(code=coupon_code).first()
+
+        print(coupon,"coupon")
         
         if not coupon:
             return JsonResponse({
