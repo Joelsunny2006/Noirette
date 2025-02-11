@@ -9,9 +9,8 @@ from django.core.paginator import Paginator
 
 @admin_required
 def category(request):
-    categories = Category.objects.filter(is_deleted=False).order_by('-id')  # Show latest categories first
+    categories = Category.objects.all().order_by('-id')  # Show all categories # Show only active
 
-    # Pagination: Show 8 categories per page
     paginator = Paginator(categories, 8)
     page_number = request.GET.get('page')
     page_obj = paginator.get_page(page_number)
@@ -69,3 +68,10 @@ def update_category(request, category_id):
         category.save()
         return redirect('admin_panel:category_list')
     return render(request, 'admin_side/update_category.html', {'category': category})
+
+
+def toggle_category(request, category_id):
+    category = get_object_or_404(Category, id=category_id)
+    category.is_deleted = not category.is_deleted
+    category.save()
+    return redirect('category')

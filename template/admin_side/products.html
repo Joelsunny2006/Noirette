@@ -162,9 +162,9 @@
                         <hr class="dropdown-divider">
                       </li>
                       <li>
-                        <a class="dropdown-item text-red" 
-                           href="{% url 'delete_product' product.serial_number %}" 
-                           onclick="return confirm('Are you sure you want to delete this product?')">Delete</a>
+                        <a class="dropdown-item" href="{% url 'toggle_product' product.serial_number %}">
+                          {% if product.is_deleted %}Unblock{% else %}Block{% endif %}
+                      </a>                      
                       </li>
                     </ul>
                   </div>
@@ -199,7 +199,6 @@
     {% endif %}
   </ul>
 </nav>
-
       </div>
     </div>
   </div>
@@ -539,7 +538,31 @@
         });
     });
 </script>
-
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+<script>
+    document.addEventListener('DOMContentLoaded', (event) => {
+        {% if messages %}
+            const messages = [
+                {% for message in messages %}
+                    {
+                        level: "{{ message.tags }}",
+                        text: "{{ message }}"
+                    },
+                {% endfor %}
+            ];
+            messages.forEach(message => {
+                Swal.fire({
+                    toast: true,
+                    position: 'top-right',
+                    icon: message.level === 'success' ? 'success' : 'error',
+                    title: message.text,
+                    showConfirmButton: false,
+                    timer: 3000
+                });
+            });
+        {% endif %}
+    });
+</script>
 
 </body>
 </html>

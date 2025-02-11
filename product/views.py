@@ -85,9 +85,9 @@ def product_view(request, serial_number):
 from django.core.paginator import Paginator
 @admin_required
 def product_list(request):
-    products = Product.objects.filter(is_deleted=False).order_by("-created")
-    categories = Category.objects.filter(is_deleted=False)
-    brands = Brand.objects.filter(status="active")
+    products = Product.objects.all().order_by("-created")
+    categories = Category.objects.all()
+    brands = Brand.objects.all()
 
     # Pagination: Show 8 products per page
     paginator = Paginator(products, 8)
@@ -300,6 +300,13 @@ def update_product(request, product_id):
         "categories": categories
     })
 
+
+def toggle_product(request, product_id):
+    product = get_object_or_404(Product, serial_number=product_id)
+    product.is_deleted = not product.is_deleted
+    product.save()
+    return redirect('product_list')
+
 from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_http_methods
 @csrf_exempt
@@ -437,3 +444,9 @@ def edit_brand(request, brand_id):
     return render(
         request, "admin_side/brand.html", {"brands": brands, "edit_brand": brand}
     )
+
+def toggle_brand(request, brand_id):
+    brand = get_object_or_404(Brand, id=brand_id)
+    brand.status = 'inactive' if brand.status == 'active' else 'active'
+    brand.save()
+    return redirect('brand_list')

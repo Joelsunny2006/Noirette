@@ -8,8 +8,8 @@ from admin_panel.decorator import admin_required
 
 @admin_required
 def customer(request):
-    alluser=UserProfile.objects.all().order_by('id')
-    return render(request, 'admin_side/customer.html',{"users":alluser}) 
+    alluser = UserProfile.objects.filter(is_admin=False).order_by('id')  # Exclude admins
+    return render(request, 'admin_side/customer.html', {"users": alluser})
 
 def user_blocked(request,user_id):
     blocked_users=UserProfile.objects.get(id=user_id)
