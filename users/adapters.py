@@ -41,7 +41,6 @@ class CustomSocialAccountAdapter(DefaultSocialAccountAdapter):
                 is_admin=False,
             )
             # It's often better to generate a secure random password
-            user.set_password(UserProfile.objects.make_random_password())
             user.save()
 
         # Connect the social account with the user
