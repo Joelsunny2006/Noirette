@@ -201,7 +201,7 @@
                             <div class="form-check">
                                 <input class="form-check-input" type="radio" id="wallet" name="payment_method" value="wallet" required>
                                 <label class="form-check-label" for="wallet">
-                                    Wallet (Current Balance: ₹{{ wallet.balance|floatformat:2 }})
+                                    Wallet (Current Balance: ₹{{ wallet_balance|default:"0.00" }})
                                 </label>
                             </div>
                         </div>

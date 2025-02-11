@@ -142,6 +142,40 @@
         color: #28a745;
         margin-left: 8px;
     }
+
+
+
+
+
+
+    .btn-custom {
+    background-color: #3e2723; /* Dark chocolate color */
+    color: #fff; 
+    padding: 12px 20px;
+    font-size: 16px;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    display: inline-block;
+    font-weight: bold;
+    text-transform: uppercase;
+    box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.2);
+}
+
+.btn-custom:hover {
+    background-color: #5d4037; /* Lighter chocolate tone */
+    transform: scale(1.05);
+}
+
+.btn-disabled {
+    background-color: #bdbdbd !important;
+    color: #757575 !important;
+    cursor: not-allowed;
+    box-shadow: none;
+    transform: none;
+}
+
 </style>
 
   <body class="goto-here">
@@ -359,12 +393,13 @@
 
     <div id="cart-message-box" class="message-box"></div> <!-- Message box for success or error messages -->
     <button 
-        id="add-to-cart-button" 
-        type="submit" 
-        class="btn-custom mt-3 {% if variants.0.variant_stock == 0 %}btn-disabled{% endif %}" 
-        {% if variants.0.variant_stock == 0 %}disabled{% endif %}>
-        Add to Cart
-    </button>
+    id="add-to-cart-button" 
+    type="submit" 
+    class="btn-custom mt-3 {% if variants.0.variant_stock == 0 %}btn-disabled{% endif %}" 
+    {% if variants.0.variant_stock == 0 %}disabled{% endif %}>
+    Add to Cart
+</button>
+
 </form>
 
 
@@ -402,139 +437,128 @@
 						</div>
 					</div>
 
-              <div class="tab-pane fade" id="v-pills-2" role="tabpanel" aria-labelledby="v-pills-day-2-tab">
-              	<div class="p-4">
-	              	<h3 class="mb-4">Manufactured By Nike</h3>
-	              	<p>On her way she met a copy. The copy warned the Little Blind Text, that where it came from it would have been rewritten a thousand times and everything that was left from its origin would be the word "and" and the Little Blind Text should turn around and return to its own, safe country. But nothing the copy said could convince her and so it didn’t take long until a few insidious Copy Writers ambushed her, made her drunk with Longe and Parole and dragged her into their agency, where they abused her for their.</p>
-              	</div>
-              </div>
-              <div class="tab-pane fade" id="v-pills-3" role="tabpanel" aria-labelledby="v-pills-day-3-tab">
-              	<div class="row p-4">
-						   		<div class="col-md-7">
-						   			<h3 class="mb-4">23 Reviews</h3>
-						   			<div class="review">
-								   		<div class="user-img" style="background-image: url(images/person_1.jpg)"></div>
-								   		<div class="desc">
-								   			<h4>
-								   				<span class="text-left">Jacob Webb</span>
-								   				<span class="text-right">14 March 2018</span>
-								   			</h4>
-								   			<p class="star">
-								   				<span>
-								   					<i class="ion-ios-star-outline"></i>
-								   					<i class="ion-ios-star-outline"></i>
-								   					<i class="ion-ios-star-outline"></i>
-								   					<i class="ion-ios-star-outline"></i>
-								   					<i class="ion-ios-star-outline"></i>
-							   					</span>
-							   					<span class="text-right"><a href="#" class="reply"><i class="icon-reply"></i></a></span>
-								   			</p>
-								   			<p>When she reached the first hills of the Italic Mountains, she had a last view back on the skyline of her hometown Bookmarksgrov</p>
-								   		</div>
-								   	</div>
-								   	<div class="review">
-								   		<div class="user-img" style="background-image: url(images/person_2.jpg)"></div>
-								   		<div class="desc">
-								   			<h4>
-								   				<span class="text-left">Jacob Webb</span>
-								   				<span class="text-right">14 March 2018</span>
-								   			</h4>
-								   			<p class="star">
-								   				<span>
-								   					<i class="ion-ios-star-outline"></i>
-								   					<i class="ion-ios-star-outline"></i>
-								   					<i class="ion-ios-star-outline"></i>
-								   					<i class="ion-ios-star-outline"></i>
-								   					<i class="ion-ios-star-outline"></i>
-							   					</span>
-							   					<span class="text-right"><a href="#" class="reply"><i class="icon-reply"></i></a></span>
-								   			</p>
-								   			<p>When she reached the first hills of the Italic Mountains, she had a last view back on the skyline of her hometown Bookmarksgrov</p>
-								   		</div>
-								   	</div>
-								   	<div class="review">
-								   		<div class="user-img" style="background-image: url(images/person_3.jpg)"></div>
-								   		<div class="desc">
-								   			<h4>
-								   				<span class="text-left">Jacob Webb</span>
-								   				<span class="text-right">14 March 2018</span>
-								   			</h4>
-								   			<p class="star">
-								   				<span>
-								   					<i class="ion-ios-star-outline"></i>
-								   					<i class="ion-ios-star-outline"></i>
-								   					<i class="ion-ios-star-outline"></i>
-								   					<i class="ion-ios-star-outline"></i>
-								   					<i class="ion-ios-star-outline"></i>
-							   					</span>
-							   					<span class="text-right"><a href="#" class="reply"><i class="icon-reply"></i></a></span>
-								   			</p>
-								   			<p>When she reached the first hills of the Italic Mountains, she had a last view back on the skyline of her hometown Bookmarksgrov</p>
-								   		</div>
-								   	</div>
-						   		</div>
-						   		<div class="col-md-4">
-						   			<div class="rating-wrap">
-							   			<h3 class="mb-4">Give a Review</h3>
-							   			<p class="star">
-							   				<span>
-							   					<i class="ion-ios-star-outline"></i>
-							   					<i class="ion-ios-star-outline"></i>
-							   					<i class="ion-ios-star-outline"></i>
-							   					<i class="ion-ios-star-outline"></i>
-							   					<i class="ion-ios-star-outline"></i>
-							   					(98%)
-						   					</span>
-						   					<span>20 Reviews</span>
-							   			</p>
-							   			<p class="star">
-							   				<span>
-							   					<i class="ion-ios-star-outline"></i>
-							   					<i class="ion-ios-star-outline"></i>
-							   					<i class="ion-ios-star-outline"></i>
-							   					<i class="ion-ios-star-outline"></i>
-							   					<i class="ion-ios-star-outline"></i>
-							   					(85%)
-						   					</span>
-						   					<span>10 Reviews</span>
-							   			</p>
-							   			<p class="star">
-							   				<span>
-							   					<i class="ion-ios-star-outline"></i>
-							   					<i class="ion-ios-star-outline"></i>
-							   					<i class="ion-ios-star-outline"></i>
-							   					<i class="ion-ios-star-outline"></i>
-							   					<i class="ion-ios-star-outline"></i>
-							   					(98%)
-						   					</span>
-						   					<span>5 Reviews</span>
-							   			</p>
-							   			<p class="star">
-							   				<span>
-							   					<i class="ion-ios-star-outline"></i>
-							   					<i class="ion-ios-star-outline"></i>
-							   					<i class="ion-ios-star-outline"></i>
-							   					<i class="ion-ios-star-outline"></i>
-							   					<i class="ion-ios-star-outline"></i>
-							   					(98%)
-						   					</span>
-						   					<span>0 Reviews</span>
-							   			</p>
-							   			<p class="star">
-							   				<span>
-							   					<i class="ion-ios-star-outline"></i>
-							   					<i class="ion-ios-star-outline"></i>
-							   					<i class="ion-ios-star-outline"></i>
-							   					<i class="ion-ios-star-outline"></i>
-							   					<i class="ion-ios-star-outline"></i>
-							   					(98%)
-						   					</span>
-						   					<span>0 Reviews</span>
-							   			</p>
-							   		</div>
-						   		</div>
-						   	</div>
-              </div>
+                    <div class="tab-pane fade" id="v-pills-2" role="tabpanel" aria-labelledby="v-pills-day-2-tab">
+                        <div class="p-4">
+                            <h3 class="mb-4">Manufactured By Noirette</h3>
+                            <p>On her way she met a chocolate maker. The chocolate maker warned the Little Blind Text that where it came from, it would have been refined a thousand times, and everything that was left from its origin would be the pure essence of cocoa. But nothing the chocolate maker said could convince her, and so it didn’t take long until a few insidious confectioners ambushed her, made her indulge in rich flavors, and whisked her away to their chocolatier, where they perfected her into a masterpiece.</p>
+                        </div>
+                    </div>
+                    <div class="tab-pane fade" id="v-pills-3" role="tabpanel" aria-labelledby="v-pills-day-3-tab">
+                        <div class="row p-4">
+                            <div class="col-md-7">
+                                <h3 class="mb-4">23 Reviews</h3>
+                                <div class="review">
+                                    <div class="user-img" style="background-image: url(images/person_1.jpg)"></div>
+                                    <div class="desc">
+                                        <h4>
+                                            <span class="text-left">Jacob Webb</span>
+                                            <span class="text-right">14 March 2018</span>
+                                        </h4>
+                                        <p class="star">
+                                            <span>
+                                                <i class="ion-ios-star-outline"></i>
+                                                <i class="ion-ios-star-outline"></i>
+                                                <i class="ion-ios-star-outline"></i>
+                                                <i class="ion-ios-star-outline"></i>
+                                                <i class="ion-ios-star-outline"></i>
+                                            </span>
+                                            
+                                        </p>
+                                        <p>The taste of this chocolate is simply divine! When I took my first bite, it melted smoothly, leaving a rich and velvety sensation. Absolutely delicious!</p>
+                                    </div>
+                                </div>
+                                <div class="review">
+                                    <div class="user-img" style="background-image: url(images/person_2.jpg)"></div>
+                                    <div class="desc">
+                                        <h4>
+                                            <span class="text-left">Samantha Ray</span>
+                                            <span class="text-right">20 April 2019</span>
+                                        </h4>
+                                        <p class="star">
+                                            <span>
+                                                <i class="ion-ios-star-outline"></i>
+                                                <i class="ion-ios-star-outline"></i>
+                                                <i class="ion-ios-star-outline"></i>
+                                                <i class="ion-ios-star-outline"></i>
+                                                <i class="ion-ios-star-outline"></i>
+                                            </span>
+                                            
+                                        </p>
+                                        <p>This is the best chocolate I’ve ever had! The balance of sweetness and bitterness is just perfect. I will definitely be buying more!</p>
+                                    </div>
+                                </div>
+                                <div class="review">
+                                    <div class="user-img" style="background-image: url(images/person_3.jpg)"></div>
+                                    <div class="desc">
+                                        <h4>
+                                            <span class="text-left">Michael Lee</span>
+                                            <span class="text-right">5 June 2021</span>
+                                        </h4>
+                                        <p class="star">
+                                            <span>
+                                                <i class="ion-ios-star-outline"></i>
+                                                <i class="ion-ios-star-outline"></i>
+                                                <i class="ion-ios-star-outline"></i>
+                                                <i class="ion-ios-star-outline"></i>
+                                                <i class="ion-ios-star-outline"></i>
+                                            </span>
+                                            
+                                        </p>
+                                        <p>The texture and flavor are phenomenal. You can really taste the high-quality ingredients. A must-try for chocolate lovers!</p>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="rating-wrap">
+                                    <h3 class="mb-4">Give a Review</h3>
+                                    <p class="star">
+                                        <span>
+                                            <i class="ion-ios-star-outline"></i>
+                                            <i class="ion-ios-star-outline"></i>
+                                            <i class="ion-ios-star-outline"></i>
+                                            <i class="ion-ios-star-outline"></i>
+                                            <i class="ion-ios-star-outline"></i>
+                                            (98%)
+                                        </span>
+                                        <span>20 Reviews</span>
+                                    </p>
+                                    <p class="star">
+                                        <span>
+                                            <i class="ion-ios-star-outline"></i>
+                                            <i class="ion-ios-star-outline"></i>
+                                            <i class="ion-ios-star-outline"></i>
+                                            <i class="ion-ios-star-outline"></i>
+                                            <i class="ion-ios-star-outline"></i>
+                                            (85%)
+                                        </span>
+                                        <span>10 Reviews</span>
+                                    </p>
+                                    <p class="star">
+                                        <span>
+                                            <i class="ion-ios-star-outline"></i>
+                                            <i class="ion-ios-star-outline"></i>
+                                            <i class="ion-ios-star-outline"></i>
+                                            <i class="ion-ios-star-outline"></i>
+                                            <i class="ion-ios-star-outline"></i>
+                                            (98%)
+                                        </span>
+                                        <span>5 Reviews</span>
+                                    </p>
+                                    <p class="star">
+                                        <span>
+                                            <i class="ion-ios-star-outline"></i>
+                                            <i class="ion-ios-star-outline"></i>
+                                            <i class="ion-ios-star-outline"></i>
+                                            <i class="ion-ios-star-outline"></i>
+                                            <i class="ion-ios-star-outline"></i>
+                                            (98%)
+                                        </span>
+                                        <span>0 Reviews</span>
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>                    
             </div>
           </div>
         </div>

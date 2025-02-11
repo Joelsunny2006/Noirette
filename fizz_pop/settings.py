@@ -34,6 +34,9 @@ SECRET_KEY = config('SECRET_KEY')
 DEBUG = config('DEBUG', default=True, cast=bool)
 ALLOWED_HOSTS = ['*']
 
+USE_TZ = True  # Default in Django 4.x
+
+
 
 CSRF_TRUSTED_ORIGINS = [
     "https://api.razorpay.com",
@@ -135,7 +138,7 @@ AUTH_PASSWORD_VALIDATORS = [
 
 # Authentication Settings
 AUTH_USER_MODEL = 'users.UserProfile'  # Ensure this points to your custom model
-
+    
 
 
 AUTHENTICATION_BACKENDS = (

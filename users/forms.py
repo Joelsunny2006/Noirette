@@ -5,6 +5,7 @@ import re
 from .models import UserProfile
 import phonenumbers
 from django.utils import timezone
+from django.contrib.auth.hashers import check_password
 
 class SignUpForm(forms.ModelForm):
     username = forms.CharField(
@@ -188,6 +189,8 @@ class LoginForm(forms.Form):
 
         # Attempt authentication
         user = authenticate(self.request, username=email, password=password)
+
+
 
         if user is None:
             if self.request:
