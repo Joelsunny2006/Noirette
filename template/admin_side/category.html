@@ -101,20 +101,20 @@ Noirette|category
                                 </span>
                             </td>
                             <td>
-                                <button class="btn btn-sm btn-outline-primary me-2" 
-                                    onclick="editCategory('{{ category.id }}', 
-                                            '{{ category.name|escapejs }}', 
-                                            '{{ category.description|escapejs }}', 
-                                            '{% if category.status %}active{% else %}inactive{% endif %}')">
-                                    <i class="fas fa-edit me-1"></i> Edit
-                                </button>
+                                <button class="btn btn-sm btn-outline-primary me-2"
+                                onclick="editCategory('{{ category.id }}', 
+                                                    '{{ category.name|escapejs }}', 
+                                                    '{{ category.description|escapejs }}', 
+                                                    '{% if category.status %}active{% else %}inactive{% endif %}')">
+                            <i class="fas fa-edit me-1"></i> Edit
+                        </button>
                                 <!-- <button class="btn btn-sm btn-outline-danger" 
                                         onclick="deleteCategory('{{ category.id }}')">
                                     <i class="fas fa-trash-alt me-1"></i> Delete
                                 </button> -->
                                 <a href="{% url 'toggle_category' category.id %}" 
-                                   class="btn btn-sm btn-{% if category.is_deleted %}success{% else %}danger{% endif %}">
-                                    {% if category.is_deleted %}Unblock{% else %}Block{% endif %}
+                                   class="btn btn-sm btn-{% if category.status %}success{% else %}danger{% endif %}">
+                                    {% if category.status %}Block{% else %}Unblock{% endif %}
                                 </a>
                             </td>
                         </tr>
@@ -162,35 +162,31 @@ Noirette|category
                 <h5 class="modal-title" id="categoryModalLabel">Add New Category</h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
-            <form id="categoryForm" method="post" action="{% url 'category' %}">
-                <div class="modal-body">
-                    {% csrf_token %}
-                    <input type="hidden" id="categoryId" name="categoryId">
-                    <div class="mb-3">
-                        <label for="categoryName" class="form-label">Category Name</label>
-                        <input type="text" class="form-control" id="categoryName" name="categoryName" 
-                               maxlength="100" pattern="[A-Za-z\s]+" required>
-                    </div>
-                    <div class="mb-3">
-                        <label for="categoryDescription" class="form-label">Description</label>
-                        <textarea class="form-control" id="categoryDescription" name="categoryDescription" 
-                                  rows="3" placeholder="Enter a brief description..."></textarea>
-                    </div>
-                    <div class="mb-3">
-                        <label for="categoryStatus" class="form-label">Status</label>
-                        <select class="form-select" id="categoryStatus" name="categoryStatus" required>
-                            <option value="active" selected>Active</option>
-                            <option value="inactive">Inactive</option>
-                        </select>
-                    </div>
-
-                    
-
+            <form id="categoryForm" method="POST" action="{% url 'add_category' %}">
+                {% csrf_token %}
+                
+                <!-- Hidden input to store category ID -->
+                <input type="hidden" id="categoryId" name="categoryId">
+                
+                <div class="mb-3">
+                    <label for="categoryName" class="form-label">Category Name</label>
+                    <input type="text" class="form-control" id="categoryName" name="name" required>
                 </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
-                    <button type="submit" class="btn btn-primary" id="categorySubmitBtn">Add Category</button>
+            
+                <div class="mb-3">
+                    <label for="categoryDescription" class="form-label">Description</label>
+                    <textarea class="form-control" id="categoryDescription" name="description"></textarea>
                 </div>
+            
+                <div class="mb-3">
+                    <label for="categoryStatus" class="form-label">Status</label>
+                    <select class="form-control" id="categoryStatus" name="status">
+                        <option value="active">Active</option>
+                        <option value="inactive">Inactive</option>
+                    </select>
+                </div>
+            
+                <button type="submit" id="categorySubmitBtn" class="btn btn-primary">Add Category</button>
             </form>
             
         </div>
@@ -207,23 +203,24 @@ Noirette|category
     });
 
     function editCategory(categoryId, categoryName, categoryDescription, categoryStatus) {
-// Update modal title and button
-document.getElementById('categoryModalLabel').innerText = 'Edit Category';
-document.getElementById('categorySubmitBtn').innerText = 'Update Category';
+    // Update modal title and button
+    document.getElementById('categoryModalLabel').innerText = 'Edit Category';
+    document.getElementById('categorySubmitBtn').innerText = 'Update Category';
 
-// Set form action to add_category (which handles both add and update)
-const form = document.getElementById('categoryForm');
-form.action = "{% url 'add_category' %}";
+    // Set form action dynamically to update_category URL
+    const form = document.getElementById('categoryForm');
+    form.action = `/category/update-category/${categoryId}/`;  // Ensure correct URL for update
 
-// Set form values
-document.getElementById('categoryId').value = categoryId;
-document.getElementById('categoryName').value = categoryName;
-document.getElementById('categoryDescription').value = categoryDescription;
-document.getElementById('categoryStatus').value = categoryStatus;
+    // Set form values
+    document.getElementById('categoryId').value = categoryId;
+    document.getElementById('categoryName').value = categoryName;
+    document.getElementById('categoryDescription').value = categoryDescription;
+    document.getElementById('categoryStatus').value = categoryStatus;
 
-// Show modal
-categoryModal.show();
+    // Show modal
+    categoryModal.show();
 }
+
 
     function addCategory() {
         document.getElementById('categoryModalLabel').innerText = 'Add New Category';

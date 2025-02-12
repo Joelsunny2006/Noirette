@@ -375,6 +375,7 @@ def brand_list(request):
 def add_brand(request):
     if request.method == "POST":
         brand_id = request.POST.get("brandId")
+        brand_id = int(brand_id) if brand_id and brand_id.isdigit() else None  # Ensure it's an integer or None
         name = request.POST.get("brandName").title()
         status = request.POST.get("brandStatus")
         
@@ -449,4 +450,4 @@ def toggle_brand(request, brand_id):
     brand = get_object_or_404(Brand, id=brand_id)
     brand.status = 'inactive' if brand.status == 'active' else 'active'
     brand.save()
-    return redirect('brand_list')
+    return redirect('brand')

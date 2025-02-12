@@ -133,22 +133,20 @@
         document.addEventListener('DOMContentLoaded', function () {
             // Function to show SweetAlert messages
             function showAlert(type, message) {
-                const Toast = Swal.mixin({
+                Swal.fire({
+                    icon: type,
+                    title: message,
                     toast: true,
                     position: 'top-end',
                     showConfirmButton: false,
                     timer: 3000,
-                    timerProgressBar: true,
-                    didOpen: (toast) => {
-                        toast.addEventListener('mouseenter', Swal.stopTimer);
-                        toast.addEventListener('mouseleave', Swal.resumeTimer);
-                    },
+                    timerProgressBar: true
                 });
+            }
     
-                Toast.fire({
-                    icon: type,
-                    title: message,
-                });
+            // Function to clear existing alerts
+            function clearAlerts() {
+                Swal.close();
             }
     
             // Function to handle form submission
@@ -157,14 +155,14 @@
     
                 form.addEventListener('submit', function (e) {
                     e.preventDefault();
+                    clearAlerts(); // Clear old alerts
     
-                    // Clear previous error styling
-                    const inputs = form.querySelectorAll('input');
-                    inputs.forEach((input) => {
+                    // Clear previous error styles
+                    form.querySelectorAll('input').forEach((input) => {
                         input.classList.remove('border-red-500');
                     });
     
-                    // Check terms acceptance
+                    // Check if terms and conditions are accepted
                     const termsCheckbox = document.getElementById('terms');
                     if (!termsCheckbox.checked) {
                         showAlert('error', 'Please accept the Terms and Conditions');
@@ -204,9 +202,7 @@
                                 if (data.errors) {
                                     Object.keys(data.errors).forEach((field) => {
                                         const input = form.querySelector(`[name="${field}"]`);
-                                        if (input) {
-                                            input.classList.add('border-red-500');
-                                        }
+                                        if (input) input.classList.add('border-red-500');
                                         data.errors[field].forEach((error) => {
                                             showAlert('error', error);
                                         });
@@ -233,68 +229,42 @@
     
             // Password strength checker
             const passwordInput = document.querySelector('input[name="password"]');
-            const confirmPasswordInput = document.querySelector('input[name="confirm_password"]');
-            let strengthTimeout;
+            if (passwordInput) {
+                passwordInput.addEventListener('input', function () {
+                    clearTimeout(this.strengthTimeout);
+                    this.strengthTimeout = setTimeout(() => {
+                        const password = this.value;
+                        let strength = 0;
+                        if (password.length >= 8) strength++;
+                        if (/[A-Z]/.test(password)) strength++;
+                        if (/[a-z]/.test(password)) strength++;
+                        if (/[0-9]/.test(password)) strength++;
+                        if (/[!@#$%^&*(),.?":{}|<>]/.test(password)) strength++;
     
-            passwordInput.addEventListener('input', function () {
-                clearTimeout(strengthTimeout);
-                strengthTimeout = setTimeout(() => {
-                    const password = this.value;
-                    let strength = 0;
-                    let message = '';
-                    let icon = '';
+                        const messages = ['Very Weak', 'Weak', 'Medium', 'Strong', 'Very Strong'];
+                        const icons = ['error', 'warning', 'info', 'success', 'success'];
     
-                    if (password.length >= 8) strength += 1;
-                    if (/[A-Z]/.test(password)) strength += 1;
-                    if (/[a-z]/.test(password)) strength += 1;
-                    if (/[0-9]/.test(password)) strength += 1;
-                    if (/[!@#$%^&*(),.?":{}|<>]/.test(password)) strength += 1;
-    
-                    switch (strength) {
-                        case 0:
-                        case 1:
-                            message = 'Very Weak';
-                            icon = 'error';
-                            break;
-                        case 2:
-                            message = 'Weak';
-                            icon = 'warning';
-                            break;
-                        case 3:
-                            message = 'Medium';
-                            icon = 'info';
-                            break;
-                        case 4:
-                            message = 'Strong';
-                            icon = 'success';
-                            break;
-                        case 5:
-                            message = 'Very Strong';
-                            icon = 'success';
-                            break;
-                    }
-    
-                    showAlert(icon, `Password Strength: ${message}`);
-                }, 300);
-            });
+                        showAlert(icons[strength], `Password Strength: ${messages[strength]}`);
+                    }, 300);
+                });
+            }
     
             // Password match checker
-            confirmPasswordInput.addEventListener('input', function () {
-                const password = passwordInput.value;
-                const confirmPassword = this.value;
-    
-                if (confirmPassword !== '') {
-                    if (password !== confirmPassword) {
+            const confirmPasswordInput = document.querySelector('input[name="confirm_password"]');
+            if (confirmPasswordInput) {
+                confirmPasswordInput.addEventListener('input', function () {
+                    if (this.value !== passwordInput.value) {
                         showAlert('error', 'Passwords do not match');
                         this.classList.add('border-red-500');
                     } else {
-                        showAlert('success', 'Passwords match');
                         this.classList.remove('border-red-500');
+                        showAlert('success', 'Passwords match');
                     }
-                }
-            });
+                });
+            }
     
             // Handle Django messages
+            clearAlerts();
             {% if messages %}
             {% for message in messages %}
             showAlert(
@@ -308,4 +278,5 @@
             handleFormSubmission('signupForm', '{% url "signup" %}');
         });
     </script>
+    
     

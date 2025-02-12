@@ -18,11 +18,12 @@ def category(request):
     return render(request, 'admin_side/category.html', {'page_obj': page_obj})
 
 def add_category(request):
-    if request.method == 'POST':        
+    if request.method == 'POST':   
+        print(request)     
 
-        name = request.POST.get('categoryName').title()
-        description = request.POST.get('categoryDescription')
-        status = request.POST.get('categoryStatus') == 'active'
+        name = request.POST.get("name", "").strip().title()  
+        description = request.POST.get("description", "").strip()
+        status = request.POST.get("status", "inactive") == "active"  #
         
         if Category.objects.filter(name=name).exists():
             messages.error(request, "A category with this name already exists.")
@@ -45,33 +46,53 @@ def add_category(request):
 
 def delete_category(request, category_id):
     category = get_object_or_404(Category, id=category_id)
+    print(category.is_deleted )
     category.is_deleted = True
+    print(category.is_deleted )
     category.save()
     return redirect('category')
 
-
+from django.utils.text import slugify
 def update_category(request, category_id):
     category = get_object_or_404(Category, id=category_id)
+
     if request.method == "POST":
-        name = request.POST.get("name").title()
-        description = request.POST.get("description")
-        if Category.objects.filter(name=name).exclude(id=category_id).exists():
-            messages.error(request, "A category with this name already exists.")
-            return redirect('category')
+        name = request.POST.get("name", "").strip().title()  # Trim spaces and capitalize
+        description = request.POST.get("description", "").strip()
+        status = request.POST.get("status", "inactive") == "active"  # Convert to boolean
+
         if not name:
             return render(request, 'admin_side/update_category.html', {
                 'category': category,
                 'error': 'Name field is required.'
             })
+
+        # Check if a different category with the same name already exists
+        if Category.objects.filter(name=name).exclude(id=category.id).exists():
+            messages.error(request, "A category with this name already exists.")
+            return redirect('category')
+
+        # ✅ Update existing category instead of creating a new one
         category.name = name
         category.description = description
+        category.status = status  # Update the status
+
+        # ✅ Update slug only if the name has changed
+        if category.slug != slugify(name):
+            category.slug = slugify(name)
+
         category.save()
-        return redirect('admin_panel:category_list')
+
+        messages.success(request, "Category updated successfully.")
+        return redirect('category')
+
     return render(request, 'admin_side/update_category.html', {'category': category})
 
 
 def toggle_category(request, category_id):
     category = get_object_or_404(Category, id=category_id)
-    category.is_deleted = not category.is_deleted
+    print(category.is_deleted )
+    category.status = not category.status
+    print(category.is_deleted )
     category.save()
     return redirect('category')

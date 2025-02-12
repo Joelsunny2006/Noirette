@@ -25,43 +25,46 @@ Noirette|Brands
 
     <div class="card">
         <div class="card-header">Brand List</div>
-        <div class="card-body">
-            <table class="table table-hover">
-                <thead>
-                    <tr>
-                        <th>ID</th>
-                        <th>Name</th>
-                        <th>Status</th>
-                        <th>Actions</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    {% for brand in brands %}
-                    <tr>
-                        <td>{{ brand.id }}</td>
-                        <td>{{ brand.name }}</td>
-                        <td>
-                            <span class="badge {% if brand.status == 'active' %}bg-success{% else %}bg-secondary{% endif %}">
-                                {{ brand.status|title }}
-                            </span>
-                        </td>
-                        <td>
-                            <button class="btn btn-sm btn-outline-primary edit-brand" 
-                                    data-bs-toggle="modal" 
-                                    data-bs-target="#brandModal"
-                                    data-brand-id="{{ brand.id }}"
-                                    data-brand-name="{{ brand.name }}"
-                                    data-brand-status="{{ brand.status }}">
-                                Edit
-                            </button>
-                            <a href="{% url 'toggle_brand' brand.id %}" class="btn btn-{% if brand.status == 'active' %}danger{% else %}success{% endif %}">
-                                {% if brand.status == 'active' %}Block{% else %}Unblock{% endif %}
-                            </a>
-                    </tr>
-                    {% endfor %}
-                </tbody>
-            </table>
-        </div>
+       <div class="card-body" style="width: 100%; height: 100vh; overflow: auto;">
+    <table class="table table-hover w-100">
+        <thead>
+            <tr>
+                <th>ID</th>
+                <th>Name</th>
+                <th>Status</th>
+                <th>Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for brand in brands %}
+            <tr>
+                <td>{{ brand.id }}</td>
+                <td>{{ brand.name }}</td>
+                <td>
+                    <span class="badge {% if brand.status == 'active' %}bg-success{% else %}bg-secondary{% endif %}">
+                        {{ brand.status|title }}
+                    </span>
+                </td>
+                <td>
+                    <button class="btn btn-sm btn-outline-primary edit-brand" 
+                            data-bs-toggle="modal" 
+                            data-bs-target="#brandModal"
+                            data-brand-id="{{ brand.id }}"
+                            data-brand-name="{{ brand.name }}"
+                            data-brand-status="{{ brand.status }}">
+                        Edit
+                    </button>
+                    <a href="{% url 'toggle_brand' brand.id %}" 
+                       class="btn btn-{% if brand.status == 'active' %}danger{% else %}success{% endif %}">
+                        {% if brand.status == 'active' %}Block{% else %}Unblock{% endif %}
+                    </a>
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+
     </div>
 </div>
 

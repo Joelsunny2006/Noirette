@@ -65,4 +65,3 @@ class Coupon(models.Model):
         if self.total_orders_used == 0:
             return Decimal('0.00')
         return self.total_discount_given / self.total_orders_used
-

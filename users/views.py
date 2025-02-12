@@ -56,6 +56,10 @@ def signup_view(request):
             user.save()
             
             generate_otp(user)
+
+            # Clear previous error messages before adding success message
+            storage = messages.get_messages(request)
+            storage.used = True  # This clears the previous messages
             
             if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
                 return JsonResponse({
@@ -63,6 +67,7 @@ def signup_view(request):
                     'message': "Account created successfully! Please verify your email with the OTP.",
                     'redirect': reverse('verify_otp', args=[user.id])
                 })
+
             messages.success(request, "Account created successfully! Please verify your email with the OTP.")
             return redirect('verify_otp', user.id)
         else:
@@ -75,7 +80,7 @@ def signup_view(request):
                     'errors': errors
                 })
             
-            # Check for specific confirm_password mismatch
+            # Password mismatch check
             password = request.POST.get('password', '')
             confirm_password = request.POST.get('confirm_password', '')
             if password != confirm_password:
@@ -88,6 +93,7 @@ def signup_view(request):
         form = SignUpForm()
     
     return render(request, "user_side/signup.html", {'form': form})
+
 
 @cache_control(no_cache=True, no_store=True, must_revalidate=True)
 def verify_otp(request, user_id):
