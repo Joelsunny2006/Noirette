@@ -117,7 +117,7 @@ Noirette|coupon
                             {% if coupon.discount_type == 'percentage' %}
                                 {{ coupon.discount_value }}%
                             {% else %}
-                                ${{ coupon.discount_value }}
+                            ₹{{ coupon.discount_value }}
                             {% endif %}
                         </td>
                         <td>{{ coupon.get_discount_type_display }}</td>

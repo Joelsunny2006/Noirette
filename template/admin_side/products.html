@@ -140,7 +140,7 @@
                     {% for variant in product.variants.all %}
                       <li>
                         <span>{{ variant.variant_name }}</span>
-                        - ${{ variant.variant_price|floatformat:2 }}
+                        - ₹{{ variant.variant_price|floatformat:2 }}
                         (Stock: {{ variant.variant_stock }})
                       </li>
                     {% endfor %}
@@ -231,7 +231,7 @@
             <select class="form-select" id="product-category" name="product_category" required aria-describedby="productCategoryHelp">
               <option value="" disabled selected>Select Category</option>
               {% for category in categories %}
-              <option value="{{ category.id }}">{{ category.name }}</option>
+                  <option value="{{ category.id }}">{{ category.name }}</option>
               {% endfor %}
             </select>
             <div class="form-text" id="productCategoryHelp">Choose a category for the product.</div>

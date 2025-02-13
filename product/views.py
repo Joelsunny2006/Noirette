@@ -11,6 +11,7 @@ from django.shortcuts import get_object_or_404, render
 from decimal import Decimal, InvalidOperation
 from admin_panel.decorator import admin_required 
 
+# First, update your view function:
 def product_view(request, serial_number):
     if not request.user.is_authenticated:
         request.session.flush()
@@ -21,14 +22,8 @@ def product_view(request, serial_number):
         images.first().image_url.url if images and images.first().image_url else None
     )
 
-    for variant in variants:
-        variant.discounted_price = None
-        if product.offer_percentage:
-            variant.discounted_price = round(
-                Decimal(variant.variant_price) - 
-                (Decimal(variant.variant_price) * Decimal(product.offer_percentage) / 100), 
-                2
-            )
+    # Remove the discounted price calculation loop since we'll use the model method
+    # The get_discounted_price method will handle this for us
 
     total_stock = (
         sum(variant.variant_stock for variant in variants)
@@ -37,7 +32,7 @@ def product_view(request, serial_number):
     )
 
     cart_count = 0
-    wishlist_count = 0  # ✅ Initialize to avoid UnboundLocalError
+    wishlist_count = 0
     wallet_balance = 0
     wishlist_variant_ids = []
 
@@ -82,11 +77,13 @@ def product_view(request, serial_number):
         },
     )
 
+
+
 from django.core.paginator import Paginator
 @admin_required
 def product_list(request):
     products = Product.objects.all().order_by("-created")
-    categories = Category.objects.all()
+    categories = Category.objects.filter(status=True, is_deleted=False)
     brands = Brand.objects.all()
 
     # Pagination: Show 8 products per page
@@ -122,7 +119,7 @@ def add_product(request):
                 if offer_percentage < 0 or offer_percentage > 100:
                     return JsonResponse({"success": False, "message": "Offer percentage must be between 0 and 100"})
                 
-                category = Category.objects.get(id=category_id)
+                category = Category.objects.get(id=category_id, status=True, is_deleted=False)
                 brand = Brand.objects.get(id=brand_id)
             except InvalidOperation:
                 return JsonResponse({"success": False, "message": "Invalid offer percentage"})

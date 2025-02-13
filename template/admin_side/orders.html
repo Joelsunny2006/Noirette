@@ -109,7 +109,7 @@
                             <td>#{{ order.id }}</td>
                             <td>{{ order.user.username }}</td>
                             <td>{{ order.created_at|date:"Y-m-d" }}</td>
-                            <td>${{ order.total_price }}</td>
+                            <td>₹{{ order.total_price }}</td>
                             <td>
                                 <!-- Dropdown for status -->
                                 <select class="form-control status-dropdown" data-order-id="{{ order.id }}">

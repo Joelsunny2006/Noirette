@@ -62,9 +62,9 @@
                   <input type="text" class="form-control" id="username" name="username" value="{{ request.user.username }}" required>
                 </div>
                 <div class="mb-3">
-                  <label for="email" class="form-label">Email</label>
-                  <input type="email" class="form-control" id="email-profile" name="email" value="{{ request.user.email }}" required>
-                </div>
+                    <label for="email" class="form-label">Email</label>
+                    <input type="email" class="form-control" id="email-profile" name="email" value="{{ request.user.email }}" readonly>
+                </div>                
                 <div class="modal-footer">
                   <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
                   <button type="submit" class="btn btn-primary">Save Changes</button>
@@ -167,7 +167,7 @@
                     <tr>
                         <td class="border px-4 py-2">#{{ order.id }}</td>
                         <td class="border px-4 py-2">{{ order.created_at|date:"Y-m-d H:i" }}</td>
-                        <td class="border px-4 py-2">${{ order.total_price }}</td>
+                        <td class="border px-4 py-2">₹{{ order.total_price }}</td>
                         <td class="border px-4 py-2">{{ order.get_status_display }}</td>
                         <td class="border px-4 py-2">
                             {% if order.status == 'Payment Pending' or order.status == 'Payment Failed' %}

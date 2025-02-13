@@ -91,8 +91,6 @@ def update_category(request, category_id):
 
 def toggle_category(request, category_id):
     category = get_object_or_404(Category, id=category_id)
-    print(category.is_deleted )
     category.status = not category.status
-    print(category.is_deleted )
     category.save()
     return redirect('category')

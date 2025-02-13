@@ -258,15 +258,13 @@ def shop(request):
     products = Product.objects.filter(is_deleted=False).prefetch_related('variants').annotate(
         min_discount_price=min_discount_price
     ).distinct()
-    categories = Category.objects.all()
+    categories = Category.objects.filter(status=True, is_deleted=False)  # Ensure only active, non-deleted categories are displayed
     brands = Brand.objects.filter(status='active')
 
     # Get all filter parameters
     search_query = request.GET.get('q', '')
     selected_categories = request.GET.getlist('categories')
     selected_brands = request.GET.getlist('brands')
-    price_from = request.GET.get('price_from', '1')
-    price_to = request.GET.get('price_to', '1000')
     sort_by = request.GET.get('sort', 'default')
 
     # Apply search filter
@@ -279,27 +277,34 @@ def shop(request):
         )
 
     # In your view, try this simpler version first:
-    selected_brands = request.GET.getlist('brands')
     if selected_brands:
         # Use name instead of slug for now
         products = products.filter(brand__name__in=selected_brands)
 
     # And for categories:
-    selected_categories = request.GET.getlist('categories')
     if selected_categories:
         products = products.filter(category__slug__in=selected_categories)
 
+    # Get price filter parameters with proper defaults
+    try:
+        price_from = max(1, float(request.GET.get('price_from', '1')))
+    except ValueError:
+        price_from = 1
+
+    try:
+        price_to = min(1000, float(request.GET.get('price_to', '1000')))
+    except ValueError:
+        price_to = 1000
+
+    # Ensure price_to is not less than price_from
+    if price_to < price_from:
+        price_to = price_from
+
     # Apply price range filter
-    if price_from and price_to:
-        try:
-            price_from = float(price_from)
-            price_to = float(price_to)
-            products = products.filter(
-                min_discount_price__gte=price_from,
-                min_discount_price__lte=price_to
-            )
-        except ValueError:
-            print("Invalid price range provided.")
+    products = products.filter(
+        min_discount_price__gte=price_from,
+        min_discount_price__lte=price_to
+    )
 
     # Apply sorting
     if sort_by == 'price_low_to_high':
@@ -377,8 +382,8 @@ def shop(request):
         'brands': brands,
         'sort_options': sort_options,
         'current_sort': sort_by,
-        'current_price_from': price_from,
-        'current_price_to': price_to,
+        'current_price_from': int(price_from) if price_from.is_integer() else price_from,
+        'current_price_to': int(price_to) if price_to.is_integer() else price_to,
         'selected_categories': selected_categories,
         'selected_brands': selected_brands,
         'search_query': search_query,
@@ -397,18 +402,27 @@ def about(request):
 def contact(request):
     return render(request, 'user_side/contact.html')
 
+@login_required
 @cache_control(no_cache=True, no_store=True, must_revalidate=True)
 def logout_view(request):
     # Clear session data
     request.session.flush()
-
-    # Forcefully clear all cookies (optional)
-    response = redirect('home')
-    response.delete_cookie('sessionid')  # If using Django sessions
-    response.delete_cookie('csrftoken')  # If you want to remove CSRF token as well
-
+    
     # Log out the user
     logout(request)
+    
+    # Create response with cache-control headers
+    response = redirect('home')
+    
+    # Clear all authentication-related cookies
+    response.delete_cookie('sessionid')
+    response.delete_cookie('csrftoken')
+    
+    # Add cache-control headers
+    response['Cache-Control'] = 'no-cache, no-store, must-revalidate, private'
+    response['Pragma'] = 'no-cache'
+    response['Expires'] = '0'
+    
     return response
 
 def support(request):

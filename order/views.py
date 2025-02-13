@@ -206,7 +206,7 @@ def place_order(request):
 
             # Calculate totals including discounts
             subtotal = sum(
-                Decimal(item.variant.variant_price) * item.quantity
+                Decimal(str(item.variant.get_discounted_price())) * item.quantity
                 for item in cart_items
             )
             delivery = Decimal('50.00')
@@ -227,7 +227,12 @@ def place_order(request):
 
             # Ensure total price is not negative
             total_price = max(subtotal + delivery - discount, Decimal('0.00'))
-
+            if payment_method == "wallet":
+                wallet = Wallet.objects.get(user=request.user)
+                if wallet.balance < total_price:
+                    messages.error(request, "Insufficient wallet balance.")
+                    return redirect("checkout")
+                
             # Create order address
             order_address = OrderAddress.objects.create(
                 user=request.user,
@@ -285,6 +290,7 @@ def place_order(request):
                     # Save order details
                     order.razorpay_order_id = razorpay_order["id"]
                     order.status = "Payment Pending"
+                    cart_items.delete() 
                     order.save()
 
                     # Prepare context for the Razorpay payment page
@@ -321,28 +327,24 @@ def place_order(request):
             elif payment_method == "wallet":
                 try:
                     wallet = Wallet.objects.get(user=request.user)
-                    if wallet.balance >= total_price:
-                        # Create wallet transaction
-                        WalletTransaction.objects.create(
-                            wallet=wallet,
-                            amount=total_price,
-                            transaction_type="debit",
-                            description=f"Payment for order #{order.id}",
-                        )
+                    WalletTransaction.objects.create(
+                        wallet=wallet,
+                        amount=total_price,
+                        transaction_type="debit",
+                        description=f"Payment for order #{order.id}",
+                    )
 
-                        wallet.balance -= total_price
-                        wallet.save()
+                    wallet.balance -= total_price
+                    wallet.save()
 
-                        order.status = "Processing"
-                        order.save()
+                    order.status = "Processing"
+                    order.save()
 
-                        cart_items.delete()  # Clear cart after successful order
+                    cart_items.delete()  # Clear cart after successful order
 
-                        messages.success(request, "Order placed successfully using wallet!")
-                        return redirect("order:order_success")
-                    else:
-                        messages.error(request, "Insufficient wallet balance.")
-                        return redirect("checkout")
+                    messages.success(request, "Order placed successfully using wallet!")
+                    return redirect("order:order_success")
+       
                 except Wallet.DoesNotExist:
                     messages.error(request, "Wallet does not exist.")
                     return redirect("checkout")
@@ -481,11 +483,13 @@ def razorpay_payment(request):
 
 @cache_control(no_cache=True, no_store=True, must_revalidate=True)
 def order_success(request):
-    return render(request, "user_side/order_success.html")
+    response = render(request, "user_side/order_success.html")
+    return response
 
 @cache_control(no_cache=True, no_store=True, must_revalidate=True)
 def order_failure(request):
-    return render(request, "user_side/order_failure.html")
+    response = render(request, "user_side/order_failure.html")
+    return response
 
 
 @login_required
@@ -501,6 +505,8 @@ def cancel_order(request, order_id):
 
             # Process wallet refund (if applicable)
             wallet, created = Wallet.objects.get_or_create(user=request.user)
+            wallet.balance += Decimal(str(order.total_price))  
+            wallet.save()
             WalletTransaction.objects.create(
                 wallet=wallet,
                 amount=order.total_price,
@@ -533,6 +539,8 @@ def return_order(request, order_id):
 
             # Process wallet refund
             wallet, created = Wallet.objects.get_or_create(user=request.user)
+            wallet.balance += Decimal(str(order.total_price))  
+            wallet.save()
             WalletTransaction.objects.create(
                 wallet=wallet,
                 amount=order.total_price,

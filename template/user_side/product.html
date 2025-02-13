@@ -208,7 +208,7 @@
 					{% if user.is_authenticated %}
 					<li class="nav-item cta">
 						<a href="{% url 'wallet' %}" class="nav-link" style="color: white;">
-							<span class="icon-wallet"></span> Wallet: ${{ wallet_balance|default:"0.00" }}
+							<span class="icon-wallet"></span> Wallet: ₹{{ wallet_balance|default:"0.00" }}
 						</a>
 					</li>
 					{% endif %}
@@ -322,16 +322,24 @@
 
 <!-- Price and Wishlist Section -->
 <div class="d-flex align-items-center mb-3">
-    <p id="price-tag" class="price h4 font-weight-bold text-black mb-0">
-        {% if product.offer_percentage %}
-            <span class="text-muted" style="text-decoration: line-through;">
-                ₹{{ variants.0.variant_price|floatformat:2 }}
-            </span>
-            <span class="text-success ms-2">
-                ₹{{ variants.0.discounted_price|floatformat:2 }}
-            </span>
+     <p id="price-tag" class="price h4 font-weight-bold text-black mb-0">
+        {% if product.variants.all %}
+            {% with first_variant=variants|first %}
+                {% if product.offer_percentage %}
+                    <span class="text-muted" style="text-decoration: line-through;">
+                        ₹{{ first_variant.variant_price|floatformat:2 }}
+                    </span>
+                    <span class="text-success ms-2">
+                        ₹{{ first_variant.get_discounted_price|floatformat:2 }}
+                    </span>
+                {% else %}
+                    <span class="text-black">
+                        ₹{{ first_variant.variant_price|floatformat:2 }}
+                    </span>
+                {% endif %}
+            {% endwith %}
         {% else %}
-            ₹{{ variants.0.variant_price|floatformat:2 }}
+            Price Not Available
         {% endif %}
     </p>
     

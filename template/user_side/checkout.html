@@ -91,7 +91,7 @@
 					{% if user.is_authenticated %}
 					<li class="nav-item cta">
 						<a href="{% url 'wallet' %}" class="nav-link" style="color: white;">
-							<span class="icon-wallet"></span> Wallet: ${{ wallet_balance|default:"0.00" }}
+							<span class="icon-wallet"></span> Wallet: ₹{{ wallet_balance|default:"0.00" }}
 						</a>
 					</li>
 					{% endif %}
