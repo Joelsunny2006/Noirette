@@ -9,6 +9,9 @@
   <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
   <link href="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.12/cropper.min.css" rel="stylesheet"/>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.12/cropper.min.js"></script>
+<script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+
+
   <style>
     .container { max-width: 1000px; }
     .dropdown-item.text-red { color: red; }
@@ -538,31 +541,50 @@
         });
     });
 </script>
+
 <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 <script>
-    document.addEventListener('DOMContentLoaded', (event) => {
-        {% if messages %}
-            const messages = [
-                {% for message in messages %}
-                    {
-                        level: "{{ message.tags }}",
-                        text: "{{ message }}"
-                    },
-                {% endfor %}
-            ];
-            messages.forEach(message => {
+    $(document).on("submit", "#addProductForm", function (e) {
+        e.preventDefault();  // Prevent default form submission
+
+        var formData = new FormData(this); // Get form data
+
+        $.ajax({
+            type: "POST",
+            url: "{% url 'add_product' %}",  // Update with your Django URL name
+            data: formData,
+            processData: false,
+            contentType: false,
+            success: function (response) {
+                if (response.success) {
+                    // ✅ SUCCESS - Show success alert
+                    Swal.fire({
+                        title: "Success!",
+                        text: response.message,
+                        icon: "success"
+                    }).then(() => {
+                        location.reload();  // Refresh the page or redirect
+                    });
+                } else {
+                    // ❌ ERROR - Show error alert
+                    Swal.fire({
+                        title: "Error!",
+                        text: response.message,
+                        icon: "error"
+                    });
+                }
+            },
+            error: function () {
                 Swal.fire({
-                    toast: true,
-                    position: 'top-right',
-                    icon: message.level === 'success' ? 'success' : 'error',
-                    title: message.text,
-                    showConfirmButton: false,
-                    timer: 3000
+                    title: "Error!",
+                    text: "Something went wrong. Please try again!",
+                    icon: "error"
                 });
-            });
-        {% endif %}
+            }
+        });
     });
 </script>
+
 
 </body>
 </html>

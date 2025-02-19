@@ -16,7 +16,7 @@ def category(request):
     page_obj = paginator.get_page(page_number)
 
     return render(request, 'admin_side/category.html', {'page_obj': page_obj})
-
+@admin_required
 def add_category(request):
     if request.method == 'POST':   
         print(request)     
@@ -43,7 +43,7 @@ def add_category(request):
         
             
     return redirect('category')
-
+@admin_required
 def delete_category(request, category_id):
     category = get_object_or_404(Category, id=category_id)
     print(category.is_deleted )
@@ -53,6 +53,7 @@ def delete_category(request, category_id):
     return redirect('category')
 
 from django.utils.text import slugify
+@admin_required
 def update_category(request, category_id):
     category = get_object_or_404(Category, id=category_id)
 
@@ -88,7 +89,7 @@ def update_category(request, category_id):
 
     return render(request, 'admin_side/update_category.html', {'category': category})
 
-
+@admin_required
 def toggle_category(request, category_id):
     category = get_object_or_404(Category, id=category_id)
     category.status = not category.status

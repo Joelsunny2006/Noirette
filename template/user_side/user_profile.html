@@ -152,60 +152,70 @@
     <div id="orders" class="tab-content hidden">
         <h2 class="text-2xl font-semibold mb-4">Orders</h2>
         <div class="overflow-x-auto">
-            <table class="w-full table-auto">
+            <table class="w-full table-auto border-collapse border border-gray-300">
                 <thead>
-                    <tr class="bg-gray-200">
-                        <th class="px-4 py-2">Order ID</th>
-                        <th class="px-4 py-2">Date</th>
-                        <th class="px-4 py-2">Total</th>
-                        <th class="px-4 py-2">Status</th>
-                        <th class="px-4 py-2">Actions</th>
+                    <tr class="bg-gray-200 text-gray-700 text-left">
+                        <th class="px-4 py-2 border">Order ID</th>
+                        <th class="px-4 py-2 border">Date</th>
+                        <th class="px-4 py-2 border">Total</th>
+                        <th class="px-4 py-2 border">Status</th>
+                        <th class="px-4 py-2 border">Actions</th>
+                        <th class="px-4 py-2 border">Order Details</th>
                     </tr>
                 </thead>
                 <tbody>
                     {% for order in orders %}
-                    <tr>
+                    <tr class="border-b">
                         <td class="border px-4 py-2">#{{ order.id }}</td>
                         <td class="border px-4 py-2">{{ order.created_at|date:"Y-m-d H:i" }}</td>
                         <td class="border px-4 py-2">₹{{ order.total_price }}</td>
                         <td class="border px-4 py-2">{{ order.get_status_display }}</td>
-                        <td class="border px-4 py-2">
+                        <td class="border px-4 py-2 space-y-2">
                             {% if order.status == 'Payment Pending' or order.status == 'Payment Failed' %}
-                                <!-- Button to complete payment with AJAX -->
-                                <button 
-                                    class="continue-payment-btn bg-yellow-500 text-white py-1 px-2 rounded" 
-                                    data-order-id="{{ order.id }}"
-                                >
+                                <button class="continue-payment-btn bg-yellow-500 text-white py-1 px-3 rounded" 
+                                        data-order-id="{{ order.id }}">
                                     Complete Payment
                                 </button>
-                            {% elif order.status == 'Pending' or order.status == 'Processing' or order.status == 'Shipped' %}
-                                <!-- Button to cancel order -->
+                            {% elif order.status in 'Pending Processing Shipped' %}
                                 <form id="cancel-order-form-{{ order.id }}" method="post" action="{% url 'order:cancel_order' order.id %}">
                                     {% csrf_token %}
-                                    <button type="button" class="bg-red-500 text-white py-1 px-2 rounded btn-cancel-order" data-order-id="{{ order.id }}">
+                                    <button type="button" class="bg-red-500 text-white py-1 px-3 rounded btn-cancel-order" 
+                                            data-order-id="{{ order.id }}">
                                         Cancel Order
                                     </button>
                                 </form>
                             {% elif order.status == 'Completed' %}
-                                <!-- Button to return order -->
-                                <form method="post" action="{% url 'order:return_order' order.id %}" id="returnOrderForm">
-                                    {% csrf_token %}
-                                    <button type="button" class="bg-blue-500 text-white py-1 px-2 rounded" id="returnOrderBtn">
-                                        Return Order
-                                    </button>
-                                </form>
-                                <!-- Button to download invoice -->
+                                {% if order.return_request_status == "None" %}
+                                    <form method="post" action="{% url 'order:return_order' order.id %}" class="space-y-2">
+                                        {% csrf_token %}
+                                        <textarea name="return_reason" placeholder="Enter reason for return" required class="border p-2 w-full"></textarea>
+                                        <button type="submit" class="bg-blue-500 text-white py-1 px-3 rounded w-full">
+                                            Request Return
+                                        </button>
+                                    </form>
+                                {% elif order.return_request_status == "Pending" %}
+                                    <p class="text-yellow-500 text-sm italic">Return request pending approval</p>
+                                {% elif order.return_request_status == "Approved" %}
+                                    <p class="text-green-500 text-sm italic">Return request approved</p>
+                                {% elif order.return_request_status == "Rejected" %}
+                                    <p class="text-red-500 text-sm italic">Return request rejected</p>
+                                {% endif %}
                                 <form method="get" action="{% url 'order:download_invoice' order.id %}">
-                                    <button type="submit" class="bg-green-500 text-white py-1 px-2 rounded mt-2">
+                                    <button type="submit" class="bg-green-500 text-white py-1 px-3 rounded w-full">
                                         Download Invoice
                                     </button>
                                 </form>
                             {% endif %}
                         </td>
+                        <td class="border px-4 py-2 text-center">
+                            <a href="{% url 'order:order_detail' order.id %}" class="bg-gray-500 text-white py-1 px-3 rounded">
+                                View Details
+                            </a>
+                        </td>
                     </tr>
                     {% empty %}
                     <tr>
-                        <td colspan="5" class="text-center py-4">No orders found.</td>
+                        <td colspan="6" class="text-center py-4">No orders found.</td>
                     </tr>
                     {% endfor %}
                 </tbody>                

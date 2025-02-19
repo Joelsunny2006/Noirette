@@ -8,6 +8,7 @@ class Category(models.Model):
     status = models.BooleanField(default=True)
     is_deleted = models.BooleanField(default=False)
 
+
     def save(self, *args, **kwargs):
         if not self.slug:
             self.slug = slugify(self.name)

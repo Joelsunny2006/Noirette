@@ -96,18 +96,29 @@ def product_list(request):
         "admin_side/products.html",
         {"page_obj": page_obj, "categories": categories, "brands": brands},
     )
+from django.utils.text import slugify
+from decimal import Decimal, InvalidOperation
+from django.http import JsonResponse
 
 def add_product(request):
     if request.method == "POST":
         try:
             # Basic validation
-            name = request.POST.get("product_name").title()
-
-            if Product.objects.filter(name=name).exists():
-                return JsonResponse({"success": False, "message": "A product with this name already exists."})
+            name = request.POST.get("product_name", "").strip().title()
 
             if not name:
                 return JsonResponse({"success": False, "message": "Product name is required"})
+
+            # Generate slug
+            slug = slugify(name)
+
+            # Check for duplicate name
+            if Product.objects.filter(name=name).exists():
+                return JsonResponse({"success": False, "message": "A product with this name already exists."})
+
+            # Check for duplicate slug
+            if Product.objects.filter(slug=slug).exists():
+                return JsonResponse({"success": False, "message": "A product with this slug already exists."})
 
             description = request.POST.get("product_description")
             category_id = request.POST.get("product_category")
@@ -129,6 +140,7 @@ def add_product(request):
             # Create product
             product = Product.objects.create(
                 name=name,
+                slug=slug,
                 description=description,
                 category=category,
                 brand=brand,
@@ -145,21 +157,21 @@ def add_product(request):
                 return JsonResponse({"success": False, "message": "At least one variant is required"})
 
             try:
-                for name, price, stock in zip(variant_names, variant_prices, variant_stocks):
-                    if not name or not price or not stock:
+                for v_name, price, stock in zip(variant_names, variant_prices, variant_stocks):
+                    if not v_name or not price or not stock:
                         raise ValueError("All variant fields are required")
-                        
+
                     price = Decimal(price)
                     stock = int(stock)
-                    
+
                     if price <= 0:
                         raise ValueError("Price must be greater than 0")
                     if stock < 0:
                         raise ValueError("Stock cannot be negative")
-                        
+
                     Variant.objects.create(
                         product=product,
-                        variant_name=name,
+                        variant_name=v_name,
                         variant_price=price,
                         variant_stock=stock
                     )
@@ -186,6 +198,7 @@ def add_product(request):
             return JsonResponse({"success": False, "message": f"An error occurred: {str(e)}"})
 
     return JsonResponse({"success": False, "message": "Invalid request method"})
+
 
 def update_product(request, product_id):
     categories = Category.objects.filter(status=True)
@@ -341,29 +354,61 @@ def delete_product(request, product_id):
 
 from django.views.decorators.http import require_POST
 @require_POST
-def remove_product_image(request, image_id):
+def update_product_image(request, image_id):
     try:
-        # Get the image object
         image = get_object_or_404(ProductImage, id=image_id)
         
-        # Delete the image file from storage
-        if image.image_url:
-            image.image_url.delete()
-        
-        # Delete the image record from database
-        image.delete()
-        
-        return JsonResponse({
-            'success': True,
-            'message': 'Image removed successfully'
-        })
+        if 'cropped_image' in request.FILES:
+            # Delete old image file
+            if image.image_url:
+                image.image_url.delete(save=False)  # Don't save yet
+            
+            # Save new cropped image
+            image.image_url = request.FILES['cropped_image']
+            image.save()
+            
+            return JsonResponse({
+                'success': True,
+                'message': 'Image updated successfully'
+            })
+        else:
+            return JsonResponse({
+                'success': False,
+                'message': 'No image file provided'
+            })
     except Exception as e:
         return JsonResponse({
             'success': False,
             'message': str(e)
         }, status=500)
+    
 
 
+
+from django.http import JsonResponse
+from django.views.decorators.http import require_POST
+from django.shortcuts import get_object_or_404
+from .models import ProductImage
+
+@require_POST
+def remove_product_image(request, image_id):
+    try:
+        image = get_object_or_404(ProductImage, id=image_id)
+        
+        # Delete the image file from storage
+        if image.image_url:
+            image.image_url.delete(save=False)  # Deletes the file but doesn't update DB
+        
+        # Delete the image record from the database
+        image.delete()
+        
+        return JsonResponse({'success': True, 'message': 'Image removed successfully'})
+    except Exception as e:
+        return JsonResponse({'success': False, 'message': str(e)}, status=500)
+
+
+    
+    
 @admin_required
 def brand_list(request):
     brands = Brand.objects.all().order_by('-id')  # Show latest brands first

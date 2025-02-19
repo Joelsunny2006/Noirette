@@ -671,170 +671,109 @@
 <script>
 
 
-// Add this script to your page
 document.addEventListener('DOMContentLoaded', function() {
     const variantSelect = document.getElementById('variant');
+    const priceTag = document.getElementById('price-tag');
     const stockDisplay = document.getElementById('stock-display');
     const addToCartButton = document.getElementById('add-to-cart-button');
-
-    function updateStockDisplay() {
-        if (variantSelect) {
-            const selectedOption = variantSelect.options[variantSelect.selectedIndex];
-            const stock = parseInt(selectedOption.getAttribute('data-stock'));
-            
-            if (stock === 0) {
-                stockDisplay.innerHTML = '<span class="text-danger">Out of Stock</span>';
-                addToCartButton.disabled = true;
-                addToCartButton.classList.add('btn-disabled');
-            } else {
-                stockDisplay.innerHTML = `In Stock: ${stock}`;
-                addToCartButton.disabled = false;
-                addToCartButton.classList.remove('btn-disabled');
-            }
-        }
-    }
-
-    // Update on page load
-    updateStockDisplay();
-
-    // Update when variant changes
-    if (variantSelect) {
-        variantSelect.addEventListener('change', updateStockDisplay);
-    }
-});
-
-    $(document).ready(function () {
-        // Intercept form submission for "Add to Cart"
-        $('#add-to-cart-form').on('submit', function (event) {
-            event.preventDefault(); // Prevent default form submission
-
-            // Collect form data
-            var formData = {
-                'variant_id': $('#variant').val(),
-                'quantity': $('#quantity').val(),
-                'csrfmiddlewaretoken': $('input[name="csrfmiddlewaretoken"]').val()
-            };
-
-            // Debugging: Log form data to console
-            console.log(formData);
-
-            // AJAX POST request to add the item to the cart
-            $.ajax({
-                url: "{% url 'add_to_cart' %}",
-                type: "POST",
-                data: formData,
-                success: function (response) {
-                    if (response.message) {
-                        // Show success message using SweetAlert
-                        Swal.fire({
-                            toast: true,
-                            position: 'top-right',
-                            icon: 'success',
-                            title: 'Item added to cart successfully!',
-                            showConfirmButton: false,
-                            timer: 3000
-                        });
-
-                        // Update cart total items dynamically
-                        $('#cart-total-items').text(response.cart_total_items);
-                    }
-                },
-            });
-        });
-
-        // Quantity increment/decrement handlers
-        $(".quantity-left-minus").click(function (e) {
-            e.preventDefault();
-            var value = parseInt($("#quantity").val(), 10);
-            if (value > 1) {
-                $("#quantity").val(value - 1);
-            }
-        });
-
-        $(".quantity-right-plus").click(function (e) {
-            e.preventDefault();
-            var value = parseInt($("#quantity").val(), 10);
-            var stock = parseInt("{{ product.stock|default:0 }}", 10); // Ensure stock is numeric
-            if (value < stock) {
-                $("#quantity").val(value + 1);
-            }
-        });
-
-        // Fancybox configuration for image gallery
-        Fancybox.bind("[data-fancybox]", {
-            closeButton: "inside",
-            infinite: false
-        });
-
-        // Lightbox configuration for image viewing
-        lightbox.option({
-            'resizeDuration': 200,
-            'wrapAround': true,
-            'fadeDuration': 200,
-            'imageFadeDuration': 200
-        });
-    });
-
-    document.addEventListener('DOMContentLoaded', function () {
-    const variantSelect = document.getElementById('variant');
-    const priceTag = document.getElementById('price-tag');
     const quantityInput = document.getElementById('quantity');
     const wishlistIcon = document.getElementById('wishlist-icon');
 
-    // Function to update variant-dependent details
     function updateVariantDetails() {
+        if (!variantSelect) return;
+        
         const selectedOption = variantSelect.options[variantSelect.selectedIndex];
-        const price = selectedOption.getAttribute('data-price');
-        const maxStock = selectedOption.getAttribute('data-stock');
-        const variantId = selectedOption.value; // Get selected variant ID
+        const originalPrice = selectedOption.getAttribute('data-price');
+        const discountedPrice = selectedOption.getAttribute('data-discounted-price');
+        const stock = parseInt(selectedOption.getAttribute('data-stock'));
+        const variantId = selectedOption.value;
 
         // Update price display
-        priceTag.textContent = `₹${parseFloat(price).toFixed(2)}`;
-
-        // Only update max stock if the quantity input exists
-        if (quantityInput) {
-            quantityInput.max = maxStock;
+        if (discountedPrice && discountedPrice !== originalPrice) {
+            priceTag.innerHTML = `
+                <span class="text-muted" style="text-decoration: line-through;">₹${originalPrice}</span>
+                <span class="text-success ms-2">₹${discountedPrice}</span>
+            `;
+        } else {
+            priceTag.innerHTML = `<span class="text-black">₹${originalPrice}</span>`;
         }
 
-        // Update wishlist icon with selected variant ID
-        wishlistIcon.setAttribute('data-variant-id', variantId);
+        // Update stock display
+        if (stock === 0) {
+            stockDisplay.innerHTML = '<span class="text-danger">Out of Stock</span>';
+            addToCartButton.disabled = true;
+            addToCartButton.classList.add('btn-disabled');
+        } else {
+            stockDisplay.innerHTML = `In Stock: ${stock}`;
+            addToCartButton.disabled = false;
+            addToCartButton.classList.remove('btn-disabled');
+        }
 
-        // Check if the selected variant is in the wishlist
+        // Update quantity input max if it exists
+        if (quantityInput) {
+            quantityInput.max = stock;
+        }
+
+        // Update wishlist icon
+        wishlistIcon.setAttribute('data-variant-id', variantId);
         checkWishlistStatus(variantId);
     }
 
-    // Function to check if the selected variant is in the wishlist
+    // Function to check wishlist status
     function checkWishlistStatus(variantId) {
         fetch(`/cart/wishlist/status/${variantId}/`, {
             method: 'GET',
             headers: {
-                'X-CSRFToken': '{{ csrf_token }}',
+                'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value,
             }
         })
         .then(response => response.json())
         .then(data => {
-            if (data.is_in_wishlist) {
-                wishlistIcon.classList.add('active');
-            } else {
-                wishlistIcon.classList.remove('active');
-            }
+            wishlistIcon.classList.toggle('active', data.is_in_wishlist);
         })
         .catch(error => console.error('Error checking wishlist status:', error));
     }
 
-    // Call update function when variant changes
-    variantSelect.addEventListener('change', updateVariantDetails);
+    // Add to cart form submission
+    $('#add-to-cart-form').on('submit', function(event) {
+        event.preventDefault();
+        
+        const formData = {
+            'variant_id': $('#variant').val(),
+            'quantity': $('#quantity').val(),
+            'csrfmiddlewaretoken': $('input[name="csrfmiddlewaretoken"]').val()
+        };
 
-    // Wishlist functionality
-    wishlistIcon.addEventListener('click', function () {
-        const variantId = wishlistIcon.getAttribute('data-variant-id');
-        const isActive = wishlistIcon.classList.contains('active');
+        $.ajax({
+            url: $(this).data('url'),
+            type: "POST",
+            data: formData,
+            success: function(response) {
+                if (response.message) {
+                    Swal.fire({
+                        toast: true,
+                        position: 'top-right',
+                        icon: 'success',
+                        title: 'Item added to cart successfully!',
+                        showConfirmButton: false,
+                        timer: 3000
+                    });
+                    $('#cart-total-items').text(response.cart_total_items);
+                }
+            }
+        });
+    });
+
+    // Wishlist click handler
+    wishlistIcon.addEventListener('click', function() {
+        const variantId = this.getAttribute('data-variant-id');
+        const isActive = this.classList.contains('active');
         const action = isActive ? 'remove' : 'add';
 
         fetch(`/cart/wishlist/${action}/${variantId}/`, {
             method: 'POST',
             headers: {
-                'X-CSRFToken': '{{ csrf_token }}',
+                'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value,
                 'Content-Type': 'application/json'
             }
         })
@@ -850,8 +789,7 @@ document.addEventListener('DOMContentLoaded', function() {
                     timer: 3000
                 });
             } else {
-                wishlistIcon.classList.toggle('active', action === 'add');
-
+                this.classList.toggle('active');
                 Swal.fire({
                     toast: true,
                     position: 'top-right',
@@ -874,11 +812,12 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     });
 
-    // Initialize with the default selected variant
-    updateVariantDetails();
+    // Initialize everything on page load
+    if (variantSelect) {
+        variantSelect.addEventListener('change', updateVariantDetails);
+        updateVariantDetails();
+    }
 });
-
-
 
 document.addEventListener('DOMContentLoaded', () => {
         const container = document.querySelector('.product-image-container');

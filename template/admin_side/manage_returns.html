@@ -1,0 +1,73 @@
+{% extends "admin_side/base.html" %}
+
+{% block title %}
+Noirette|Manage Order Returns
+{% endblock %}
+
+{% block content %}
+
+<div class="bg-white shadow-lg rounded-xl p-6">
+    <h2 class="text-2xl font-semibold text-gray-800 mb-4">Manage Order Returns</h2>
+
+    <div class="overflow-x-auto">
+        <table class="w-full border border-gray-200 rounded-lg overflow-hidden shadow-md">
+            <thead>
+                <tr class="bg-gray-900 text-white text-left">
+                    <th class="px-6 py-3">Order ID</th>
+                    <th class="px-6 py-3">User</th>
+                    <th class="px-6 py-3">Total Price</th>
+                    <th class="px-6 py-3">Return Reason</th>
+                    <th class="px-6 py-3">Actions</th>
+                </tr>
+            </thead>
+            <tbody class="bg-white divide-y divide-gray-200">
+                {% for order in pending_returns %}
+                <tr class="hover:bg-gray-100 transition">
+                    <td class="px-6 py-4 font-medium text-gray-700">#{{ order.id }}</td>
+                    <td class="px-6 py-4 text-gray-600">{{ order.user.username }}</td>
+                    <td class="px-6 py-4 text-green-600 font-semibold">₹{{ order.total_price }}</td>
+                    <td class="px-6 py-4 text-gray-500">{{ order.return_reason }}</td>
+                    <td class="px-6 py-4 flex gap-2">
+                        <form method="post" action="{% url 'order:approve_return' order.id %}">
+                            {% csrf_token %}
+                            <button type="submit" class="bg-green-500 hover:bg-green-600 text-white font-semibold py-2 px-4 rounded-lg shadow-md transition">
+                                Approve
+                            </button>
+                        </form>
+                        <form method="post" action="{% url 'order:reject_return' order.id %}">
+                            {% csrf_token %}
+                            <button type="submit" class="bg-red-500 hover:bg-red-600 text-white font-semibold py-2 px-4 rounded-lg shadow-md transition">
+                                Reject
+                            </button>
+                        </form>
+                    </td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="5" class="text-center text-gray-500 py-6">No pending return requests.</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+{% if messages %}
+    <script>
+        document.addEventListener("DOMContentLoaded", function() {
+            {% for message in messages %}
+                Swal.fire({
+                    toast: true,
+                    position: "top-end",
+                    icon: "{% if message.tags == 'success' %}success{% elif message.tags == 'error' %}error{% elif message.tags == 'warning' %}warning{% elif message.tags == 'info' %}info{% else %}question{% endif %}",
+                    title: "{{ message }}",
+                    showConfirmButton: false,
+                    timer: 3000,
+                    timerProgressBar: true
+                });
+            {% endfor %}
+        });
+    </script>
+{% endif %}
+
+{% endblock %}

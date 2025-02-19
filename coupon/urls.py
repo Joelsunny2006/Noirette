@@ -5,7 +5,7 @@ urlpatterns = [
     # Admin URLs
     path('admin/coupons/', views.coupon_list, name='coupon_list'),
     path('admin/coupons/create/', views.create_coupon, name='create_coupon'),
-    path('admin/coupons/edit/<int:coupon_id>/', views.edit_coupon, name='edit_coupon'),
+    path('edit-coupon/<int:coupon_id>/', views.edit_coupon, name='edit_coupon'),
     path('admin/coupons/delete/<int:coupon_id>/', views.delete_coupon, name='delete_coupon'),
     
     # Customer URLs

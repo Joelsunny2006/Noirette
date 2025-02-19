@@ -4,6 +4,7 @@
 {% block title %}Noirette|Order{% endblock %}
 
 {% block content %}
+<script src="https://cdn.tailwindcss.com"></script>
 <style>
     body {
         background-color: #f7f8fa;
@@ -85,9 +86,11 @@
                     </button>
                 </div>
             </div>
-            <button class="btn btn-outline-secondary">
-                <i class="fas fa-filter mr-1"></i> Filter
-            </button>
+            <td class="text-center">
+                <a href="{% url 'order:manage_returns' %}" class="bg-gray-500 text-white py-1 px-3 rounded">
+                    View Return Requests
+                </a>
+            </td>
         </div>
 
         <!-- Orders Table -->
@@ -99,7 +102,7 @@
                     <th>Date</th>
                     <th>Total</th>
                     <th>Status</th>
-                    <th>Actions</th>
+                    <th>Order Details</th>
                 </tr>
             </thead>
             <tbody id="orders-table-body">
@@ -113,25 +116,51 @@
                             <td>
                                 <!-- Dropdown for status -->
                                 <select class="form-control status-dropdown" data-order-id="{{ order.id }}">
-                                    <option value="Pending" {% if order.status == 'Pending' %}selected{% endif %}>Pending</option>
-                                    <option value="Processing" {% if order.status == 'Processing' %}selected{% endif %}>Processing</option>
-                                    <option value="Shipped" {% if order.status == 'Shipped' %}selected{% endif %}>Shipped</option>
-                                    <option value="Completed" {% if order.status == 'Completed' %}selected{% endif %}>Completed</option>
-                                    <option value="Cancelled" {% if order.status == 'Cancelled' %}selected{% endif %}>Cancelled</option>
+                                    <option value="Pending" {% if order.status == 'Pending' %}selected{% endif %}
+                                        {% if order.status != 'Pending' %}disabled{% endif %}>
+                                        Pending
+                                    </option>
+        
+                                    <option value="Processing" {% if order.status == 'Processing' %}selected{% endif %}
+                                        {% if order.status in 'Shipped,Completed,Cancelled,Returned' %}disabled{% endif %}>
+                                        Processing
+                                    </option>
+        
+                                    <option value="Shipped" {% if order.status == 'Shipped' %}selected{% endif %}
+                                        {% if order.status in 'Completed,Cancelled,Returned' %}disabled{% endif %}>
+                                        Shipped
+                                    </option>
+        
+                                    <option value="Completed" {% if order.status == 'Completed' %}selected{% endif %}
+                                        {% if order.status in 'Cancelled,Returned' %}disabled{% endif %}>
+                                        Completed
+                                    </option>
+        
+                                    <option value="Cancelled" {% if order.status == 'Cancelled' %}selected{% endif %}
+                                        {% if order.status in 'Returned' %}disabled{% endif %}>
+                                        Cancelled
+                                    </option>
+        
+                                    <option value="Returned" {% if order.status == 'Returned' %}selected{% endif %} disabled>
+                                        Returned
+                                    </option>
                                 </select>
                             </td>
-                            <td>
-                                <button class="btn btn-sm btn-danger" onclick="deleteOrder({{ order.id }})">Delete</button>
+                            <td class="text-center">
+                                <a href="{% url 'order:order_detail_admin' order.id %}" class="bg-gray-500 text-white py-1 px-3 rounded">
+                                    View Details
+                                </a>
                             </td>
                         </tr>
                     {% endfor %}
                 {% else %}
                     <tr>
-                        <td colspan="6" class="text-center">No orders found.</td>
+                        <td colspan="7" class="text-center py-4">No orders found.</td>
                     </tr>
                 {% endif %}
-            </tbody>            
+            </tbody>
         </table>
+        
         <!-- Pagination Controls -->
 <nav aria-label="Orders pagination">
     <ul class="pagination justify-content-center">
@@ -216,5 +245,4 @@ window.deleteOrder = function (orderId) {
 };
 
   </script>
-
 {% endblock %}

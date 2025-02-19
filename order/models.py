@@ -37,6 +37,13 @@ class Order(models.Model):
         ('wallet', 'Wallet'),
     ]
 
+    RETURN_REQUEST_CHOICES = [
+        ('Pending', 'Pending'),
+        ('Approved', 'Approved'),
+        ('Rejected', 'Rejected'),
+        ('None', 'None'),
+    ]
+
     user = models.ForeignKey(UserProfile, on_delete=models.CASCADE) 
     status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='Pending')
     total_price = models.DecimalField(max_digits=10, decimal_places=2, default=0.0)
@@ -45,6 +52,10 @@ class Order(models.Model):
     razorpay_order_id = models.CharField(max_length=100, blank=True, null=True)
     razorpay_payment_id = models.CharField(max_length=100, blank=True, null=True)
     razorpay_signature = models.CharField(max_length=255, blank=True, null=True)
+    return_request_status = models.CharField(
+        max_length=20, choices=RETURN_REQUEST_CHOICES, default='None'
+    )
+    return_reason = models.TextField(blank=True, null=True) 
 
     # New fields
     order_address = models.ForeignKey(

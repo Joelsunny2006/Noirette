@@ -13,6 +13,7 @@ urlpatterns = [
     path('delete_brand/<int:brand_id>/', views.delete_brand, name='delete_brand'),
     path('edit_brand/<int:brand_id>/', views.edit_brand, name='edit_brand'),
     path('remove-product-image/<int:image_id>/', views.remove_product_image, name='remove_product_image'),
+    path('update-product-image/<int:image_id>/', views.update_product_image, name='update_product_image'),
     path('delete-variant/<int:variant_id>/', views.delete_variant, name='delete_variant'),
     path('toggle_product/<int:product_id>/',views.toggle_product,name='toggle_product'),
     path('toggle_brand/<int:brand_id>/',views.toggle_brand,name='toggle_brand')

@@ -166,79 +166,47 @@ def login_view(request):
     return render(request, "user_side/login.html", {'form': form})
 
 
-@never_cache
+from django.db.models import Count
+
 def home(request):
     if not request.user.is_authenticated:
-        request.session.flush() 
-    # Get products that should be displayed on the homepage
-    products = Product.objects.filter(home_display=True, is_deleted=False)
+        request.session.flush()
 
-    # Get all product images
-    product_images = ProductImage.objects.filter(product__in=products).order_by('id')
+    # Fetch the best-selling product based on order count
+    best_selling_product = (
+        Product.objects.annotate(order_count=Count('variants__orderitem'))
+        .filter(is_deleted=False)
+        .order_by('-order_count')
+        .first()
+    )
 
-    # Prepare the image URL map
-    product_image_map = {
-        img.product.serial_number: img.image_url.url if img.image_url else '/media/default_image.jpg'
-        for img in product_images
-    }
+    # Fetch only the first 3 products
+    products = Product.objects.filter(is_deleted=False).order_by('serial_number')[:3]
 
-    # Prepare products with their first image URLs and variants
-    products_with_images = []
+    # Attach the first image URL to each product
     for product in products:
-        # Add the first image URL to each product
-        product.first_image_url = product_image_map.get(product.serial_number, '/media/default_image.jpg')
+        first_image = product.images.first()
+        product.first_image_url = first_image.image_url.url if first_image else '/media/default_image.jpg'
 
-        # Append the product to the list (variants will be accessed dynamically in the template)
-        products_with_images.append(product)
-
-    # Calculate cart count
-    cart_count = 0
-    if request.user.is_authenticated:
-        try:
-            cart = Cart.objects.filter(user=request.user).first()
-            if cart:
-                cart_count = cart.items.aggregate(total=models.Sum('quantity'))['total'] or 0
-        except Cart.DoesNotExist:
-            cart_count = 0
-
-    wishlist_count = 0
-    wallet_balance = 0
+    # Fetch cart, wishlist, and wallet data
+    cart_count = wishlist_count = wallet_balance = 0
 
     if request.user.is_authenticated:
-        # Get Wishlist Count
-        try:
-            wishlist = Wishlist.objects.filter(user=request.user).first()
-            if wishlist:
-                wishlist_count = wishlist.items.count()
-        except Wishlist.DoesNotExist:
-            wishlist_count = 0
+        cart_count = Cart.objects.filter(user=request.user).first()
+        wishlist_count = Wishlist.objects.filter(user=request.user).first()
+        wallet_balance = Wallet.objects.filter(user=request.user).first()
 
-        # Get Wallet Balance
-        try:
-            wallet = Wallet.objects.filter(user=request.user).first()
-            if wallet:
-                wallet_balance = wallet.balance
-        except Wallet.DoesNotExist:
-            wallet_balance = 0
+        cart_count = cart_count.items.aggregate(total=Count('quantity'))['total'] if cart_count else 0
+        wishlist_count = wishlist_count.items.count() if wishlist_count else 0
+        wallet_balance = wallet_balance.balance if wallet_balance else 0
 
-    # Fetch the first available product as the best-selling product
-    best_selling_product = Product.objects.filter(is_deleted=False).prefetch_related('variants').first()
-    if best_selling_product:
-        # Add the first image URL to the best-selling product
-        best_selling_product.first_image_url = product_image_map.get(
-            best_selling_product.serial_number, '/media/default_image.jpg'
-        )
-
-    # Render the home page with the products and their data
     return render(request, 'user_side/home.html', {
-        "products": products_with_images,
-        "cart_count": cart_count,
+        "products": products,  # Only first 3 products
         "best_selling_product": best_selling_product,
-        'wishlist_count': wishlist_count,
-        'wallet_balance': wallet_balance
+        "cart_count": cart_count,
+        "wishlist_count": wishlist_count,
+        "wallet_balance": wallet_balance,
     })
-
-
 
 from django.db.models import F, ExpressionWrapper, FloatField, Subquery, OuterRef, Q
 from django.core.paginator import Paginator
@@ -254,12 +222,18 @@ def shop(request):
         ).order_by('calculated_discount_price').values('calculated_discount_price')[:1]
     )
 
-    # Add the annotation to the Product queryset
-    products = Product.objects.filter(is_deleted=False).prefetch_related('variants').annotate(
+    # Fetch active categories and brands
+    categories = Category.objects.filter(status=True, is_deleted=False)  
+    brands = Brand.objects.filter(status='active')
+
+    # Filter products ensuring they belong to active categories and brands
+    products = Product.objects.filter(
+        is_deleted=False, 
+        category__status=True, category__is_deleted=False,  # Ensure category is active and not deleted
+        brand__status="active"  # Ensure brand is active
+    ).prefetch_related('variants').annotate(
         min_discount_price=min_discount_price
     ).distinct()
-    categories = Category.objects.filter(status=True, is_deleted=False)  # Ensure only active, non-deleted categories are displayed
-    brands = Brand.objects.filter(status='active')
 
     # Get all filter parameters
     search_query = request.GET.get('q', '')
@@ -276,14 +250,13 @@ def shop(request):
             Q(category__name__icontains=search_query)
         )
 
-    # In your view, try this simpler version first:
+    # Filter by selected brands (ensure they are active)
     if selected_brands:
-        # Use name instead of slug for now
-        products = products.filter(brand__name__in=selected_brands)
+        products = products.filter(brand__name__in=selected_brands, brand__status="active")
 
-    # And for categories:
+    # Filter by selected categories (ensure they are active and not deleted)
     if selected_categories:
-        products = products.filter(category__slug__in=selected_categories)
+        products = products.filter(category__slug__in=selected_categories, category__status=True, category__is_deleted=False)
 
     # Get price filter parameters with proper defaults
     try:

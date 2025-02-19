@@ -84,6 +84,7 @@ def coupon_list(request):
     return render(request, 'admin_side/coupon.html', context)
 
 @require_http_methods(["POST"])
+@admin_required
 def create_coupon(request):
     try:
         form = CouponForm(request.POST)
@@ -108,20 +109,23 @@ def create_coupon(request):
             'message': 'An unexpected error occurred. Please try again.'
         }, status=500)
 
-
+@admin_required
 def edit_coupon(request, coupon_id):
     coupon = get_object_or_404(Coupon, id=coupon_id)
+    
     if request.method == 'POST':
         form = CouponForm(request.POST, instance=coupon)
         if form.is_valid():
             form.save()
-            messages.success(request, 'Coupon updated successfully.')
-            return redirect('coupon_list')
+            return JsonResponse({'status': 'success'})
+        else:
+            return JsonResponse({'status': 'error', 'errors': form.errors}, status=400)
     else:
         form = CouponForm(instance=coupon)
+
     return render(request, 'admin_side/coupon.html', {'form': form})
 
-
+@admin_required
 def delete_coupon(request, coupon_id):
     coupon = get_object_or_404(Coupon, id=coupon_id)
     coupon.delete()

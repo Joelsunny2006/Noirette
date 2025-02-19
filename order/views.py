@@ -17,12 +17,14 @@ from django.conf import settings
 from django.views.decorators.csrf import csrf_exempt
 import razorpay
 from wallet.models import *
+from product.models import *
 from django.http import HttpResponseNotAllowed
 from django.http import HttpResponse 
 from django.contrib.messages import get_messages
 from django.utils.safestring import mark_safe
 from django.views.decorators.cache import cache_control
 from django.urls import reverse
+from django.contrib.admin.views.decorators import staff_member_required
             # Handle different payment methods
 import logging
 import razorpay
@@ -31,6 +33,15 @@ from django.shortcuts import render
 from django.urls import reverse
 from admin_panel.decorator import admin_required 
 from django.core.paginator import Paginator
+
+
+import os
+from io import BytesIO
+from decimal import Decimal
+from django.shortcuts import get_object_or_404
+from django.http import HttpResponse
+from django.contrib.auth.decorators import login_required
+from weasyprint import HTML, CSS
 
 @require_http_methods(["GET"])
 @admin_required
@@ -361,6 +372,9 @@ def place_order(request):
     return redirect("checkout")
 
 
+
+
+
 import logging
 
 logger = logging.getLogger(__name__)  # Add this at the top
@@ -530,35 +544,75 @@ def cancel_order(request, order_id):
 def return_order(request, order_id):
     order = get_object_or_404(Order, id=order_id, user=request.user)
 
+    # Allow return request only if it's 'Completed' and hasn't been requested already
     if order.status == "Completed":
-        try:
-            # Restore stock for each item in the order
-            for item in order.items.all():
-                item.variant.variant_stock += item.quantity
-                item.variant.save()
+        if order.return_request_status == "None":
+            if request.method == "POST":
+                return_reason = request.POST.get("return_reason", "")
+                order.return_request_status = "Pending"
+                order.return_reason = return_reason
+                order.save()
+                messages.success(request, "Your return request has been submitted for approval.")
+            else:
+                messages.error(request, "Invalid request.")
 
-            # Process wallet refund
-            wallet, created = Wallet.objects.get_or_create(user=request.user)
-            wallet.balance += Decimal(str(order.total_price))  
-            wallet.save()
-            WalletTransaction.objects.create(
-                wallet=wallet,
-                amount=order.total_price,
-                transaction_type="credit",
-                description=f"Refund for Returned Order #{order_id}",
-            )
+        elif order.return_request_status == "Rejected":
+            messages.error(request, "Your return request has been rejected. You cannot request a return again.")
 
-            # Update order status
-            order.status = "Returned"
-            order.save()
+        else:
+            messages.error(request, "This order cannot be returned at this stage.")
 
-            messages.success(request, f"Order #{order_id} has been returned. Refund of ₹{order.total_price} has been added to your wallet.")
-        except Exception as e:
-            messages.error(request, f"Error processing return: {str(e)}")
     else:
         messages.error(request, "This order cannot be returned.")
 
     return redirect("user_profile")
+
+
+@staff_member_required
+def manage_returns(request):
+    pending_returns = Order.objects.filter(return_request_status="Pending")
+    return render(request, "admin_side/manage_returns.html", {"pending_returns": pending_returns})
+
+
+@staff_member_required
+def approve_return(request, order_id):
+    order = get_object_or_404(Order, id=order_id)
+
+    if order.return_request_status == "Pending":
+        # Restore stock
+        for item in order.items.all():
+            item.variant.variant_stock += item.quantity
+            item.variant.save()
+
+        # Refund to wallet
+        wallet, _ = Wallet.objects.get_or_create(user=order.user)
+        wallet.balance += Decimal(str(order.total_price))
+        wallet.save()
+        WalletTransaction.objects.create(
+            wallet=wallet,
+            amount=order.total_price,
+            transaction_type="credit",
+            description=f"Refund for Order #{order_id} return",
+        )
+
+        # Update order status
+        order.status = "Returned"
+        order.return_request_status = "Approved"
+        order.save()
+
+        messages.success(request, f"Return request for Order #{order_id} approved.")
+    return redirect("order:manage_returns")
+
+@staff_member_required
+def reject_return(request, order_id):
+    order = get_object_or_404(Order, id=order_id)
+
+    if order.return_request_status == "Pending":
+        order.return_request_status = "Rejected"
+        order.save()
+        messages.error(request, f"Return request for Order #{order_id} rejected.")
+    return redirect("order:manage_returns")
+
 
 
 @login_required
@@ -613,16 +667,6 @@ def continue_payment(request, order_id):
         messages.error(request, f"An unexpected error occurred: {e}")
         return redirect("user_profile")
     
-
-import os
-from io import BytesIO
-from decimal import Decimal
-from django.shortcuts import get_object_or_404
-from django.http import HttpResponse
-from django.contrib.auth.decorators import login_required
-from weasyprint import HTML, CSS
-
-
 @login_required
 def download_invoice(request, order_id):
     try:
@@ -723,3 +767,39 @@ def download_invoice(request, order_id):
 
     except Exception as e:
         return HttpResponse(f'Error generating PDF: {str(e)}', status=500)
+
+
+def order_detail(request, order_id):
+    order = get_object_or_404(Order, id=order_id, user=request.user)
+
+    # Fetch images for each variant
+    order_items = []
+    for item in order.items.all():
+        first_image = ProductImage.objects.filter(product=item.variant.product).first()
+        order_items.append({
+            'item': item,
+            'image_url': first_image.image_url.url if first_image else None
+        })
+
+    return render(request, 'user_side/order_detail.html', {'order': order, 'order_items': order_items})
+
+
+def order_detail_admin(request, order_id):
+    order = get_object_or_404(Order, id=order_id)
+    
+    # Fetch images for each variant
+    order_items = []
+    for item in order.items.all():
+        first_image = ProductImage.objects.filter(product=item.variant.product).first()
+        order_items.append({
+            'item': item,
+            'image_url': first_image.image_url.url if first_image else None
+        })
+
+    context = {
+        'order': order,
+        'order_items': order_items,
+        'admin_view': True  # Add this to differentiate admin view
+    }
+    
+    return render(request, 'admin_side/order_detail.html', context)

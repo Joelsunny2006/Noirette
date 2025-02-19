@@ -5,6 +5,7 @@ Noirette|edit-product
 {% endblock %}
 
 {% block content %}
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.12/cropper.min.css">
     <style>
         body {
             background-color: #f8f9fa;
@@ -55,7 +56,19 @@ Noirette|edit-product
             border-color: #007bff;
         }
 
-        
+        .preview-image {
+        cursor: pointer;
+        transition: transform 0.2s;
+    }
+    
+    .preview-image:hover {
+        transform: scale(1.05);
+    }
+    
+    .img-container {
+        max-height: 70vh;
+        overflow: hidden;
+    }
     </style>
 </head>
 <body>
@@ -105,23 +118,7 @@ Noirette|edit-product
     <input type="number" step="0.01" min="0" max="100" class="form-control" id="product-offer-percentage" name="offer_price_percentage" value="{{ product.offer_percentage }}">
     <small class="text-muted">Enter a percentage (e.g., 10 for 10% off). Applied to all variants.</small>
   </div>
-  
-        
-            <!-- Price and Stock -->
-            <!-- <div class="row">
-                <div class="col-md-6">
-                    <div class="mb-3">
-                        <label for="product-price" min="0" max="1000" class="form-label">Price <span class="text-danger">*</span></label>
-                        <div class="input-group">
-                            <span class="input-group-text">$</span>
-                            <input type="number" step="0.01" min="0" max="1000" name="price" id="product-price" class="form-control" required value="{{ product.price }}">
-                        </div>
-                    </div>
-                </div>
-                
-            </div> -->
-        
-            <!-- Description -->
+              <!-- Description -->
             <div class="mb-3">
                 <label for="product-description" class="form-label">Description <span class="text-danger">*</span></label>
                 <textarea name="description" class="form-control" id="product-description" rows="3" required>{{ product.description }}</textarea>
@@ -139,11 +136,34 @@ Noirette|edit-product
                     {% for image in product.images.all %}
                         <div class="image-wrapper">
                             <img src="{{ image.image_url.url }}" alt="Product Image" class="image-preview">
-                            <button type="button" class="btn btn-sm btn-danger remove-image" data-image-id="{{ image.serial_number }}">×</button>
+                            <button type="button" class="btn btn-sm btn-danger remove-image" 
+                                data-image-id="{{ image.id }}">
+                                ×
+                            </button>
                         </div>
                     {% endfor %}
                 </div>
+                
                 <small class="form-text text-muted">You can upload multiple images (max 5 images, each max 5MB).</small>
+            </div>
+            <div class="modal fade" id="cropModal" tabindex="-1" aria-labelledby="cropModalLabel" aria-hidden="true">
+                <div class="modal-dialog modal-lg">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <h5 class="modal-title" id="cropModalLabel">Crop Image</h5>
+                            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                        </div>
+                        <div class="modal-body">
+                            <div class="img-container">
+                                <img id="imageToCrop" src="" alt="Image to crop" style="max-width: 100%; max-height: 70vh;">
+                            </div>
+                        </div>
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                            <button type="button" class="btn btn-primary" id="cropButton">Crop</button>
+                        </div>
+                    </div>
+                </div>
             </div>
         
 <!-- Variants (Optional) -->
@@ -180,92 +200,539 @@ Noirette|edit-product
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.bundle.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.12/cropper.min.js"></script>
+   
+
     <script>
-        function setupImageUpload() {
-            const dragDropZone = document.getElementById('drag-drop-zone');
-            const imageInput = document.getElementById('product-images');
-            const previewContainer = document.getElementById('image-preview');
+function setupImageUpload() {
+    const dragDropZone = document.getElementById('drag-drop-zone');
+    const imageInput = document.getElementById('product-images');
+    const previewContainer = document.getElementById('image-preview');
+    const cropModal = new bootstrap.Modal(document.getElementById('cropModal'));
+    const imageToCrop = document.getElementById('imageToCrop');
+    const cropButton = document.getElementById('cropButton');
+    let cropper;
+    let currentImageWrapper;
+    let currentFile;
+    let isExistingImage = false;
 
-            dragDropZone.addEventListener('click', () => imageInput.click());
+    // Create hidden form input for cropped images
+    const croppedImagesInput = document.createElement('input');
+    croppedImagesInput.type = 'file';
+    croppedImagesInput.name = 'product_images';
+    croppedImagesInput.multiple = true;
+    croppedImagesInput.style.display = 'none';
+    dragDropZone.parentElement.appendChild(croppedImagesInput);
 
-            dragDropZone.addEventListener('dragover', (e) => {
-                e.preventDefault();
-                dragDropZone.classList.add('dragover');
+    // Store cropped files
+    let croppedFiles = new DataTransfer();
+
+    dragDropZone.addEventListener('click', () => imageInput.click());
+
+    dragDropZone.addEventListener('dragover', (e) => {
+        e.preventDefault();
+        dragDropZone.classList.add('dragover');
+    });
+
+    dragDropZone.addEventListener('dragleave', () => {
+        dragDropZone.classList.remove('dragover');
+    });
+
+    dragDropZone.addEventListener('drop', (e) => {
+        e.preventDefault();
+        dragDropZone.classList.remove('dragover');
+        const files = e.dataTransfer.files;
+        handleFiles(files);
+    });
+
+    function createImagePreview(file, existingImageUrl = null, imageId = null) {
+        const reader = new FileReader();
+        reader.onload = function(e) {
+            const wrapper = document.createElement('div');
+            wrapper.className = 'image-wrapper position-relative';
+            
+            const img = document.createElement('img');
+            img.src = existingImageUrl || e.target.result;
+            img.className = 'image-preview';
+            img.style.maxWidth = '150px';
+            img.style.maxHeight = '150px';
+            img.style.cursor = 'pointer';
+            
+            img.addEventListener('click', function() {
+                imageToCrop.src = this.src;
+                currentImageWrapper = wrapper;
+                currentFile = file;
+                isExistingImage = !!imageId;
+                cropModal.show();
             });
+            
+            const removeBtn = document.createElement('button');
+            removeBtn.className = 'btn btn-sm btn-danger position-absolute top-0 end-0 remove-image';
+            removeBtn.innerHTML = '×';
+            if (imageId) {
+                removeBtn.dataset.imageId = imageId;
+            }
+            
+            wrapper.appendChild(img);
+            wrapper.appendChild(removeBtn);
+            previewContainer.appendChild(wrapper);
+        };
+        
+        if (existingImageUrl) {
+            reader.onload();
+        } else {
+            reader.readAsDataURL(file);
+        }
+    }
 
-            dragDropZone.addEventListener('dragleave', () => {
-                dragDropZone.classList.remove('dragover');
+    function handleFiles(files) {
+        const currentImages = previewContainer.querySelectorAll('.image-wrapper').length;
+        if (currentImages + files.length > 5) {
+            Toast.fire({
+                icon: 'error',
+                title: 'You can only upload up to 5 images'
             });
+            return;
+        }
 
-            dragDropZone.addEventListener('drop', (e) => {
-                e.preventDefault();
-                dragDropZone.classList.remove('dragover');
-                handleFiles(e.dataTransfer.files);
-            });
-
-            imageInput.addEventListener('change', (e) => {
-                handleFiles(e.target.files);
-            });
-
-            function handleFiles(files) {
-                if (files.length > 5) {
-                    alert('You can only upload up to 5 images');
-                    return;
-                }
-
-                Array.from(files).forEach(file => {
-                    if (file.size > 5 * 1024 * 1024) {
-                        alert(`File ${file.name} is too large. Maximum size is 5MB`);
-                        return;
-                    }
-
-                    const reader = new FileReader();
-                    reader.onload = (e) => {
-                        const wrapper = document.createElement('div');
-                        wrapper.className = 'image-wrapper';
-                        
-                        const img = document.createElement('img');
-                        img.src = e.target.result;
-                        img.className = 'image-preview';
-                        
-                        const removeBtn = document.createElement('div');
-                        removeBtn.className = 'remove-image';
-                        removeBtn.innerHTML = '×';
-                        removeBtn.onclick = () => wrapper.remove();
-                        
-                        wrapper.appendChild(img);
-                        wrapper.appendChild(removeBtn);
-                        previewContainer.appendChild(wrapper);
-                    };
-                    reader.readAsDataURL(file);
+        Array.from(files).forEach(file => {
+            if (file.size > 5 * 1024 * 1024) {
+                Toast.fire({
+                    icon: 'error',
+                    title: `File ${file.name} is too large. Maximum size is 5MB`
                 });
+                return;
+            }
+            createImagePreview(file);
+        });
+    }
+
+    imageInput.addEventListener('change', function(event) {
+        handleFiles(event.target.files);
+        // Clear the input to allow selecting the same file again
+        this.value = '';
+    });
+
+    document.getElementById('cropModal').addEventListener('shown.bs.modal', function() {
+        cropper = new Cropper(imageToCrop, {
+            aspectRatio: NaN,
+            viewMode: 1,
+            dragMode: 'move',
+            guides: true,
+            background: false,
+        });
+    });
+
+    document.getElementById('cropModal').addEventListener('hidden.bs.modal', function() {
+        if (cropper) {
+            cropper.destroy();
+            cropper = null;
+        }
+    });
+
+    cropButton.addEventListener('click', function() {
+        if (!cropper) return;
+        
+        const canvas = cropper.getCroppedCanvas({
+            maxWidth: 4096,
+            maxHeight: 4096,
+            imageSmoothingEnabled: true,
+            imageSmoothingQuality: 'high',
+        });
+        
+        if (canvas) {
+            canvas.toBlob(function(blob) {
+                const croppedImageUrl = canvas.toDataURL('image/jpeg');
+                const previewImage = currentImageWrapper.querySelector('.image-preview');
+                previewImage.src = croppedImageUrl;
+                
+                if (isExistingImage) {
+                    const imageId = currentImageWrapper.querySelector('.remove-image').dataset.imageId;
+                    const formData = new FormData();
+                    formData.append('cropped_image', blob);
+                    
+                    fetch(`/product/update-product-image/${imageId}/`, {
+                        method: 'POST',
+                        headers: {
+                            'X-CSRFToken': getCookie('csrftoken'),
+                        },
+                        body: formData
+                    }).then(response => response.json())
+                    .then(data => {
+                        if (data.success) {
+                            Toast.fire({
+                                icon: 'success',
+                                title: 'Image updated successfully'
+                            });
+                        } else {
+                            Toast.fire({
+                                icon: 'error',
+                                title: data.message || 'Failed to update image'
+                            });
+                        }
+                    });
+                } else {
+                    // Handle new image cropping
+                    const fileName = currentFile.name;
+                    const croppedFile = new File([blob], fileName, { type: 'image/jpeg' });
+                    
+                    // Update the DataTransfer object
+                    croppedFiles = new DataTransfer();
+                    croppedFiles.items.add(croppedFile);
+                    croppedImagesInput.files = croppedFiles.files;
+                }
+                
+                cropModal.hide();
+            }, 'image/jpeg', 0.9);
+        }
+    })
+
+
+    // Initialize existing images for cropping
+    document.querySelectorAll('#image-preview .image-wrapper').forEach(wrapper => {
+        const img = wrapper.querySelector('img');
+        img.addEventListener('click', function() {
+            imageToCrop.src = this.src;
+            currentImageWrapper = wrapper;
+            isExistingImage = true;
+            cropModal.show();
+        });
+    });
+}
+    
+        // Add required CSS
+        const style = document.createElement('style');
+        style.textContent = `
+            .image-wrapper {
+                display: inline-block;
+                position: relative;
+                margin: 10px;
+            }
+            
+            .image-preview {
+                max-width: 150px;
+                max-height: 150px;
+                object-fit: contain;
+                cursor: pointer;
+                transition: transform 0.2s;
+            }
+            
+            .image-preview:hover {
+                transform: scale(1.05);
+            }
+            
+            .remove-image {
+                position: absolute;
+                top: -10px;
+                right: -10px;
+                background-color: #dc3545;
+                color: white;
+                border-radius: 50%;
+                width: 24px;
+                height: 24px;
+                text-align: center;
+                line-height: 24px;
+                cursor: pointer;
+            }
+            
+            .drag-drop-zone {
+                border: 2px dashed #ccc;
+                padding: 20px;
+                text-align: center;
+                cursor: pointer;
+                transition: border-color 0.3s;
+            }
+            
+            .drag-drop-zone.dragover {
+                border-color: #2196F3;
+                background-color: rgba(33, 150, 243, 0.1);
+            }
+        `;
+        document.head.appendChild(style);
+    
+        // Initialize everything when the DOM is loaded
+        document.addEventListener('DOMContentLoaded', function() {
+            setupImageUpload();
+        });
+    
+        // Variant counter for new variants
+        let variantCounter = document.querySelectorAll('.variant-row').length;
+    
+        document.getElementById('add-variant-button').addEventListener('click', function() {
+            const variantsContainer = document.getElementById('variants-container');
+            variantCounter++;
+            
+            const newVariantRow = document.createElement('div');
+            newVariantRow.classList.add('row', 'variant-row', 'mb-2');
+            
+            newVariantRow.innerHTML = `
+                <div class="col-md-3">
+                    <input type="text" name="variant_name_${variantCounter}" class="form-control" placeholder="Variant Name" required>
+                </div>
+                <div class="col-md-3">
+                    <input type="number" name="variant_price_${variantCounter}" class="form-control" placeholder="Price" step="0.01" min="0" required>
+                </div>
+                <div class="col-md-3">
+                    <input type="number" name="variant_stock_${variantCounter}" class="form-control" placeholder="Stock" min="0" required>
+                </div>
+                <div class="col-md-3 d-flex align-items-center">
+                    <button type="button" class="btn btn-danger btn-sm remove-variant">Remove</button>
+                </div>
+            `;
+            
+            variantsContainer.appendChild(newVariantRow);
+        });
+    
+        // Handle variant removal
+        document.addEventListener('click', function(e) {
+            if (e.target.classList.contains('remove-variant')) {
+                const variantRow = e.target.closest('.variant-row');
+                const variantId = e.target.getAttribute('data-variant-id'); // Changed to get attribute directly from button
+    
+                if (variantId) {
+                    // Existing variant - send delete request
+                    if (confirm('Are you sure you want to delete this variant?')) {
+                        fetch(`/product/delete-variant/${variantId}/`, {
+                            method: 'DELETE',
+                            headers: {
+                                'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value,
+                                'Content-Type': 'application/json'
+                            }
+                        })
+                        .then(response => {
+                            if (!response.ok) {
+                                throw new Error('Network response was not ok');
+                            }
+                            return response.json();
+                        })
+                        .then(data => {
+                            if (data.success) {
+                                variantRow.remove();
+                                // Optional: Show success message
+                                alert('Variant deleted successfully');
+                            } else {
+                                alert('Error: ' + data.message);
+                            }
+                        })
+                        .catch(error => {
+                            console.error('Error:', error);
+                            alert('Failed to delete variant: ' + error.message);
+                        });
+                    }
+                } else {
+                    // New variant - just remove from DOM
+                    variantRow.remove();
+                }
+            }
+        });
+    
+        // Import SweetAlert2
+        const Toast = Swal.mixin({
+            toast: true,
+            position: 'top-end',
+            showConfirmButton: false,
+            timer: 3000,
+            timerProgressBar: true
+        });
+    
+        // Form validation function
+        function validateProductForm(formId) {
+            const form = document.getElementById(formId);
+            const requiredFields = {
+                'product-name': 'Product name is required',
+                'product-category': 'Please select a category',
+                'product-brand': 'Please select a brand',
+                'product-description': 'Product description is required'
+            };
+    
+            // Validate required fields
+            for (const [fieldId, message] of Object.entries(requiredFields)) {
+                const field = document.getElementById(fieldId);
+                if (!field.value.trim()) {
+                    Toast.fire({
+                        icon: 'error',
+                        title: message
+                    });
+                    field.focus();
+                    return false;
+                }
+            }
+    
+            // Validate offer percentage
+            const offerPercentage = document.getElementById('product-offer-percentage');
+            if (offerPercentage.value && (parseFloat(offerPercentage.value) < 0 || parseFloat(offerPercentage.value) > 100)) {
+                Toast.fire({
+                    icon: 'error',
+                    title: 'Offer percentage must be between 0 and 100'
+                });
+                offerPercentage.focus();
+                return false;
+            }
+    
+            // Validate variants
+            const variantNames = document.getElementsByName('variant_name[]');
+            const variantPrices = document.getElementsByName('variant_price[]');
+            const variantStocks = document.getElementsByName('variant_stock[]');
+    
+            for (let i = 0; i < variantNames.length; i++) {
+                if (!variantNames[i].value.trim()) {
+                    Toast.fire({
+                        icon: 'error',
+                        title: 'Variant name is required'
+                    });
+                    variantNames[i].focus();
+                    return false;
+                }
+                if (!variantPrices[i].value || parseFloat(variantPrices[i].value) <= 0) {
+                    Toast.fire({
+                        icon: 'error',
+                        title: 'Valid variant price is required'
+                    });
+                    variantPrices[i].focus();
+                    return false;
+                }
+                if (!variantStocks[i].value || parseInt(variantStocks[i].value) < 0) {
+                    Toast.fire({
+                        icon: 'error',
+                        title: 'Valid variant stock is required'
+                    });
+                    variantStocks[i].focus();
+                    return false;
+                }
+            }
+    
+            // Validate images
+            const images = document.getElementById('product-images').files;
+            const existingImages = document.querySelectorAll('.image-preview').length;
+            
+            if (formId === 'add-product-form' && images.length === 0) {
+                Toast.fire({
+                    icon: 'error',
+                    title: 'At least one product image is required'
+                });
+                return false;
+            }
+    
+            if (images.length + existingImages > 5) {
+                Toast.fire({
+                    icon: 'error',
+                    title: 'Maximum 5 images allowed'
+                });
+                return false;
+            }
+    
+            return true;
+        }
+    
+        // Success message function
+        function showSuccess(message) {
+            Toast.fire({
+                icon: 'success',
+                title: message
+            });
+        }
+    
+        // Error message function
+        function showError(message) {
+            Toast.fire({
+                icon: 'error',
+                title: message
+            });
+        }
+    
+        // Handle form submission
+        document.addEventListener('DOMContentLoaded', () => {
+            ['add-product-form', 'edit-product-form'].forEach(formId => {
+                const form = document.getElementById(formId);
+                if (form) {
+                    form.addEventListener('submit', async (e) => {
+                        e.preventDefault();
+                        
+                        if (!validateProductForm(formId)) {
+                            return;
+                        }
+    
+                        try {
+                            const formData = new FormData(form);
+                            const response = await fetch(form.action, {
+                                method: 'POST',
+                                body: formData,
+                                headers: {
+                                    'X-CSRFToken': getCookie('csrftoken')
+                                }
+                            });
+    
+                            const result = await response.json();
+    
+                            if (result.success) {
+                                showSuccess(result.message);
+                                setTimeout(() => {
+                                    window.location.href = '/product/products/';  // Adjust URL as needed
+                                }, 1500);
+                            } else {
+                                showError(result.message);
+                            }
+                        } catch (error) {
+                            showError('An error occurred. Please try again.');
+                        }
+                    });
+                }
+            });
+        });
+
+
+        document.addEventListener("DOMContentLoaded", function () {
+    const previewContainer = document.getElementById("image-preview");
+
+    previewContainer.addEventListener("click", (e) => {
+        if (e.target.classList.contains("remove-image")) {
+            const imageId = e.target.getAttribute("data-image-id"); // Fetch image ID properly
+            const wrapper = e.target.closest(".image-wrapper");
+
+            console.log("Clicked Image ID:", imageId); // Debugging log
+
+            if (!imageId) {
+                console.error("Error: Image ID not found");
+                return;
             }
 
-            // Handle existing image removal
-            previewContainer.addEventListener('click', (e) => {
-                if (e.target.classList.contains('remove-image')) {
-                    const imageId = e.target.dataset.imageId;
-                    if (imageId) {
-                        // Send AJAX request to remove the image
-                        fetch(`/product/remove-product-image/${imageId}/`, {
-                            method: 'POST',
-                            headers: {
-                                'X-CSRFToken': getCookie('csrftoken'),
-                            },
-                        }).then(response => {
-                            if (response.ok) {
-                                e.target.closest('.image-wrapper').remove();
+            // Show confirmation dialog
+            Swal.fire({
+                title: "Are you sure?",
+                text: "This image will be permanently deleted!",
+                icon: "warning",
+                showCancelButton: true,
+                confirmButtonColor: "#d33",
+                cancelButtonColor: "#3085d6",
+                confirmButtonText: "Yes, delete it!",
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    fetch(`/product/remove-product-image/${imageId}/`, {
+                        method: "POST",
+                        headers: {
+                            "X-CSRFToken": getCookie("csrftoken"),
+                        },
+                    })
+                        .then((response) => response.json())
+                        .then((data) => {
+                            if (data.success) {
+                                wrapper.remove();
+                                Swal.fire("Deleted!", "Image has been removed.", "success");
                             } else {
-                                alert('Failed to remove image. Please try again.');
+                                Swal.fire("Error!", data.message || "Failed to remove image.", "error");
                             }
+                        })
+                        .catch(() => {
+                            Swal.fire("Error!", "Something went wrong.", "error");
                         });
-                    } else {
-                        e.target.closest('.image-wrapper').remove();
-                    }
                 }
             });
         }
+    });
+});
 
+
+    
         function getCookie(name) {
             let cookieValue = null;
             if (document.cookie && document.cookie !== '') {
@@ -280,240 +747,7 @@ Noirette|edit-product
             }
             return cookieValue;
         }
-
-
-        // Variant counter for new variants
-let variantCounter = document.querySelectorAll('.variant-row').length;
-
-document.getElementById('add-variant-button').addEventListener('click', function() {
-    const variantsContainer = document.getElementById('variants-container');
-    variantCounter++;
-    
-    const newVariantRow = document.createElement('div');
-    newVariantRow.classList.add('row', 'variant-row', 'mb-2');
-    
-    newVariantRow.innerHTML = `
-        <div class="col-md-3">
-            <input type="text" name="variant_name_${variantCounter}" class="form-control" placeholder="Variant Name" required>
-        </div>
-        <div class="col-md-3">
-            <input type="number" name="variant_price_${variantCounter}" class="form-control" placeholder="Price" step="0.01" min="0" required>
-        </div>
-        <div class="col-md-3">
-            <input type="number" name="variant_stock_${variantCounter}" class="form-control" placeholder="Stock" min="0" required>
-        </div>
-        <div class="col-md-3 d-flex align-items-center">
-            <button type="button" class="btn btn-danger btn-sm remove-variant">Remove</button>
-        </div>
-    `;
-    
-    variantsContainer.appendChild(newVariantRow);
-});
-
-
-
-        document.addEventListener('DOMContentLoaded', setupImageUpload);
-
-
-// Import SweetAlert2
-const Toast = Swal.mixin({
-  toast: true,
-  position: 'top-end',
-  showConfirmButton: false,
-  timer: 3000,
-  timerProgressBar: true
-});
-
-// Form validation function
-function validateProductForm(formId) {
-  const form = document.getElementById(formId);
-  const requiredFields = {
-    'product-name': 'Product name is required',
-    'product-category': 'Please select a category',
-    'product-brand': 'Please select a brand',
-    'product-description': 'Product description is required'
-  };
-
-  // Validate required fields
-  for (const [fieldId, message] of Object.entries(requiredFields)) {
-    const field = document.getElementById(fieldId);
-    if (!field.value.trim()) {
-      Toast.fire({
-        icon: 'error',
-        title: message
-      });
-      field.focus();
-      return false;
-    }
-  }
-
-  // Validate offer percentage
-  const offerPercentage = document.getElementById('product-offer-percentage');
-  if (offerPercentage.value && (parseFloat(offerPercentage.value) < 0 || parseFloat(offerPercentage.value) > 100)) {
-    Toast.fire({
-      icon: 'error',
-      title: 'Offer percentage must be between 0 and 100'
-    });
-    offerPercentage.focus();
-    return false;
-  }
-
-  // Validate variants
-  const variantNames = document.getElementsByName('variant_name[]');
-  const variantPrices = document.getElementsByName('variant_price[]');
-  const variantStocks = document.getElementsByName('variant_stock[]');
-
-  for (let i = 0; i < variantNames.length; i++) {
-    if (!variantNames[i].value.trim()) {
-      Toast.fire({
-        icon: 'error',
-        title: 'Variant name is required'
-      });
-      variantNames[i].focus();
-      return false;
-    }
-    if (!variantPrices[i].value || parseFloat(variantPrices[i].value) <= 0) {
-      Toast.fire({
-        icon: 'error',
-        title: 'Valid variant price is required'
-      });
-      variantPrices[i].focus();
-      return false;
-    }
-    if (!variantStocks[i].value || parseInt(variantStocks[i].value) < 0) {
-      Toast.fire({
-        icon: 'error',
-        title: 'Valid variant stock is required'
-      });
-      variantStocks[i].focus();
-      return false;
-    }
-  }
-
-  // Validate images
-  const images = document.getElementById('product-images').files;
-  const existingImages = document.querySelectorAll('.image-preview').length;
-  
-  if (formId === 'add-product-form' && images.length === 0) {
-    Toast.fire({
-      icon: 'error',
-      title: 'At least one product image is required'
-    });
-    return false;
-  }
-
-  if (images.length + existingImages > 5) {
-    Toast.fire({
-      icon: 'error',
-      title: 'Maximum 5 images allowed'
-    });
-    return false;
-  }
-
-  return true;
-}
-
-// Success message function
-function showSuccess(message) {
-  Toast.fire({
-    icon: 'success',
-    title: message
-  });
-}
-
-// Error message function
-function showError(message) {
-  Toast.fire({
-    icon: 'error',
-    title: message
-  });
-}
-
-// Handle form submission
-document.addEventListener('DOMContentLoaded', () => {
-  ['add-product-form', 'edit-product-form'].forEach(formId => {
-    const form = document.getElementById(formId);
-    if (form) {
-      form.addEventListener('submit', async (e) => {
-        e.preventDefault();
-        
-        if (!validateProductForm(formId)) {
-          return;
-        }
-
-        try {
-          const formData = new FormData(form);
-          const response = await fetch(form.action, {
-            method: 'POST',
-            body: formData,
-            headers: {
-              'X-CSRFToken': getCookie('csrftoken')
-            }
-          });
-
-          const result = await response.json();
-
-          if (result.success) {
-            showSuccess(result.message);
-            setTimeout(() => {
-              window.location.href = '/product/products/';  // Adjust URL as needed
-            }, 1500);
-          } else {
-            showError(result.message);
-          }
-        } catch (error) {
-          showError('An error occurred. Please try again.');
-        }
-      });
-    }
-  });
-});
-
     </script>
 
-<script>
-// Handle variant removal
-document.addEventListener('click', function(e) {
-    if (e.target.classList.contains('remove-variant')) {
-        const variantRow = e.target.closest('.variant-row');
-        const variantId = e.target.getAttribute('data-variant-id'); // Changed to get attribute directly from button
-
-        if (variantId) {
-            // Existing variant - send delete request
-            if (confirm('Are you sure you want to delete this variant?')) {
-                fetch(`/product/delete-variant/${variantId}/`, {
-                    method: 'DELETE',
-                    headers: {
-                        'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value,
-                        'Content-Type': 'application/json'
-                    }
-                })
-                .then(response => {
-                    if (!response.ok) {
-                        throw new Error('Network response was not ok');
-                    }
-                    return response.json();
-                })
-                .then(data => {
-                    if (data.success) {
-                        variantRow.remove();
-                        // Optional: Show success message
-                        alert('Variant deleted successfully');
-                    } else {
-                        alert('Error: ' + data.message);
-                    }
-                })
-                .catch(error => {
-                    console.error('Error:', error);
-                    alert('Failed to delete variant: ' + error.message);
-                });
-            }
-        } else {
-            // New variant - just remove from DOM
-            variantRow.remove();
-        }
-    }
-});
-</script>
 
 {%endblock%}

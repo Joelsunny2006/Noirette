@@ -101,7 +101,7 @@ def sales_report(request):
     }
 
     return render(request, 'admin_side/sales_report.html', context)
-
+@admin_required
 def get_date_range(report_type, start_date=None, end_date=None):
     """Helper function to calculate date ranges based on report type"""
     today = datetime.now().date()
@@ -120,7 +120,7 @@ def get_date_range(report_type, start_date=None, end_date=None):
     elif report_type == 'custom' and start_date and end_date:
         return start_date, end_date
     return today, today
-
+@admin_required
 @require_http_methods(["GET"])
 def sales_report_api(request):
     try:
@@ -189,7 +189,7 @@ def sales_report_api(request):
 
 
 
-
+@admin_required
 @require_http_methods(["GET"])
 def download_sales_report(request):
     try:
@@ -356,15 +356,15 @@ from django.db.models import Sum
 from django.contrib.admin.views.decorators import staff_member_required
 
 @staff_member_required
+@admin_required
 def salesanalytics(request):
     filter_type = request.GET.get('filter', 'all')
     start_date = request.GET.get('start_date')
     end_date = request.GET.get('end_date')
 
-    print(start_date,end_date)
-
     today = timezone.now()
 
+    # Get all orders (for displaying all orders)
     if filter_type == 'weekly':
         start_date = today - timedelta(days=7)
         orders = Order.objects.filter(created_at__gte=start_date)
@@ -375,15 +375,19 @@ def salesanalytics(request):
         end_date = timezone.make_aware(datetime.strptime(end_date, "%Y-%m-%d"))
         orders = Order.objects.filter(created_at__range=[start_date, end_date])
     else:
-        orders = Order.objects.all()
+        orders = Order.objects.all()  # ✅ Show all orders
+
+    # ✅ Get only Completed Orders for Revenue & Discount Calculation
+    completed_orders = orders.filter(status='Completed')
 
     # ✅ Explicitly order the queryset
     orders = orders.order_by('-created_at')
 
     # Calculate total values
-    total_orders = orders.count()
-    total_order_amount = orders.aggregate(total_amount=Sum('items__total_price'))['total_amount'] or 0
-    total_discount = orders.aggregate(total_discount=Sum('items__variant__discounted_price'))['total_discount'] or 0
+    total_orders = orders.count()  # ✅ Count all orders
+    total_order_amount = completed_orders.aggregate(total_amount=Sum('total_price'))['total_amount'] or 0  # ✅ Only from Completed orders
+    total_discount = completed_orders.aggregate(total_discount=Sum('coupon_discount'))['total_discount'] or 0  # ✅ Only from Completed orders
+
     payment_methods = orders.values('payment_method').annotate(count=Sum('total_price')).order_by('payment_method')
 
     # Pagination
@@ -394,14 +398,13 @@ def salesanalytics(request):
     context = {
         'page_obj': page_obj,
         'orders': orders,
-        'total_orders': total_orders,
-        'total_order_amount': total_order_amount,
-        'total_discount': total_discount,
+        'total_orders': total_orders,  # ✅ Show count of all orders
+        'total_order_amount': total_order_amount,  # ✅ Only Completed Orders Revenue
+        'total_discount': total_discount,  # ✅ Only Completed Orders Discount
         'payment_methods': payment_methods,
     }
 
     return render(request, 'admin_side/salesanalytics.html', context)
-
 
 
 

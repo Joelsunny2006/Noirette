@@ -101,7 +101,7 @@ def view_cart(request):
 
     return render(request, 'user_side/cart.html', context)
 
-
+@login_required
 def add_to_cart(request):
     if request.method == "POST":
         try:

@@ -46,6 +46,7 @@ def products_view(request):
     return render(request, 'admin_side/products.html', {'products': products,'categories': categories})
 
 # Add a new product
+@admin_required
 def add_product(request):
     if request.method == 'POST':
         name = request.POST.get('productName')
@@ -86,6 +87,7 @@ def add_product(request):
     return render(request, 'admin_side/add_product.html', {'categories': categories})
 
 # Delete product (soft delete)
+@admin_required
 def delete_product(request, product_id):
     product = Product.objects.get(serial_number=product_id)
     product.is_deleted = True  # Soft delete the product
@@ -93,6 +95,7 @@ def delete_product(request, product_id):
     return redirect('products')
 
 # Update product details
+@admin_required
 def update_product(request, product_id):
     product = Product.objects.get(serial_number=product_id)
     
