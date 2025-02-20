@@ -518,21 +518,25 @@ def cancel_order(request, order_id):
                 item.variant.save()
 
             # Process wallet refund (if applicable)
-            wallet, created = Wallet.objects.get_or_create(user=request.user)
-            wallet.balance += Decimal(str(order.total_price))  
-            wallet.save()
-            WalletTransaction.objects.create(
-                wallet=wallet,
-                amount=order.total_price,
-                transaction_type="credit",
-                description=f"Refund for Cancelled Order #{order_id}",
-            )
+            if order.payment_method in ["wallet", "razorpay"]:
+                wallet, created = Wallet.objects.get_or_create(user=request.user)
+                wallet.balance += Decimal(str(order.total_price))  
+                wallet.save()
+                WalletTransaction.objects.create(
+                    wallet=wallet,
+                    amount=order.total_price,
+                    transaction_type="credit",
+                    description=f"Refund for Cancelled Order #{order_id}",
+                )
 
             # Update order status
             order.status = "Cancelled"
             order.save()
+            if order.payment_method in ["wallet", "razorpay"]:
+                messages.success(request, f"Order #{order_id} has been cancelled. Refund of ₹{order.total_price} has been added to your wallet.")
+            else:
+                messages.success(request, f"Order #{order_id} has been cancelled.")
 
-            messages.success(request, f"Order #{order_id} has been cancelled. Refund of ₹{order.total_price} has been added to your wallet.")
         except Exception as e:
             messages.error(request, f"Error processing cancellation: {str(e)}")
     else:
@@ -787,6 +791,7 @@ def order_detail(request, order_id):
 def order_detail_admin(request, order_id):
     order = get_object_or_404(Order, id=order_id)
     
+    
     # Fetch images for each variant
     order_items = []
     for item in order.items.all():
@@ -795,6 +800,8 @@ def order_detail_admin(request, order_id):
             'item': item,
             'image_url': first_image.image_url.url if first_image else None
         })
+
+    print("gijoji",order_items)    
 
     context = {
         'order': order,
